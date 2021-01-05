@@ -1,0 +1,28 @@
+[package]
+name = "rust_ipl"
+version = "0.1.0"
+authors = [
+    "Jiewen Yao <jiewen.yao@intel.com>",
+    "Xiaoyu Lu <xiaoyux.lu@intel.com>"
+    ]
+edition = "2018"
+
+# the profile used for `cargo build`
+[profile.dev]
+panic = "abort" # disable stack unwinding on panic
+
+# the profile used for `cargo build --release`
+[profile.release]
+panic = "abort" # disable stack unwinding on panic
+
+[dependencies]
+cpuio = "0.3.0"
+spin = "0.4.9"
+r-efi = { path = "../r-efi" }
+x86 = "0.34.0"
+plain = { path = "../plain" }
+bitfield = "0.13.2"
+
+[dependencies.lazy_static]
+version = "1.0"
+features = ["spin_no_std"]
