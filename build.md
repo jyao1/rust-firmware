@@ -2,9 +2,15 @@
 
 ## Tools
 
-1. [RUST](https://www.rust-lang.org/)
+1. Install [RUST](https://www.rust-lang.org/)
 
-2. [NASM](https://www.nasm.us/)
+1.1. Intall xbuild
+
+```
+cargo install cargo-xbuild
+```
+
+2. Install [NASM](https://www.nasm.us/)
 
 ## Build
 
@@ -39,7 +45,7 @@ Assemble all images together
 ```
 set RESET_VECTOR_BIN=<rust-firmware>\rust-ipl\ResetVector\ResetVector.bin
 set RUST_IPL_BIN=<rust-firmware>\rust-ipl\target\x86_64-unknown-uefi\debug\rust-ipl.efi
-set RUST_PAYLOAD_BIN=<rust-firmware>\rust-uefi-payload\target\x86_64-unknown-none\debug\rust-uefi-payload.efi
+set RUST_PAYLOAD_BIN=<rust-firmware>\rust-uefi-payload\target\target\debug\rust-uefi-payload.efi
 set RUST_FIRMWARE_BIN=<rust-firmware>\rust-firmware-tool\final.bin
 cargo run %RESET_VECTOR_BIN% %RUST_IPL_BIN% %RUST_PAYLOAD_BIN% %RUST_FIRMWARE_BIN%
 ```
