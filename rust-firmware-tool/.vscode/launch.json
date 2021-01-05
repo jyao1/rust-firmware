@@ -1,0 +1,20 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "(Windows) Launch",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "${workspaceRoot}/target/debug/rust-firmware-tool.exe",
+            "args": [
+                "${workspaceRoot}\\..\\ResetVector\\ResetVector.bin",
+                "c:\\home\\PersonalGit\\rust-firmware\\rust-ipl\\target\\x86_64-unknown-uefi\\debug\\rust_ipl.efi",
+                "C:\\home\\edkii\\edk2\\MinOvmf64FwPkg\\payload-efi",
+                "final.bin"],
+            "stopAtEntry": false,
+            "cwd": "${workspaceRoot}",
+            "environment": [],
+            "externalConsole": true
+        }
+    ]
+}
