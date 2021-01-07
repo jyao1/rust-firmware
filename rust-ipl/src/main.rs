@@ -207,7 +207,7 @@ pub extern "win64" fn _start(boot_fv: *const c_void, top_of_stack: *const c_void
             hob::RESOURCE_ATTRIBUTE_WRITE_BACK_CACHEABLE |
             hob::RESOURCE_ATTRIBUTE_TESTED,
         physical_start: 0u64,
-        resource_length: 0x8000u64 + 0x2000u64
+        resource_length: 0x80000u64 + 0x20000u64
     };
 
     let (entry, basefw, basefwsize) = sec::FindAndReportEntryPoint(pcd::pcd_get_PcdOvmfDxeMemFvBase() as u64 as * const pi::fv::FirmwareVolumeHeader);
