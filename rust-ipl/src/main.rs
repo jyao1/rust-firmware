@@ -273,7 +273,9 @@ pub extern "win64" fn _start(boot_fv: *const c_void, top_of_stack: *const c_void
     sec::VirtIoBlk();
 
     let mut code: extern "win64" fn(* mut HobTemplate) = unsafe {core::mem::transmute(entry)};
-    code(&hob_template as *const HobTemplate as *mut HobTemplate);
+    let hob = memory_bottom;
+    unsafe {core::ptr::copy_nonoverlapping (&hob_template as *const HobTemplate as *const c_void, hob as *mut c_void, core::mem::size_of::<HobTemplate>());}
+    code(hob as *const HobTemplate as *mut HobTemplate);
 
     loop {}
 }
