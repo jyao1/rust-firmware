@@ -20,7 +20,7 @@ cpuio = "0.3.0"
 spin = "0.4.9"
 r-efi = { path = "../r-efi" }
 x86 = "0.34.0"
-plain = { path = "../plain" }
+plain = "0.2.3"
 bitfield = "0.13.2"
 
 [dependencies.lazy_static]
