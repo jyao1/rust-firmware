@@ -6,6 +6,7 @@
 
 #![feature(llvm_asm)]
 #![feature(core_intrinsics)]
+#![feature(alloc_error_handler)]
 #![cfg_attr(not(test), no_std)]
 #![cfg_attr(not(test), no_main)]
 #![cfg_attr(test, allow(unused_imports))]
@@ -55,6 +56,13 @@ fn panic(_info: &PanicInfo) -> ! {
 }
 
 #[cfg(not(test))]
+#[alloc_error_handler]
+#[allow(clippy::empty_loop)]
+fn alloc_error(_info: core::alloc::Layout) -> ! {
+    log!("alloc_error ... {:?}\n", _info);
+    loop {}
+}
+
 #[no_mangle]
 #[export_name = "efi_main"]
 pub extern "win64" fn _start(boot_fv: *const c_void, top_of_stack: *const c_void) -> ! {
@@ -210,7 +218,11 @@ pub extern "win64" fn _start(boot_fv: *const c_void, top_of_stack: *const c_void
         resource_length: 0x80000u64 + 0x20000u64
     };
 
-    let (entry, basefw, basefwsize) = sec::FindAndReportEntryPoint(pcd::pcd_get_PcdOvmfDxeMemFvBase() as u64 as * const pi::fv::FirmwareVolumeHeader);
+    let basefw = 0x100000;
+    let basefwsize = 0x800000;
+    let loaded_buffer = unsafe { core::slice::from_raw_parts_mut(basefw as *mut u8, basefwsize)};
+
+    let (entry, basefw, basefwsize) = sec::FindAndReportEntryPoint(pcd::pcd_get_PcdOvmfDxeMemFvBase() as u64 as * const r_uefi_pi::fv::FirmwareVolumeHeader, loaded_buffer);
     let entry = entry as usize;
 
     const HYPERVISORFW_NAME_GUID: efi::Guid = efi::Guid::from_fields(

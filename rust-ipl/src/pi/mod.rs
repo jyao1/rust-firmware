@@ -14,7 +14,5 @@
 
 pub mod hob;
 pub mod boot_mode;
-pub mod fv;
 
 pub mod hob_lib;
-pub mod fv_lib;

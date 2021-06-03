@@ -6,10 +6,7 @@
 use crate::logger;
 
 use crate::pcd;
-use crate::pi;
-use crate::pi::hob;
-use crate::pi::fv;
-use crate::pi::fv_lib;
+use r_uefi_pi::fv;
 use crate::elf;
 use crate::pci;
 
@@ -53,7 +50,6 @@ fn cmos_write8(index: u8, value: u8) -> u8
 }
 
 #[allow(non_snake_case)]
-#[cfg(not(test))]
 pub fn GetSystemMemorySizeBelow4Gb() -> u64 {
     let mut cmos0x34: u8 = 0u8;
     let mut cmos0x35: u8 = 0u8;
@@ -66,14 +62,12 @@ pub fn GetSystemMemorySizeBelow4Gb() -> u64 {
 }
 
 #[allow(non_snake_case)]
-#[cfg(not(test))]
 pub fn EfiSizeToPage(size: u64) -> u64
 {
     (size + SIZE_4KB - 1) / SIZE_4KB
 }
 
 #[allow(non_snake_case)]
-#[cfg(not(test))]
 pub fn EfiPageToSize(page: u64) -> u64
 {
     page * SIZE_4KB
@@ -91,24 +85,22 @@ fn AlignValue(value: u64, align: u64, flag: bool) -> u64
 }
 
 #[allow(non_snake_case)]
-#[cfg(not(test))]
-pub fn FindAndReportEntryPoint(firmwareVolumePtr: * const fv::FirmwareVolumeHeader) -> (u64, u64, u64)
+pub fn FindAndReportEntryPoint(firmwareVolumePtr: * const fv::FirmwareVolumeHeader, loaded_buffer: &mut [u8]) -> (u64, u64, u64)
 {
-    let firmwareVolume = unsafe{&(*firmwareVolumePtr)};
-    log!("FirmwareVolumeHeader: \n fv_length: {:x}\n signature: {:x}\n", firmwareVolume.fv_length, firmwareVolume.signature);
-
-    let (image, size) = fv_lib::get_image_from_fv(firmwareVolumePtr as u64, pcd::pcd_get_PcdOvmfDxeMemFvSize() as u64, fv::FV_FILETYPE_DXE_CORE, fv::SECTION_PE32);
+    let firmware_buffer = unsafe { core::slice::from_raw_parts(firmwareVolumePtr as *const u8, pcd::pcd_get_PcdOvmfDxeMemFvSize() as usize) };
+    let image = uefi_pi::fv_lib::get_image_from_fv(firmware_buffer, fv::FV_FILETYPE_DXE_CORE, fv::SECTION_PE32).unwrap();
+    // let res = elf_loader::elf::relocate_elf(image2, loaded_buffer);
 
     // parser file and get entry point
-    let data_slice = unsafe {core::slice::from_raw_parts(image as *const u8, size as usize)};
-    let data_header = data_slice[0..4].try_into().unwrap();
+    let image = image;
+    let image_header = image[0..4].try_into().unwrap();
     let mut entry = 0u64;
-    match data_header {
+    match image_header {
         elf::ELFMAG => {
             log!("Elf FW image\n");
-            match data_slice[elf::EI_CLASS] {
-                elf::ELFCLASS32 => FindAndReportEntryPointElf32(image, data_slice),
-                elf::ELFCLASS64 => FindAndReportEntryPointElf64(image, data_slice),
+            match image[elf::EI_CLASS] {
+                elf::ELFCLASS32 => FindAndReportEntryPointElf32(image as *const [u8] as *const c_void, image),
+                elf::ELFCLASS64 => FindAndReportEntryPointElf64(image as *const [u8] as *const c_void, image),
                 _ => {log!("Invalid EI class"); (0u64,0u64,0u64)}
             }
         }
@@ -120,7 +112,6 @@ pub fn FindAndReportEntryPoint(firmwareVolumePtr: * const fv::FirmwareVolumeHead
 }
 
 #[allow(non_snake_case)]
-#[cfg(not(test))]
 fn FindAndReportEntryPointElf64(image: *const c_void, data_slice: &[u8]) -> (u64, u64, u64) {
     let elf_header = elf::ELFHeader64::from_bytes(data_slice);
     log!("--Elf: {:?}", elf_header);
@@ -160,7 +151,6 @@ fn FindAndReportEntryPointElf64(image: *const c_void, data_slice: &[u8]) -> (u64
 }
 
 #[allow(non_snake_case)]
-#[cfg(not(test))]
 fn FindAndReportEntryPointElf32(image: *const c_void, data_slice: &[u8]) ->(u64, u64, u64)  {
     let elf_header = elf::ELFHeader32::from_bytes(data_slice);
     log!("--Elf: {:?}", elf_header);
@@ -201,7 +191,6 @@ fn FindAndReportEntryPointElf32(image: *const c_void, data_slice: &[u8]) ->(u64,
 
 
 #[allow(non_snake_case)]
-#[cfg(not(test))]
 pub fn PciExBarInitialization()
 {
     let pci_exbar_base = pcd::pcd_get_PcdPciExpressBaseAddress();
@@ -222,7 +211,6 @@ pub fn PciExBarInitialization()
 }
 
 #[allow(non_snake_case)]
-#[cfg(not(test))]
 pub fn InitPci()
 {
     pci::PciCf8Write32(0, 3, 0, 0x14, 0xC1085000);
@@ -232,7 +220,6 @@ pub fn InitPci()
 }
 
 #[allow(non_snake_case)]
-#[cfg(not(test))]
 pub fn VirtIoBlk()
 {
     let base: usize = 0x8C2000000usize;
@@ -248,7 +235,6 @@ pub fn VirtIoBlk()
 
 
 #[allow(non_snake_case)]
-#[cfg(not(test))]
 pub fn CreateHostPaging(PageTableAddressStart: u64) -> u64
 {
     // Assume 2MB page, PhysicalAddressBits is 36
@@ -297,7 +283,6 @@ pub fn CreateHostPaging(PageTableAddressStart: u64) -> u64
 }
 
 #[allow(non_snake_case)]
-#[cfg(not(test))]
 pub fn CpuGetMemorySpaceSize() -> u8
 {
     let res = x86::cpuid::cpuid!(0x80000000u32);
@@ -312,7 +297,6 @@ pub fn CpuGetMemorySpaceSize() -> u8
 
 
 #[allow(non_snake_case)]
-#[cfg(not(test))]
 pub fn LocalApicBaseAddressMsrSupported() -> bool
 {
     let res = x86::cpuid::cpuid!(1u32);
@@ -325,7 +309,6 @@ pub fn LocalApicBaseAddressMsrSupported() -> bool
 }
 
 #[allow(non_snake_case)]
-#[cfg(not(test))]
 pub fn GetApicMode() -> u64
 {
     use x86::msr;
@@ -349,7 +332,6 @@ pub fn GetApicMode() -> u64
 }
 
 #[allow(non_snake_case)]
-#[cfg(not(test))]
 pub fn SetApicMode(mode: u64) {
     let CurrentMode = GetApicMode();
     if CurrentMode == LOCAL_APIC_MODE_XAPIC && mode == LOCAL_APIC_MODE_X2APIC {
@@ -382,7 +364,6 @@ pub fn SetApicMode(mode: u64) {
 /// Defines the APIC timer frequency as the processor frequency divided by a
 /// specified value.
 #[allow(non_snake_case)]
-#[cfg(not(test))]
 #[derive(Debug, Copy, Clone)]
 #[repr(u8)]
 pub enum TimerDivide {
@@ -406,7 +387,6 @@ pub enum TimerDivide {
 
 /// Local APIC timer modes.
 #[allow(non_snake_case)]
-#[cfg(not(test))]
 #[derive(Debug, Copy, Clone)]
 #[repr(u8)]
 pub enum TimerMode {
@@ -419,7 +399,6 @@ pub enum TimerMode {
 }
 
 #[allow(non_snake_case)]
-#[cfg(not(test))]
 pub fn InitializeApicTimer(DivideValue: TimerDivide, InitCount: u32, PeriodicMode: TimerMode, Vector: u8)
 {
     //
@@ -453,7 +432,6 @@ pub fn InitializeApicTimer(DivideValue: TimerDivide, InitCount: u32, PeriodicMod
 }
 
 #[allow(non_snake_case)]
-#[cfg(not(test))]
 pub fn DisableApicTimerInterrupt()
 {
     unsafe {
@@ -465,7 +443,6 @@ pub fn DisableApicTimerInterrupt()
 }
 
 #[allow(non_snake_case)]
-#[cfg(not(test))]
 fn InitializeLocalApicSoftwareEnable(b: bool)
 {
     let mut srv = unsafe {msr::rdmsr(msr::IA32_X2APIC_SIVR)};

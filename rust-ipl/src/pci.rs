@@ -9,7 +9,6 @@ pub const PCI_CONFIGURATION_ADDRESS_PORT:  u16 = 0xCF8;
 pub const PCI_CONFIGURATION_DATA_PORT: u16 = 0xCFC;
 
 #[allow(non_snake_case)]
-#[cfg(not(test))]
 pub fn PciCf8Read32(bus: u8, device: u8, fnc: u8, reg: u8) -> u32
 {
     let data = u32::from(bus) << 16;
@@ -27,7 +26,6 @@ pub fn PciCf8Read32(bus: u8, device: u8, fnc: u8, reg: u8) -> u32
 }
 
 #[allow(non_snake_case)]
-#[cfg(not(test))]
 pub fn PciCf8Write32(bus: u8, device: u8, fnc: u8, reg: u8, value: u32)
 {
     let data = u32::from(bus) << 16;
@@ -43,7 +41,6 @@ pub fn PciCf8Write32(bus: u8, device: u8, fnc: u8, reg: u8, value: u32)
 }
 
 #[allow(non_snake_case)]
-#[cfg(not(test))]
 pub fn PciCf8Write8(bus: u8, device: u8, fnc: u8, reg: u8, value: u8)
 {
     let data = u32::from(bus) << 16;
@@ -60,7 +57,6 @@ pub fn PciCf8Write8(bus: u8, device: u8, fnc: u8, reg: u8, value: u8)
 
 
 #[allow(non_snake_case)]
-#[cfg(not(test))]
 pub fn PciCf8Read8(bus: u8, device: u8, fnc: u8, reg: u8) -> u8
 {
     let data = u32::from(bus) << 16;
@@ -78,7 +74,6 @@ pub fn PciCf8Read8(bus: u8, device: u8, fnc: u8, reg: u8) -> u8
 }
 
 #[allow(non_snake_case)]
-#[cfg(not(test))]
 pub fn InitializeAcpiPm()
 {
     let mut PmbaAndVal = 0xffffffffu32;
