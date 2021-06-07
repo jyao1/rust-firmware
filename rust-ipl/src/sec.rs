@@ -85,110 +85,12 @@ fn AlignValue(value: u64, align: u64, flag: bool) -> u64
 }
 
 #[allow(non_snake_case)]
-pub fn FindAndReportEntryPoint(firmwareVolumePtr: * const fv::FirmwareVolumeHeader, loaded_buffer: &mut [u8]) -> (u64, u64, u64)
+pub fn FindAndReportEntryPoint(firmwareVolumePtr: * const fv::FirmwareVolumeHeader, _loaded_buffer: &mut [u8]) -> (u64, u64, u64)
 {
     let firmware_buffer = unsafe { core::slice::from_raw_parts(firmwareVolumePtr as *const u8, pcd::pcd_get_PcdOvmfDxeMemFvSize() as usize) };
     let image = uefi_pi::fv_lib::get_image_from_fv(firmware_buffer, fv::FV_FILETYPE_DXE_CORE, fv::SECTION_PE32).unwrap();
-    // let res = elf_loader::elf::relocate_elf(image2, loaded_buffer);
-
-    // parser file and get entry point
-    let image = image;
-    let image_header = image[0..4].try_into().unwrap();
-    let mut entry = 0u64;
-    match image_header {
-        elf::ELFMAG => {
-            log!("Elf FW image\n");
-            match image[elf::EI_CLASS] {
-                elf::ELFCLASS32 => FindAndReportEntryPointElf32(image as *const [u8] as *const c_void, image),
-                elf::ELFCLASS64 => FindAndReportEntryPointElf64(image as *const [u8] as *const c_void, image),
-                _ => {log!("Invalid EI class"); (0u64,0u64,0u64)}
-            }
-        }
-        _ =>{
-            log!("Not support\n");
-            (0u64,0u64,0u64)
-        }
-    }
+    elf_loader::elf::relocate_elf(image as *const [u8] as *const c_void, image.len())
 }
-
-#[allow(non_snake_case)]
-fn FindAndReportEntryPointElf64(image: *const c_void, data_slice: &[u8]) -> (u64, u64, u64) {
-    let elf_header = elf::ELFHeader64::from_bytes(data_slice);
-    log!("--Elf: {:?}", elf_header);
-    let phdr_slice = unsafe {core::slice::from_raw_parts((image as u64 + elf_header.e_phoff as u64) as *const u8 , (elf_header.e_ehsize * elf_header.e_phnum) as usize)};
-
-    let pheaders = elf::ProgramHeader64::slice_from_bytes(phdr_slice);
-
-    let mut bottom: u64 = 0xFFFFFFFFu64;
-    let mut top:    u64 = 0u64;
-
-    for ph in pheaders.into_iter() {
-        log!("pheader: {:?}", ph);
-        if ph.p_type == elf::PT_LOAD {
-            if bottom > ph.p_vaddr {
-                bottom = ph.p_vaddr;
-            }
-            if top < ph.p_vaddr + ph.p_memsz {
-                top = ph.p_vaddr + ph.p_memsz;
-            }
-        }
-    }
-    bottom = AlignValue(bottom, SIZE_4KB, true);
-    top = AlignValue(top, SIZE_4KB, false);
-    log!("BaseHypervisorFw - 0x{:x}\n", bottom);
-    log!("Size - 0x{:x}\n", top - bottom);
-    log!("HypervisorFwEntryPoint - 0x{:x}\n", elf_header.e_entry);
-
-    // load per program header
-    for ph in pheaders.into_iter() {
-        if ph.p_type == elf::PT_LOAD {
-            unsafe {
-                core::ptr::copy_nonoverlapping((image as u64 + ph.p_offset as u64) as *mut u8, ph.p_vaddr as *const u8 as *mut u8, ph.p_filesz as usize)
-            };
-        }
-    }
-    (elf_header.e_entry as u64, bottom, top-bottom)
-}
-
-#[allow(non_snake_case)]
-fn FindAndReportEntryPointElf32(image: *const c_void, data_slice: &[u8]) ->(u64, u64, u64)  {
-    let elf_header = elf::ELFHeader32::from_bytes(data_slice);
-    log!("--Elf: {:?}", elf_header);
-    let phdr_slice = unsafe {core::slice::from_raw_parts((image as u64 + elf_header.e_phoff as u64) as *const u8 , (elf_header.e_ehsize * elf_header.e_phnum) as usize)};
-
-    let pheaders = elf::ProgramHeader32::slice_from_bytes(phdr_slice);
-
-    let mut bottom: u32 = 0xFFFFFFFFu32;
-    let mut top:    u32 = 0u32;
-
-    for ph in pheaders.into_iter() {
-        log!("pheader: {:?}", ph);
-        if ph.p_type == elf::PT_LOAD {
-            if bottom > ph.p_vaddr {
-                bottom = ph.p_vaddr;
-            }
-            if top < ph.p_vaddr + ph.p_memsz {
-                top = ph.p_vaddr + ph.p_memsz;
-            }
-        }
-    }
-    bottom = AlignValue(bottom as u64, SIZE_4KB, true) as u32;
-    top = AlignValue(top as u64, SIZE_4KB, false) as u32;
-    log!("BaseHypervisorFw - 0x{:x}\n", bottom);
-    log!("Size - 0x{:x}\n", top - bottom);
-    log!("HypervisorFwEntryPoint - 0x{:x}\n", elf_header.e_entry);
-
-    // load per program header
-    for ph in pheaders.into_iter() {
-        if ph.p_type == elf::PT_LOAD {
-            unsafe {
-                core::ptr::copy_nonoverlapping((image as u64 + ph.p_offset as u64) as *mut u8, ph.p_vaddr as *const u8 as *mut u8, ph.p_filesz as usize)
-            };
-        }
-    }
-    (elf_header.e_entry as u64, bottom as u64, (bottom-top) as u64)
-}
-
 
 #[allow(non_snake_case)]
 pub fn PciExBarInitialization()
