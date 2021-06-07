@@ -152,8 +152,9 @@ pub extern "win64" fn _start(boot_fv: *const c_void, top_of_stack: *const c_void
     const PAGE_TABLE_NAME_GUID: efi::Guid = efi::Guid::from_fields(
         0xF8E21975, 0x0899, 0x4F58, 0xA4, 0xBE, &[0x55, 0x25, 0xA9, 0xC6, 0xD7, 0x7A]
     );
+    let memory_size = 0x1000000000; // TODO: hardcoding to 64GiB for now
 
-    let page_total_size = sec::CreateHostPaging((pcd::pcd_get_PcdOvmfSecPeiTempRamBase() + pcd::pcd_get_PcdOvmfSecPeiTempRamSize()) as u64);
+    paging::setup_paging((pcd::pcd_get_PcdOvmfSecPeiTempRamBase() + pcd::pcd_get_PcdOvmfSecPeiTempRamSize()) as u64, memory_size);
     #[allow(non_snake_case)]
     let mut pageTable = hob::MemoryAllocation {
         header: hob::Header {
@@ -164,7 +165,7 @@ pub extern "win64" fn _start(boot_fv: *const c_void, top_of_stack: *const c_void
         alloc_descriptor: hob::MemoryAllocationHeader {
             name: PAGE_TABLE_NAME_GUID,
             memory_base_address:  unsafe{x86::controlregs::cr3()},  // TBD
-            memory_length: page_total_size as u64,
+            memory_length: paging::PAGE_TABLE_SIZE as u64,
             memory_type: efi::MemoryType::BootServicesData,
             reserved: [0u8; 4]
         }
