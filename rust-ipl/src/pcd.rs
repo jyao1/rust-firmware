@@ -19,7 +19,8 @@ pub fn pcd_get_PcdOvmfSecPageTablesBase() -> u32 {
 
 #[allow(non_snake_case)]
 pub fn pcd_get_PcdOvmfDxeMemFvBase() -> u32 {
-    0xFFC84000
+    // 0xFFC84000
+    0xFFC81000
 }
 
 #[allow(non_snake_case)]
