@@ -135,55 +135,6 @@ pub fn VirtIoBlk()
     unsafe{volatile_store((base + 0x14usize) as *mut u32, 2u32);}
 }
 
-
-#[allow(non_snake_case)]
-pub fn CreateHostPaging(PageTableAddressStart: u64) -> u64
-{
-    // Assume 2MB page, PhysicalAddressBits is 36
-    // Use 4 level paging.
-    let mut PageTableAddress: u64 = paging::PAddr::from(PageTableAddressStart as u64).align_up_to_base_page().into();
-
-    let mut BaseAddress = paging::PAddr::from(0x0);
-
-    let Pml4= unsafe {
-        slice::from_raw_parts_mut(
-            PageTableAddress as *mut c_void as *mut paging::PML4Entry, 1)
-        };
-    PageTableAddress += SIZE_4KB;
-    let plm4 = paging::PML4Entry::new(paging::PAddr::from(PageTableAddress), paging::PML4Flags::RW|paging::PML4Flags::P);
-    (Pml4[0]).clone_from(&plm4);
-
-    // move to pdpte
-    let Pdpte =  unsafe {
-        slice::from_raw_parts_mut(
-            PageTableAddress as *mut c_void as *mut paging::PDPTEntry, 64)
-        };
-    PageTableAddress += SIZE_4KB;
-
-    for pdpte_index in 0..64 {
-        Pdpte[pdpte_index].clone_from(&paging::PDPTEntry::new(paging::PAddr::from(PageTableAddress), paging::PDPTFlags::RW | paging::PDPTFlags::P));
-
-        // move to pde
-        let pde =  unsafe {
-            slice::from_raw_parts_mut(
-                PageTableAddress as *mut c_void as *mut paging::PDEntry, 512)
-            };
-        PageTableAddress += SIZE_4KB;
-        for pde_index in 0..512 {
-            pde[pde_index].clone_from(&paging::PDEntry::new(BaseAddress, paging::PDFlags::RW|paging::PDFlags::P|paging::PDFlags::PS));
-            BaseAddress += SIZE_2MB;
-        }
-    }
-
-    log!("FinalAddress - {:x}\n", BaseAddress);
-    log!("PageTable - {:x}\n", PageTableAddressStart as u64);
-    log!("PageTable size - {:x}\n", PageTableAddress - PageTableAddressStart as u64);
-
-    unsafe{x86::controlregs::cr3_write(PageTableAddressStart);}
-    log!("Cr3 - {:x}\n", unsafe{x86::controlregs::cr3()});
-    PageTableAddress - PageTableAddressStart as u64
-}
-
 #[allow(non_snake_case)]
 pub fn CpuGetMemorySpaceSize() -> u8
 {
