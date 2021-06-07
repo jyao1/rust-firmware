@@ -7,5 +7,6 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-goblin = { version = "0.4", default-features=false, features=["elf32", "elf64", "pe32", "pe64"]}
-scroll = { version = "0.10", default-features=false }
+# goblin = { version = "0.4", default-features=false, features=["elf32", "elf64", "pe32", "pe64"]}
+# scroll = { version = "0.10", default-features=false }
+plain = "0.2.3"
