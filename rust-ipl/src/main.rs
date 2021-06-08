@@ -17,6 +17,7 @@ mod pcd;
 mod pi;
 mod sec;
 mod pci;
+mod memslice;
 
 extern crate plain;
 extern crate bitfield;
