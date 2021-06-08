@@ -12,9 +12,5 @@
   "panic-strategy": "abort",
   "disable-redzone": true,
   "features": "-mmx,-sse,+soft-float",
-  "pre-link-args": {
-    "ld.lld": [
-      "--script=layout.ld"
-    ]
-  }
+  "position-independent-executables": true
 }

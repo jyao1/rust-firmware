@@ -81,6 +81,7 @@ fn i8042_reset() -> ! {
 
 #[cfg(not(test))]
 #[no_mangle]
+#[cfg_attr(target_os = "uefi", export_name = "efi_main")]
 pub extern "win64" fn _start(hob: *const c_void) -> ! {
 
     log!("Starting UEFI hob - {:p}\n", hob);
