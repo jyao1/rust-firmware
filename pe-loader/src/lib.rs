@@ -13,7 +13,8 @@
 // limitations under the License.
 
 #![no_std]
-#![forbid(unsafe_code)]
+// #![forbid(unsafe_code)]
 #![feature(slice_fill)]
 
 pub mod pe;
+mod mem_region;
