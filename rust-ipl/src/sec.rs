@@ -89,7 +89,8 @@ pub fn FindAndReportEntryPoint(firmwareVolumePtr: * const fv::FirmwareVolumeHead
 {
     let firmware_buffer = unsafe { core::slice::from_raw_parts(firmwareVolumePtr as *const u8, pcd::pcd_get_PcdOvmfDxeMemFvSize() as usize) };
     let image = uefi_pi::fv_lib::get_image_from_fv(firmware_buffer, fv::FV_FILETYPE_DXE_CORE, fv::SECTION_PE32).unwrap();
-    elf_loader::elf::relocate_elf(image as *const [u8] as *const c_void, image.len())
+    // elf_loader::elf::relocate_elf(image as *const [u8] as *const c_void, image.len())
+    pe_loader::pe::relocate_pe_mem(image as *const [u8] as *const c_void, image.len(), _loaded_buffer as *const [u8] as *const c_void, _loaded_buffer.len())
 }
 
 #[allow(non_snake_case)]

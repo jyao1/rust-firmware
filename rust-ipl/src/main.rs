@@ -220,9 +220,7 @@ pub extern "win64" fn _start(boot_fv: *const c_void, top_of_stack: *const c_void
         resource_length: 0x80000u64 + 0x20000u64
     };
 
-    let basefw = 0x100000;
-    let basefwsize = 0x800000;
-    let loaded_buffer = unsafe { core::slice::from_raw_parts_mut(basefw as *mut u8, basefwsize)};
+    let loaded_buffer = memslice::get_dynamic_mem_slice_mut(memslice::SliceType::RuntimePayloadSlice, 0x1000000);
 
     let (entry, basefw, basefwsize) = sec::FindAndReportEntryPoint(pcd::pcd_get_PcdOvmfDxeMemFvBase() as u64 as * const r_uefi_pi::fv::FirmwareVolumeHeader, loaded_buffer);
     let entry = entry as usize;
@@ -286,6 +284,7 @@ pub extern "win64" fn _start(boot_fv: *const c_void, top_of_stack: *const c_void
     sec::InitPci();
     sec::VirtIoBlk();
 
+    log!("payload entry is: 0x{:X}\n", entry);
     let mut code: extern "win64" fn(* mut HobTemplate) = unsafe {core::mem::transmute(entry)};
     let hob = memory_bottom;
     unsafe {core::ptr::copy_nonoverlapping (&hob_template as *const HobTemplate as *const c_void, hob as *mut c_void, core::mem::size_of::<HobTemplate>());}
