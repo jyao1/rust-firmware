@@ -1,441 +1,266 @@
-// Copyright © 2019 Intel Corporation
+// Copyright (c) 2021 Intel Corporation
 //
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-License-Identifier: BSD-2-Clause-Patent
 
-#![allow(unused)]
+use scroll::{Pread, Pwrite};
 
-use log;
-
-use core::mem::size_of;
-use crate::mem_region::MemoryRegion;
-
-// ELFMAG b"\x7FELF"
-pub const DOSMAG: [u8; 2] = [0x4d, 0x5a];
-
-const DOS_SIGNATURE: u16 = 0x5a4d;
 const PE_SIGNATURE: u32 = 0x00004550;
-const MACHINE_I386: u16 = 0x014c;
+const DOS_SIGNATURE: u16 = 0x5a4d;
 const MACHINE_X64: u16 = 0x8664;
-const OPTIONAL_HDR32_MAGIC: u16 = 0x10b;
 const OPTIONAL_HDR64_MAGIC: u16 = 0x20b;
-const DIRECTORY_ENTRY_BASERELOC: u32 = 5;
 
-const REL_BASED_ABSOLUTE: u8 = 0;
-const REL_BASED_HIGH: u8 = 1;
-const REL_BASED_LOW: u8 = 2;
-const REL_BASED_HIGHLOW: u8 = 3;
-const REL_BASED_HIGHADJ: u8 = 4;
 const REL_BASED_DIR64: u8 = 10;
 
-#[repr(packed)]
-struct DosHeader {
-    e_magic: u16,
-    _e_cblp: u16,
-    _e_cp: u16,
-    _e_crlc: u16,
-    _e_cparhdr: u16,
-    _e_minalloc: u16,
-    _e_maxalloc: u16,
-    _e_ss: u16,
-    _e_sp: u16,
-    _e_csum: u16,
-    _e_ip: u16,
-    _e_cs: u16,
-    _e_lfarlc: u16,
-    _e_ovno: u16,
-    _e_res: [u16; 4],
-    _e_oemid: u16,
-    _e_oeminfo: u16,
-    _e_res2: [u16; 10],
-    e_lfanew: u32,
-}
+pub fn is_pe(pe_image: &[u8]) -> bool {
+    if pe_image.len() <= 0x42 {
+        return false;
+    }
+    if pe_image.pread::<u16>(0).unwrap() != DOS_SIGNATURE {
+        return false;
+    }
+    let pe_header_offset = pe_image.pread::<u32>(0x3c).unwrap() as usize;
 
-#[repr(packed)]
-struct FileHeader {
-    machine: u16,
-    number_of_sections: u16,
-    time_date_stamp: u32,
-    pointer_to_symbol_table: u32,
-    number_of_symbols: u32,
-    size_of_optional_header: u16,
-    characteristics: u16,
-}
+    if pe_image.len() <= pe_header_offset {
+        return false
+    }
 
-#[repr(packed)]
-struct DataDirectory {
-    virtual_address: u32,
-    size: u32,
-}
+    let pe_region = &pe_image[pe_header_offset..];
 
-#[repr(packed)]
-struct OptionalHeader32 {
-    ///
-    /// Standard fields.
-    ///
-    magic: u16,
-    major_linker_version: u8,
-    minor_linker_version: u8,
-    size_of_code: u32,
-    size_of_initialized_data: u32,
-    size_of_uninitialized_data: u32,
-    address_of_entrypoint: u32,
-    base_of_code: u32,
-    base_of_data: u32,
-    ///< PE32 contains this additional field, which is absent in PE32+.
-    ///
-    /// Optional Header Windows-Specific Fields.
-    ///
-    image_base: u32,
-    section_alignment: u32,
-    file_alignment: u32,
-    major_operating_system_version: u16,
-    minor_operating_system_version: u16,
-    major_image_version: u16,
-    minor_image_version: u16,
-    major_subsystem_version: u16,
-    minor_subsystem_version: u16,
-    win32_version_value: u32,
-    size_of_image: u32,
-    size_of_headers: u32,
-    checksum: u32,
-    subsystem: u16,
-    dll_characteristics: u16,
-    size_of_stack_reserve: u32,
-    size_of_stack_commit: u32,
-    size_of_heap_reserve: u32,
-    size_of_heap_commit: u32,
-    loader_flags: u32,
-    number_of_rva_and_sizes: u32,
-    data_directory: [DataDirectory; 16],
-}
-
-#[repr(packed)]
-struct OptionalHeader64 {
-    ///
-    /// Standard fields.
-    ///
-    magic: u16,
-    major_linker_version: u8,
-    minor_linker_version: u8,
-    size_of_code: u32,
-    size_of_initialized_data: u32,
-    size_of_uninitialized_data: u32,
-    address_of_entrypoint: u32,
-    base_of_code: u32,
-    ///
-    /// Optional Header Windows-Specific Fields.
-    ///
-    image_base: u64,
-    section_alignment: u32,
-    file_alignment: u32,
-    major_operating_system_version: u16,
-    minor_operating_system_version: u16,
-    major_image_version: u16,
-    minor_image_version: u16,
-    major_subsystem_version: u16,
-    minor_subsystem_version: u16,
-    win32_version_value: u32,
-    size_of_image: u32,
-    size_of_headers: u32,
-    checksum: u32,
-    subsystem: u16,
-    dll_characteristics: u16,
-    size_of_stack_reserve: u64,
-    size_of_stack_commit: u64,
-    size_of_heap_reserve: u64,
-    size_of_heap_commit: u64,
-    loader_flags: u32,
-    number_of_rva_and_sizes: u32,
-    data_directory: [DataDirectory; 16],
-}
-
-#[repr(packed)]
-struct PeHeader32 {
-    signature: u32,
-    file_header: FileHeader,
-    optional_header: OptionalHeader32,
-}
-
-#[repr(packed)]
-struct PeHeader64 {
-    signature: u32,
-    file_header: FileHeader,
-    optional_header: OptionalHeader64,
-}
-
-#[repr(packed)]
-struct Section {
-    name: [u8; 8],
-    virtual_size: u32,
-    virtual_address: u32,
-    size_of_raw_data: u32,
-    pointer_to_raw_data: u32,
-    pointer_to_relocations: u32,
-    pointer_to_line_numbers: u32,
-    number_of_relocations: u16,
-    number_of_line_numbers: u16,
-    characteristics: u32,
-}
-
-#[repr(packed)]
-struct ImageBaseRelocation {
-    virtual_address: u32,
-    size_of_block: u32,
+    if pe_region.pread::<u32>(0).unwrap() != PE_SIGNATURE {
+        return false;
+    }
+    // if pe is x64
+    if pe_region.pread::<u16>(4).unwrap() != MACHINE_X64 {
+        return false;
+    }
+    true
 }
 
 pub fn relocate(pe_image: &[u8], new_pe_image: &mut [u8], new_image_base: usize) -> Option<usize> {
     log::info!("start relocate...");
-    let image_buffer = &pe_image[..];
-    let new_image_buffer = &new_pe_image[..];
+    let image_buffer = pe_image;
+    let loaded_buffer = &mut new_pe_image[..];
 
-    let mut loaded_region = MemoryRegion::new(
-        new_image_buffer as *const [u8] as *const u8 as usize as u64,
-        new_image_buffer.len() as u64,
-    );
+    let pe_header_offset = pe_image.pread::<u32>(0x3c).unwrap() as usize;
+    let pe_region = &pe_image[pe_header_offset..];
 
-    let dos_region = MemoryRegion::from_slice(&image_buffer);
-    if dos_region.read_u16(0) != DOS_SIGNATURE {
-        return None;
-    }
-    let pe_header_offset = dos_region.read_u32(0x3c) as usize;
-    let pe_region = MemoryRegion::from_slice(&image_buffer[pe_header_offset..]);
-    if pe_region.read_u32(0) != PE_SIGNATURE {
-        return None;
-    }
-    if pe_region.read_u16(4) != MACHINE_X64 {
-        return None;
-    }
-    let num_sections = pe_region.read_u16(6) as usize;
-    let optional_header_size = pe_region.read_u16(20) as usize;
-    let optional_region = MemoryRegion::from_slice(&image_buffer[(24 + pe_header_offset)..]);
-    if optional_region.read_u16(0) != OPTIONAL_HDR64_MAGIC {
+    let num_sections = pe_region.pread::<u16>(6).unwrap() as usize;
+    let optional_header_size = pe_region.pread::<u16>(20).unwrap() as usize;
+    let optional_region = &image_buffer[24+pe_header_offset..];
+
+    // check optional_hdr64_magic
+    if optional_region.pread::<u16>(0).unwrap() != OPTIONAL_HDR64_MAGIC {
         return None;
     }
 
-    let entry_point = optional_region.read_u32(16);
-    let image_base = optional_region.read_u64(24);
-    let image_size = optional_region.read_u32(56) as usize;
-    let size_of_headers = optional_region.read_u32(60) as usize;
-    if new_pe_image.len() < image_size {
-        log::info!("image_buffer too small - {}, expect - {}", new_pe_image.len(), image_size);
-        return None;
-    }
+    let entry_point = optional_region.pread::<u32>(16).unwrap();
+    let image_base = optional_region.pread::<u64>(24).unwrap();
 
-    let sections = &image_buffer[(24 + pe_header_offset + optional_header_size)..];
-    let sections: &[Section] =
-        unsafe { core::slice::from_raw_parts(sections.as_ptr() as *const Section, num_sections) };
+    let sections_buffer = &image_buffer[(24 + pe_header_offset + optional_header_size)..];
 
-    // Load the PE header into the destination memory
     let total_header_size =
         (24 + pe_header_offset + optional_header_size + num_sections * 40) as usize;
-    let l: &mut [u8] = loaded_region.as_mut_slice(0, total_header_size as u64);
-    l.copy_from_slice(&image_buffer[0..total_header_size]);
-    loaded_region.write_u64((24 + pe_header_offset + 24) as u64, new_image_base as u64);
+    loaded_buffer[0..total_header_size].copy_from_slice(&image_buffer[0..total_header_size]);
+    let _ = loaded_buffer.pwrite(new_image_base as u64, (24 + pe_header_offset + 24) as usize);
 
+    let sections = Sections::parse(sections_buffer, num_sections as usize).unwrap();
+    // Load the PE header into the destination memory
     for section in sections {
-        for x in 0..section.virtual_size {
-            loaded_region.write_u8((x + section.virtual_address) as u64, 0);
-        }
         let section_size = core::cmp::min(section.size_of_raw_data, section.virtual_size);
-        let l: &mut [u8] =
-            loaded_region.as_mut_slice(section.virtual_address as u64, section_size as u64);
-        l.copy_from_slice(
+        let section_range =
+            section.virtual_address as usize..(section.virtual_address + section_size) as usize;
+        loaded_buffer[section_range.clone()].fill(0);
+        loaded_buffer[section_range.clone()].copy_from_slice(
             &image_buffer[section.pointer_to_raw_data as usize
                 ..(section.pointer_to_raw_data + section_size) as usize],
         );
     }
 
-    // Relocate image in the destination memory
+    let sections = Sections::parse(sections_buffer, num_sections as usize).unwrap();
     for section in sections {
         if &section.name[0..6] == b".reloc" {
-            let section_size = core::cmp::min(section.size_of_raw_data, section.virtual_size);
-            let l: &mut [u8] =
-                loaded_region.as_mut_slice(section.virtual_address as u64, section_size as u64);
-
-            let reloc_region = MemoryRegion::from_slice(l);
-
-            let mut section_bytes_remaining = section_size;
-            let mut offset = 0;
-            while section_bytes_remaining > 0 {
-                // Read details for block
-                let page_rva = reloc_region.read_u32(offset);
-                let block_size = reloc_region.read_u32(offset + 4);
-                let mut block_offset = 8;
-                while block_offset < block_size {
-                    let entry = reloc_region.read_u16(offset + u64::from(block_offset));
-
-                    let entry_type = (entry >> 12) as u8;
-                    let entry_offset = (entry & 0xfff) as u32;
-
-                    match entry_type {
-                        REL_BASED_DIR64 => {
-                            let location = (page_rva + entry_offset) as u64;
-                            let value = loaded_region.read_u64(location);
-                            loaded_region
-                                .write_u64(location, value - image_base + new_image_base as u64);
-                        }
-                        REL_BASED_ABSOLUTE => {}
-                        _ => {
-                            return None;
-                        }
-                    }
-                    block_offset += 2;
-                }
-
-                section_bytes_remaining -= block_size;
-                offset += u64::from(block_size);
-            }
+            reloc_to_base(
+                loaded_buffer,
+                image_buffer,
+                &section,
+                image_base as usize,
+                new_image_base as usize,
+            );
         }
     }
 
     Some(new_image_base + entry_point as usize)
 }
 
-fn get_entrypoint (pe_image: &[u8]) -> u64 {
-    let image_buffer = &pe_image[..];
-
-    let dos_region = MemoryRegion::from_slice(&image_buffer);
-    if dos_region.read_u16(0) != DOS_SIGNATURE {
-        return 0;
-    }
-    let pe_header_offset = dos_region.read_u32(0x3c) as usize;
-    let pe_region = MemoryRegion::from_slice(&image_buffer[pe_header_offset..]);
-    if pe_region.read_u32(0) != PE_SIGNATURE {
-        return 0;
-    }
-    if pe_region.read_u16(4) != MACHINE_X64 {
-        return 0;
-    }
-    let num_sections = pe_region.read_u16(6) as usize;
-    let optional_header_size = pe_region.read_u16(20) as usize;
-    let optional_region = MemoryRegion::from_slice(&image_buffer[(24 + pe_header_offset)..]);
-    if optional_region.read_u16(0) != OPTIONAL_HDR64_MAGIC {
-        return 0;
-    }
-
-    let entry_point = optional_region.read_u32(16);
-
-    entry_point as u64
-}
-
-pub fn get_pe_entrypoint (image: *const core::ffi::c_void, size: usize) -> (u64, u64, u64) {
+pub fn relocate_pe_mem(image: &[u8], loaded_buffer: &mut [u8]) -> (u64, u64, u64) {
     // parser file and get entry point
-    let data_slice = unsafe { core::slice::from_raw_parts(image as *const u8, size as usize) };
+    let image_buffer = image;
+    let image_size = image.len();
+    let new_image_base = loaded_buffer as *const [u8] as *const u8 as usize;
 
-    let entry_point = get_entrypoint (data_slice);
+    let res = relocate(image_buffer, loaded_buffer, new_image_base).unwrap();
 
-    (image as usize as u64 + entry_point, image as usize as u64, size as u64)
-}
-
-pub fn relocate_pe_mem (image: *const core::ffi::c_void, size: usize, new_image_base: *const core::ffi::c_void, new_size: usize) -> (u64, u64, u64) {
-    // parser file and get entry point
-    let image_buffer = unsafe { core::slice::from_raw_parts(image as *const u8, size as usize) };
-
-    let mut loaded_region = MemoryRegion::new(
+    (
+        res as u64,
         new_image_base as usize as u64,
-        new_size as u64,
-    );
+        image_size as u64,
+    )
+}
 
-    let dos_region = MemoryRegion::from_slice(&image_buffer);
-    if dos_region.read_u16(0) != DOS_SIGNATURE {
-        return (0,0,0);
+#[derive(Debug, Default, Pread, Pwrite)]
+pub struct Section {
+    name: [u8; 8], // 8
+    virtual_size: u32, //4
+    virtual_address: u32, //4
+    size_of_raw_data: u32,//4
+    pointer_to_raw_data: u32,//4
+    pointer_to_relocations: u32,//4
+    pointer_to_line_numbers: u32,//4
+    number_of_relocations: u16,//2
+    number_of_line_numbers: u16,//2
+    characteristics: u32,//4
+}
+
+pub struct Sections<'a> {
+    index: usize,
+    entries: &'a [u8],
+    num_sections: usize
+}
+
+impl<'a> Sections<'a> {
+    // section entries byties, num_sections: total sections
+    pub fn parse(entries: &'a [u8], num_sections: usize) -> Option<Self> {
+        Some(Sections {
+            index: 0,
+            entries,
+            num_sections,
+        })
     }
-    let pe_header_offset = dos_region.read_u32(0x3c) as usize;
-    let pe_region = MemoryRegion::from_slice(&image_buffer[pe_header_offset..]);
-    if pe_region.read_u32(0) != PE_SIGNATURE {
-        return (0,0,0);
-    }
-    if pe_region.read_u16(4) != MACHINE_X64 {
-        return (0,0,0);
-    }
-    let num_sections = pe_region.read_u16(6) as usize;
-    let optional_header_size = pe_region.read_u16(20) as usize;
-    let optional_region = MemoryRegion::from_slice(&image_buffer[(24 + pe_header_offset)..]);
-    if optional_region.read_u16(0) != OPTIONAL_HDR64_MAGIC {
-        return (0,0,0);
-    }
+}
 
-    let entry_point = optional_region.read_u32(16);
-    let image_base = optional_region.read_u64(24);
-    let image_size = optional_region.read_u32(56) as usize;
-    let size_of_headers = optional_region.read_u32(60) as usize;
-
-    let sections = &image_buffer[(24 + pe_header_offset + optional_header_size)..];
-    let sections: &[Section] =
-        unsafe { core::slice::from_raw_parts(sections.as_ptr() as *const Section, num_sections) };
-
-    // Load the PE header into the destination memory
-    let total_header_size =
-        (24 + pe_header_offset + optional_header_size + num_sections * 40) as usize;
-    let l: &mut [u8] = loaded_region.as_mut_slice(0, total_header_size as u64);
-    l.copy_from_slice(&image_buffer[0..total_header_size]);
-    loaded_region.write_u64((24 + pe_header_offset + 24) as u64, new_image_base as usize as u64);
-
-    for section in sections {
-        for x in 0..section.virtual_size {
-            loaded_region.write_u8((x + section.virtual_address) as u64, 0);
+impl<'a> Iterator for Sections<'a> {
+    type Item = Section;
+    fn next(&mut self) -> Option<Self::Item> {
+        const ENTRY_SIZE: usize = 40;
+        if self.index == self.num_sections {
+            return None;
         }
-        let section_size = core::cmp::min(section.size_of_raw_data, section.virtual_size);
-        let l: &mut [u8] =
-            loaded_region.as_mut_slice(section.virtual_address as u64, section_size as u64);
-        l.copy_from_slice(
-            &image_buffer[section.pointer_to_raw_data as usize
-                ..(section.pointer_to_raw_data + section_size) as usize],
-        );
+        let offset = self.index * ENTRY_SIZE;
+
+        let current_bytes = &self.entries[offset..];
+
+        let section: Section = current_bytes.pread(0).unwrap();
+
+        self.index += 1;
+        Some(section)
     }
+}
 
-    // Relocate image in the destination memory
-    for section in sections {
-        if &section.name[0..6] == b".reloc" {
-            let section_size = core::cmp::min(section.size_of_raw_data, section.virtual_size);
-            let l: &mut [u8] =
-                loaded_region.as_mut_slice(section.virtual_address as u64, section_size as u64);
+#[derive(Clone, Copy)]
+pub struct RelocationEntry {
+    pub entry_type: u8,
+    pub offset: u32,
+}
 
-            let reloc_region = MemoryRegion::from_slice(l);
+pub struct RelocationEntries<'a> {
+    index: usize,
+    entries: &'a [u8],
+}
 
-            let mut section_bytes_remaining = section_size;
-            let mut offset = 0;
-            while section_bytes_remaining > 0 {
-                // Read details for block
-                let page_rva = reloc_region.read_u32(offset);
-                let block_size = reloc_region.read_u32(offset + 4);
-                let mut block_offset = 8;
-                while block_offset < block_size {
-                    let entry = reloc_region.read_u16(offset + u64::from(block_offset));
+impl<'a> RelocationEntries<'a> {
+    pub fn parse(entries: &'a [u8]) -> Option<Self> {
+        Some(RelocationEntries { index: 0, entries })
+    }
+}
 
-                    let entry_type = (entry >> 12) as u8;
-                    let entry_offset = (entry & 0xfff) as u32;
+impl<'a> Iterator for RelocationEntries<'a> {
+    type Item = RelocationEntry;
+    fn next(&mut self) -> Option<Self::Item> {
+        const ENTRY_SIZE: usize = 2;
+        if self.index * core::mem::size_of::<u16>() > self.entries.len() - ENTRY_SIZE {
+            return None;
+        }
 
-                    match entry_type {
-                        REL_BASED_DIR64 => {
-                            let location = (page_rva + entry_offset) as u64;
-                            let value = loaded_region.read_u64(location);
-                            loaded_region
-                                .write_u64(location, value - image_base + new_image_base as usize as u64);
-                        }
-                        REL_BASED_ABSOLUTE => {}
-                        _ => {
-                            return (0,0,0);
-                        }
-                    }
-                    block_offset += 2;
+        let entry: u16 = self.entries.pread(self.index * ENTRY_SIZE).ok()?;
+        let entry_type = (entry >> 12) as u8;
+        let entry_offset = (entry & 0xfff) as u32;
+
+        let res = RelocationEntry {
+            entry_type,
+            offset: entry_offset,
+        };
+        self.index += 1;
+        Some(res)
+    }
+}
+
+pub struct Relocations<'a> {
+    offset: usize,
+    relocations: &'a [u8],
+}
+
+#[derive(Clone, Copy)]
+pub struct Relocation<'a> {
+    pub page_rva: u32,
+    pub block_size: u32,
+    pub entries: &'a [u8],
+}
+
+impl<'a> Relocations<'a> {
+    pub fn parse(bytes: &'a [u8]) -> Option<Self> {
+        Some(Relocations {
+            offset: 0,
+            relocations: bytes,
+        })
+    }
+}
+
+impl<'a> Iterator for Relocations<'a> {
+    type Item = Relocation<'a>;
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.offset > self.relocations.len() - 8 {
+            return None;
+        }
+        let bytes = &self.relocations[self.offset..];
+        let page_rva = bytes.pread(0).ok()?;
+        let block_size = bytes.pread(core::mem::size_of::<u32>()).ok()?;
+        let entries = &bytes[(core::mem::size_of::<u32>() * 2) as usize..block_size as usize];
+        let res = Relocation {
+            page_rva,
+            block_size,
+            entries,
+        };
+        self.offset += block_size as usize;
+        Some(res)
+    }
+}
+
+fn reloc_to_base(
+    loaded_buffer: &mut [u8],
+    image_buffer: &[u8],
+    section: &Section,
+    image_base: usize,
+    new_image_base: usize,
+) {
+    let section_size = core::cmp::min(section.size_of_raw_data, section.virtual_size);
+
+    let relocation_range_in_image =
+        section.pointer_to_raw_data as usize..(section.pointer_to_raw_data + section_size) as usize;
+
+    let relocations = Relocations::parse(&image_buffer[relocation_range_in_image]).unwrap();
+    for relocation in relocations {
+        for entry in RelocationEntries::parse(relocation.entries).unwrap() {
+            match entry.entry_type {
+                REL_BASED_DIR64 => {
+                    let location = (relocation.page_rva + entry.offset) as usize;
+                    let value: u64 = loaded_buffer.pread(location).unwrap();
+                    let _ = loaded_buffer.pwrite(
+                        value - image_base as u64 + new_image_base as u64,
+                        location as usize,
+                    );
                 }
-
-                section_bytes_remaining -= block_size;
-                offset += u64::from(block_size);
+                _ => continue,
             }
         }
     }
-
-    (new_image_base as usize as u64 + entry_point as u64, new_image_base as usize as u64, image_size as u64)
 }
