@@ -43,7 +43,7 @@ use crate::efi::file;
 use r_efi::protocols::device_path::Protocol as DevicePathProtocol;
 use r_efi::protocols::device_path::End as EndDevicePath;
 
-#[cfg(not(test))]
+// #[cfg(not(test))]
 #[repr(C,packed)]
 pub struct HardDriveDevicePathNode {
   pub header : DevicePathProtocol,
@@ -54,7 +54,7 @@ pub struct HardDriveDevicePathNode {
   pub partition_format: u8,
   pub partition_type: u8,
 }
-#[cfg(not(test))]
+// #[cfg(not(test))]
 #[repr(C,packed)]
 pub struct HardDriveDevicePath {
   file_system_path_node : HardDriveDevicePathNode,
@@ -63,7 +63,7 @@ pub struct HardDriveDevicePath {
 
 
 
-#[cfg(not(test))]
+// #[cfg(not(test))]
 pub fn initialize_memory(hob: *const c_void) {
 
   let mut hob_header : *const Header = hob as *const Header;
@@ -114,7 +114,7 @@ pub fn initialize_memory(hob: *const c_void) {
   }
 }
 
-#[cfg(not(test))]
+// #[cfg(not(test))]
 pub fn find_loader(hob: *const c_void) -> (*const c_void, usize) {
   let (image, size) = find_image_in_fv (hob);
   (image, size)
@@ -161,9 +161,9 @@ pub fn initialize_console(system_table: *mut efi::SystemTable, con_in_ex: *mut c
   }
 }
 
-#[cfg(not(test))]
+// #[cfg(not(test))]
 const VIRTIO_PCI_VENDOR_ID: u16 = 0x1af4;
-#[cfg(not(test))]
+// #[cfg(not(test))]
 const VIRTIO_PCI_BLOCK_DEVICE_ID: u16 = 0x1042;
 
 fn dup_device_path(device_path: *mut c_void) -> *mut core::ffi::c_void{

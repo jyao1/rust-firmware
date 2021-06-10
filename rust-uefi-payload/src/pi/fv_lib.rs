@@ -22,12 +22,12 @@ use r_efi::efi::{Guid};
 use crate::pi::hob::*;
 use crate::pi::fv::*;
 
-#[cfg(not(test))]
+// #[cfg(not(test))]
 fn get_image_from_sections(sections_address: usize, sections_length: usize, section_type: SectionType) -> (*const c_void, usize) {
   log!("  get_image_from_sections - 0x{:x} 0x{:x}\n", sections_address, sections_length);
 
   let sections_end = sections_address + sections_length;
-  
+
   let mut next_ptr : usize = sections_address;
   let mut current_ptr : usize;
 
@@ -58,7 +58,7 @@ fn get_image_from_sections(sections_address: usize, sections_length: usize, sect
   (core::ptr::null_mut(), 0)
 }
 
-#[cfg(not(test))]
+// #[cfg(not(test))]
 fn get_image_from_fv(fv_base_address: u64, fv_length: u64, fv_file_type: FvFileType, section_type: SectionType) -> (*const c_void, usize) {
 
   log!("get_image_from_fv - 0x{:x} 0x{:x}\n", fv_base_address, fv_length);
@@ -100,7 +100,7 @@ fn get_image_from_fv(fv_base_address: u64, fv_length: u64, fv_file_type: FvFileT
       return (image, size);
     }
   }
-  
+
   (core::ptr::null_mut(), 0)
 }
 
@@ -115,7 +115,7 @@ pub fn find_image_in_fv (hob: *const c_void) -> (*const c_void, usize) {
         let (image, size) = get_image_from_fv (fv_hob.base_address, fv_hob.length, FV_FILETYPE_APPLICATION, SECTION_PE32);
         if image != core::ptr::null_mut() {
           return (image, size);
-        }        
+        }
       }
       HOB_TYPE_END_OF_HOB_LIST => {
         break;

@@ -45,7 +45,7 @@ pub struct HobTemplate {
     pub endOffHob:  hob::Header
 }
 
-#[cfg(not(test))]
+// #[cfg(not(test))]
 #[panic_handler]
 #[allow(clippy::empty_loop)]
 fn panic(_info: &PanicInfo) -> ! {
@@ -54,7 +54,7 @@ fn panic(_info: &PanicInfo) -> ! {
     loop {}
 }
 
-#[cfg(not(test))]
+// #[cfg(not(test))]
 #[alloc_error_handler]
 #[allow(clippy::empty_loop)]
 fn alloc_error(_info: core::alloc::Layout) -> ! {

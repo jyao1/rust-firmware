@@ -26,14 +26,14 @@ use r_efi::efi::{
 use crate::efi::ALLOCATOR;
 use crate::efi::PAGE_SIZE;
 
-#[cfg(not(test))]
+// #[cfg(not(test))]
 fn dump_hob_header(hob_header: & Header) {
   log!("Hob:\n");
   log!("  header.type            - 0x{:x}\n", hob_header.r#type);
   log!("  header.length          - 0x{:x}\n", hob_header.length);
 }
 
-#[cfg(not(test))]
+// #[cfg(not(test))]
 fn dump_phit_hob(phit_hob: & HandoffInfoTable) {
   log!("PhitHob:\n");
   log!("  version                - 0x{:x}\n", phit_hob.version);
@@ -45,7 +45,7 @@ fn dump_phit_hob(phit_hob: & HandoffInfoTable) {
   log!("  efi_end_of_hob_list    - 0x{:016x}\n", phit_hob.efi_end_of_hob_list);
 }
 
-#[cfg(not(test))]
+// #[cfg(not(test))]
 fn dump_resource_hob(resource_hob: & ResourceDescription) {
   log!(
     "ResourceDescription 0x{:08x} : 0x{:016x} - 0x{:016x} (0x{:08x})\n",
@@ -56,7 +56,7 @@ fn dump_resource_hob(resource_hob: & ResourceDescription) {
     );
 }
 
-#[cfg(not(test))]
+// #[cfg(not(test))]
 fn dump_allocation_hob(allocation_hob: & MemoryAllocation) {
   log!(
     "MemoryAllocation 0x{:08x} : 0x{:016x} - 0x{:016x}\n",
@@ -66,7 +66,7 @@ fn dump_allocation_hob(allocation_hob: & MemoryAllocation) {
     );
 }
 
-#[cfg(not(test))]
+// #[cfg(not(test))]
 fn dump_fv_hob(fv_hob: & FirmwareVolume) {
   log!(
     "FirmwareVolume : 0x{:016x} - 0x{:016x}\n",
@@ -75,7 +75,7 @@ fn dump_fv_hob(fv_hob: & FirmwareVolume) {
     );
 }
 
-#[cfg(not(test))]
+// #[cfg(not(test))]
 fn dump_cpu_hob(cpu_hob: & Cpu) {
   log!(
     "Cpu : mem size {} , io size {}\n",
@@ -84,7 +84,7 @@ fn dump_cpu_hob(cpu_hob: & Cpu) {
     );
 }
 
-#[cfg(not(test))]
+// #[cfg(not(test))]
 pub fn dump_hob(hob: *const c_void) {
 
   let mut hob_header : *const Header = hob as *const Header;
@@ -124,13 +124,13 @@ pub fn dump_hob(hob: *const c_void) {
   }
 }
 
-#[cfg(not(test))]
+// #[cfg(not(test))]
 pub fn get_hob_total_size(hob: *const c_void) -> usize {
   let phit = unsafe {transmute::<*const c_void, &HandoffInfoTable>(hob)};
   phit.efi_end_of_hob_list as usize - hob as usize
 }
 
-#[cfg(not(test))]
+// #[cfg(not(test))]
 pub fn relocate_hob(hob: *const c_void) -> *mut c_void {
 
   let hob_total_size = crate::pi::hob_lib::get_hob_total_size (hob);
@@ -146,7 +146,7 @@ pub fn relocate_hob(hob: *const c_void) -> *mut c_void {
 
   let new_hob_ptr : *mut c_void = new_hob_address as usize as *mut c_void;
   unsafe {core::ptr::copy_nonoverlapping (hob, new_hob_ptr, hob_total_size);}
-  
+
   let phit = unsafe {transmute::<*const c_void, &mut HandoffInfoTable>(new_hob_ptr)};
   phit.efi_end_of_hob_list = ( new_hob_ptr as usize + hob_total_size ) as usize as u64;
 

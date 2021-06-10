@@ -14,18 +14,18 @@
 
 use core::cell::RefCell;
 
-#[cfg(not(test))]
+// #[cfg(not(test))]
 use crate::virtio::Error as VirtioError;
-#[cfg(not(test))]
+// #[cfg(not(test))]
 use crate::virtio::VirtioTransport;
 
-#[cfg(not(test))]
+// #[cfg(not(test))]
 const QUEUE_SIZE: usize = 16;
 
 #[repr(C)]
 #[repr(align(16))]
 #[derive(Default)]
-#[cfg(not(test))]
+// #[cfg(not(test))]
 /// A virtio qeueue entry descriptor
 struct Desc {
     addr: u64,
@@ -37,7 +37,7 @@ struct Desc {
 #[repr(C)]
 #[repr(align(2))]
 #[derive(Default)]
-#[cfg(not(test))]
+// #[cfg(not(test))]
 /// The virtio available ring
 struct AvailRing {
     flags: u16,
@@ -48,7 +48,7 @@ struct AvailRing {
 #[repr(C)]
 #[repr(align(4))]
 #[derive(Default)]
-#[cfg(not(test))]
+// #[cfg(not(test))]
 /// The virtio used ring
 struct UsedRing {
     flags: u16,
@@ -58,7 +58,7 @@ struct UsedRing {
 
 #[repr(C)]
 #[derive(Default)]
-#[cfg(not(test))]
+// #[cfg(not(test))]
 /// A single element in the used ring
 struct UsedElem {
     id: u32,
@@ -67,7 +67,7 @@ struct UsedElem {
 
 #[repr(C)]
 #[repr(align(64))]
-#[cfg(not(test))]
+// #[cfg(not(test))]
 /// Device driver for virtio block over any transport
 pub struct VirtioBlockDevice<'a> {
     transport: &'a mut dyn VirtioTransport,
@@ -77,7 +77,7 @@ pub struct VirtioBlockDevice<'a> {
 #[repr(C)]
 #[repr(align(64))]
 #[derive(Default)]
-#[cfg(not(test))]
+// #[cfg(not(test))]
 struct DriverState {
     descriptors: [Desc; QUEUE_SIZE],
     avail: AvailRing,
@@ -88,12 +88,12 @@ struct DriverState {
 pub enum Error {
     BlockIOError,
 
-    #[cfg(not(test))]
+    // #[cfg(not(test))]
     BlockNotSupported,
 }
 
 #[repr(C)]
-#[cfg(not(test))]
+// #[cfg(not(test))]
 /// Header used for virtio block requests
 struct BlockRequestHeader {
     request: u32,
@@ -102,7 +102,7 @@ struct BlockRequestHeader {
 }
 
 #[repr(C)]
-#[cfg(not(test))]
+// #[cfg(not(test))]
 /// Footer used for virtio block requests
 struct BlockRequestFooter {
     status: u8,
@@ -121,7 +121,7 @@ pub trait SectorWrite {
     fn flush(&self) -> Result<(), Error>;
 }
 
-#[cfg(not(test))]
+// #[cfg(not(test))]
 #[derive(PartialEq, Copy, Clone)]
 enum RequestType {
     Read = 0,
@@ -306,14 +306,14 @@ impl<'a> VirtioBlockDevice<'a> {
     }
 }
 
-#[cfg(not(test))]
+// #[cfg(not(test))]
 impl<'a> SectorRead for VirtioBlockDevice<'a> {
     fn read(&self, sector: u64, data: &mut [u8]) -> Result<(), Error> {
         self.request(sector, Some(data), RequestType::Read)
     }
 }
 
-#[cfg(not(test))]
+// #[cfg(not(test))]
 impl<'a> SectorWrite for VirtioBlockDevice<'a> {
     fn write(&self, sector: u64, data: &mut [u8]) -> Result<(), Error> {
         self.request(sector, Some(data), RequestType::Write)

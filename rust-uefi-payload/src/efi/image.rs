@@ -35,7 +35,7 @@ use core::mem::size_of;
 use crate::efi::peloader::*;
 
 // HACK: Until r-util/r-efi#11 gets merged
-#[cfg(not(test))]
+// #[cfg(not(test))]
 #[repr(C)]
 pub struct LoadedImageProtocol {
     pub revision: u32,

@@ -22,14 +22,14 @@ use crate::efi::fat::Error as FatError;
 use crate::efi::fat::DirectoryEntry;
 use crate::efi::fat::FileType;
 
-#[cfg(not(test))]
+// #[cfg(not(test))]
 #[repr(C)]
 pub struct FileDevicePathProtocol {
     pub device_path: DevicePathProtocol,
     pub filename: [u16; 64],
 }
 
-#[cfg(not(test))]
+// #[cfg(not(test))]
 pub extern "win64" fn filesystem_open_volume(
     fs_proto: *mut SimpleFileSystemProtocol,
     file: *mut *mut FileProtocol,
@@ -50,7 +50,7 @@ pub extern "win64" fn filesystem_open_volume(
     }
 }
 
-#[cfg(not(test))]
+// #[cfg(not(test))]
 pub extern "win64" fn open(
     file_in: *mut FileProtocol,
     file_out: *mut *mut FileProtocol,
@@ -154,7 +154,7 @@ pub extern "win64" fn open(
     }
 }
 
-#[cfg(not(test))]
+// #[cfg(not(test))]
 pub extern "win64" fn close(proto: *mut FileProtocol) -> Status {
     let wrapper = container_of!(proto, FileWrapper, proto);
     super::ALLOCATOR
@@ -162,13 +162,13 @@ pub extern "win64" fn close(proto: *mut FileProtocol) -> Status {
         .free_pages(&wrapper as *const _ as u64)
 }
 
-#[cfg(not(test))]
+// #[cfg(not(test))]
 pub extern "win64" fn delete(_: *mut FileProtocol) -> Status {
     crate::log!("delete unsupported");
     Status::UNSUPPORTED
 }
 
-#[cfg(not(test))]
+// #[cfg(not(test))]
 pub extern "win64" fn read(file: *mut FileProtocol, size: *mut usize, buf: *mut c_void) -> Status {
     let wrapper = container_of_mut!(file, FileWrapper, proto);
     let wrapper_value = unsafe{&(*wrapper)};
@@ -257,26 +257,26 @@ pub extern "win64" fn read(file: *mut FileProtocol, size: *mut usize, buf: *mut 
 
 }
 
-#[cfg(not(test))]
+// #[cfg(not(test))]
 pub extern "win64" fn write(_: *mut FileProtocol, _: *mut usize, _: *mut c_void) -> Status {
     crate::log!("write unsupported");
     Status::UNSUPPORTED
 }
 
-#[cfg(not(test))]
+// #[cfg(not(test))]
 pub extern "win64" fn get_position(_: *mut FileProtocol, _: *mut u64) -> Status {
     crate::log!("get_position unsupported");
     Status::UNSUPPORTED
 }
 
-#[cfg(not(test))]
+// #[cfg(not(test))]
 pub extern "win64" fn set_position(_: *mut FileProtocol, _: u64) -> Status {
     // TODO: set position for opened file and opend directory.
     // crate::log!("set_position todo\n");
     Status::SUCCESS
 }
 
-#[cfg(not(test))]
+// #[cfg(not(test))]
 #[repr(packed)]
 struct FileInfo {
     size: u64,
@@ -289,7 +289,7 @@ struct FileInfo {
     file_name: [Char16; 256],
 }
 
-#[cfg(not(test))]
+// #[cfg(not(test))]
 pub extern "win64" fn get_info(
     file: *mut FileProtocol,
     guid: *mut Guid,
@@ -339,7 +339,7 @@ pub extern "win64" fn get_info(
     }
 }
 
-#[cfg(not(test))]
+// #[cfg(not(test))]
 pub extern "win64" fn set_info(
     _: *mut FileProtocol,
     _: *mut Guid,
@@ -350,13 +350,13 @@ pub extern "win64" fn set_info(
     Status::UNSUPPORTED
 }
 
-#[cfg(not(test))]
+// #[cfg(not(test))]
 pub extern "win64" fn flush(_: *mut FileProtocol) -> Status {
     crate::log!("flush unsupported");
     Status::UNSUPPORTED
 }
 
-#[cfg(not(test))]
+// #[cfg(not(test))]
 struct FileWrapper<'a> {
     fs: &'a crate::fat::Filesystem<'a>,
     proto: FileProtocol,
@@ -368,7 +368,7 @@ struct FileWrapper<'a> {
     parent: u64,
 }
 
-#[cfg(not(test))]
+// #[cfg(not(test))]
 #[repr(C)]
 pub struct FileSystemWrapper<'a> {
     hw: super::HandleWrapper,
@@ -377,7 +377,7 @@ pub struct FileSystemWrapper<'a> {
     pub block_part_id: Option<u32>,
 }
 
-#[cfg(not(test))]
+// #[cfg(not(test))]
 impl<'a> FileSystemWrapper<'a> {
 
     // alloc a new FileWrapper

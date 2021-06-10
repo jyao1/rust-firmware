@@ -95,13 +95,13 @@ macro_rules! log_always {
     ($($arg:tt)*) => ($crate::logger::_log(format_args!($($arg)*)));
 }
 
-#[cfg(not(test))]
+// #[cfg(not(test))]
 pub fn _log(args: fmt::Arguments) {
     use core::fmt::Write;
     LOGGER.lock().write_fmt(args).unwrap();
 }
 
-#[cfg(not(test))]
+// #[cfg(not(test))]
 pub fn _log_ex(level: usize, mask: u64, args: fmt::Arguments) {
     if level > LOGGER.lock().get_level() {
       return

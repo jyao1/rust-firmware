@@ -70,12 +70,12 @@ use crate::pci;
 use crate::part;
 use crate::fat;
 
-#[cfg(not(test))]
+// #[cfg(not(test))]
 const VIRTIO_PCI_VENDOR_ID: u16 = 0x1af4;
-#[cfg(not(test))]
+// #[cfg(not(test))]
 const VIRTIO_PCI_BLOCK_DEVICE_ID: u16 = 0x1042;
 
-#[cfg(not(test))]
+// #[cfg(not(test))]
 #[repr(C,packed)]
 pub struct HardDriveDevicePathNode {
   pub header : DevicePathProtocol,
@@ -86,14 +86,14 @@ pub struct HardDriveDevicePathNode {
   pub partition_format: u8,
   pub partition_type: u8,
 }
-#[cfg(not(test))]
+// #[cfg(not(test))]
 #[repr(C,packed)]
 pub struct HardDriveDevicePath {
   file_system_path_node : HardDriveDevicePathNode,
   end: EndDevicePath,
 }
 
-#[cfg(not(test))]
+// #[cfg(not(test))]
 #[repr(C,packed)]
 pub struct PciDevicePathNode {
   pub header: DevicePathProtocol,
@@ -102,7 +102,7 @@ pub struct PciDevicePathNode {
 }
 
 
-#[cfg(not(test))]
+// #[cfg(not(test))]
 #[repr(C,packed)]
 pub struct PciDevicePath {
   pci_device_path_node : PciDevicePathNode,
@@ -127,14 +127,14 @@ use event::EventInfo;
 use conout::ConOut;
 use conin::ConIn;
 
-#[cfg(not(test))]
+// #[cfg(not(test))]
 #[repr(C,packed)]
 pub struct FullMemoryMappedDevicePath {
   memory_map : MemoryMappedDevicePathProtocol,
   end: EndDevicePath,
 }
 
-#[cfg(not(test))]
+// #[cfg(not(test))]
 #[derive(Copy, Clone, PartialEq)]
 enum HandleType {
     None,
@@ -143,7 +143,7 @@ enum HandleType {
     LoadedImage,
 }
 
-#[cfg(not(test))]
+// #[cfg(not(test))]
 #[repr(C)]
 #[derive(Copy, Clone)]
 struct HandleWrapper {
@@ -178,13 +178,13 @@ lazy_static! {
     pub static ref CONIN: Mutex<ConIn> = Mutex::new(ConIn::new());
 }
 
-#[cfg(not(test))]
+// #[cfg(not(test))]
 pub static mut BLOCK_WRAPPERS: block::BlockWrappers = block::BlockWrappers {
     wrappers: [core::ptr::null_mut(); 16],
     count: 0,
 };
 
-#[cfg(not(test))]
+// #[cfg(not(test))]
 pub const BLOCK_PROTOCOL_GUID: Guid = Guid::from_fields(
     0x964e_5b21,
     0x6459,
@@ -280,13 +280,13 @@ pub fn print_char16 (
     return i;
 }
 
-#[cfg(not(test))]
+// #[cfg(not(test))]
 pub extern "win64" fn stdin_reset(_: *mut SimpleTextInputProtocol, _: Boolean) -> Status {
     crate::log!("EFI_STUB: stdin_reset\n");
     Status::SUCCESS
 }
 
-#[cfg(not(test))]
+// #[cfg(not(test))]
 pub extern "win64" fn stdin_read_key_stroke(
     _: *mut SimpleTextInputProtocol,
     key: *mut InputKey,
@@ -325,13 +325,13 @@ pub extern "win64" fn stdin_read_key_stroke(
     Status::SUCCESS
 }
 
-#[cfg(not(test))]
+// #[cfg(not(test))]
 pub extern "win64" fn stdin_reset_ex(_: *mut SimpleTextInputExProtocol, _: Boolean) -> Status {
     crate::log!("EFI_STUB: stdin_reset_ex\n");
     Status::SUCCESS
 }
 
-#[cfg(not(test))]
+// #[cfg(not(test))]
 pub extern "win64" fn stdin_read_key_stroke_ex(
     _: *mut SimpleTextInputExProtocol,
     key_data: *mut KeyData,
@@ -357,7 +357,7 @@ pub extern "win64" fn stdin_read_key_stroke_ex(
     Status::SUCCESS
 }
 
-#[cfg(not(test))]
+// #[cfg(not(test))]
 pub extern "win64" fn stdin_set_state(
     _: *mut SimpleTextInputExProtocol,
     _: *mut KeyToggleState,
@@ -366,7 +366,7 @@ pub extern "win64" fn stdin_set_state(
     Status::UNSUPPORTED
 }
 
-#[cfg(not(test))]
+// #[cfg(not(test))]
 pub extern "win64" fn stdin_register_key_notify(
     _: *mut SimpleTextInputExProtocol,
     _: *mut KeyData,
@@ -377,7 +377,7 @@ pub extern "win64" fn stdin_register_key_notify(
     Status::SUCCESS
 }
 
-#[cfg(not(test))]
+// #[cfg(not(test))]
 pub extern "win64" fn stdin_unregister_key_notify(
     _: *mut SimpleTextInputExProtocol,
     _: *mut core::ffi::c_void,
@@ -386,13 +386,13 @@ pub extern "win64" fn stdin_unregister_key_notify(
     Status::UNSUPPORTED
 }
 
-#[cfg(not(test))]
+// #[cfg(not(test))]
 pub extern "win64" fn stdout_reset(_: *mut SimpleTextOutputProtocol, _: Boolean) -> Status {
     crate::log!("EFI_STUB: stdout_reset\n");
     Status::SUCCESS
 }
 
-#[cfg(not(test))]
+// #[cfg(not(test))]
 pub extern "win64" fn stdout_output_string(
     _: *mut SimpleTextOutputProtocol,
     message: *mut Char16,
@@ -403,7 +403,7 @@ pub extern "win64" fn stdout_output_string(
     Status::SUCCESS
 }
 
-#[cfg(not(test))]
+// #[cfg(not(test))]
 pub extern "win64" fn stdout_test_string(
     _: *mut SimpleTextOutputProtocol,
     message: *mut Char16,
@@ -411,7 +411,7 @@ pub extern "win64" fn stdout_test_string(
     Status::SUCCESS
 }
 
-#[cfg(not(test))]
+// #[cfg(not(test))]
 pub extern "win64" fn stdout_query_mode(
     _: *mut SimpleTextOutputProtocol,
     mode_number: usize,
@@ -439,24 +439,24 @@ pub extern "win64" fn stdout_query_mode(
     Status::SUCCESS
 }
 
-#[cfg(not(test))]
+// #[cfg(not(test))]
 pub extern "win64" fn stdout_set_mode(_: *mut SimpleTextOutputProtocol, mode_number: usize) -> Status {
     CONOUT.lock().set_mode(mode_number)
 }
 
-#[cfg(not(test))]
+// #[cfg(not(test))]
 pub extern "win64" fn stdout_set_attribute(_: *mut SimpleTextOutputProtocol, attribute: usize) -> Status {
     CONOUT.lock().set_attribute(attribute);
     Status::SUCCESS
 }
 
-#[cfg(not(test))]
+// #[cfg(not(test))]
 pub extern "win64" fn stdout_clear_screen(_: *mut SimpleTextOutputProtocol) -> Status {
     CONOUT.lock().clear_screen();
     Status::SUCCESS
 }
 
-#[cfg(not(test))]
+// #[cfg(not(test))]
 pub extern "win64" fn stdout_set_cursor_position(
     _: *mut SimpleTextOutputProtocol,
     column: usize,
@@ -466,36 +466,36 @@ pub extern "win64" fn stdout_set_cursor_position(
     Status::SUCCESS
 }
 
-#[cfg(not(test))]
+// #[cfg(not(test))]
 pub extern "win64" fn stdout_enable_cursor(_: *mut SimpleTextOutputProtocol, visible: Boolean) -> Status {
     Status::SUCCESS
 }
 
-#[cfg(not(test))]
+// #[cfg(not(test))]
 pub extern "win64" fn get_time(_: *mut Time, _: *mut TimeCapabilities) -> Status {
     crate::log!("EFI_STUB: get_time - UNSUPPORTED\n");
     Status::UNSUPPORTED
 }
 
-#[cfg(not(test))]
+// #[cfg(not(test))]
 pub extern "win64" fn set_time(_: *mut Time) -> Status {
     crate::log!("EFI_STUB: set_time - UNSUPPORTED\n");
     Status::UNSUPPORTED
 }
 
-#[cfg(not(test))]
+// #[cfg(not(test))]
 pub extern "win64" fn get_wakeup_time(_: *mut Boolean, _: *mut Boolean, _: *mut Time) -> Status {
     crate::log!("EFI_STUB: get_wakeup_time - UNSUPPORTED\n");
     Status::UNSUPPORTED
 }
 
-#[cfg(not(test))]
+// #[cfg(not(test))]
 pub extern "win64" fn set_wakeup_time(_: Boolean, _: *mut Time) -> Status {
     crate::log!("EFI_STUB: set_wakeup_time - UNSUPPORTED\n");
     Status::UNSUPPORTED
 }
 
-#[cfg(not(test))]
+// #[cfg(not(test))]
 pub extern "win64" fn set_virtual_address_map(
     map_size: usize,
     descriptor_size: usize,
@@ -516,13 +516,13 @@ pub extern "win64" fn set_virtual_address_map(
     ALLOCATOR.lock().update_virtual_addresses(descriptors)
 }
 
-#[cfg(not(test))]
+// #[cfg(not(test))]
 pub extern "win64" fn convert_pointer(_: usize, _: *mut *mut c_void) -> Status {
     crate::log!("EFI_STUB: convert_pointer - UNSUPPORTED\n");
     Status::UNSUPPORTED
 }
 
-#[cfg(not(test))]
+// #[cfg(not(test))]
 pub extern "win64" fn get_variable(
     var_name: *mut Char16,
     var_guid: *mut Guid,
@@ -578,7 +578,7 @@ pub extern "win64" fn get_variable(
     Status::SUCCESS
 }
 
-#[cfg(not(test))]
+// #[cfg(not(test))]
 pub extern "win64" fn get_next_variable_name(
     _: *mut usize,
     _: *mut Char16,
@@ -588,7 +588,7 @@ pub extern "win64" fn get_next_variable_name(
     Status::UNSUPPORTED
 }
 
-#[cfg(not(test))]
+// #[cfg(not(test))]
 pub extern "win64" fn set_variable(
     var_name: *mut Char16,
     var_guid: *mut Guid,
@@ -637,19 +637,19 @@ pub extern "win64" fn set_variable(
     status
 }
 
-#[cfg(not(test))]
+// #[cfg(not(test))]
 pub extern "win64" fn get_next_high_mono_count(_: *mut u32) -> Status {
     crate::log!("EFI_STUB: get_next_high_mono_count - UNSUPPORTED\n");
     Status::UNSUPPORTED
 }
 
-#[cfg(not(test))]
+// #[cfg(not(test))]
 pub extern "win64" fn reset_system(_: ResetType, _: Status, _: usize, _: *mut c_void) {
     crate::log!("EFI_STUB: reset_system.\n");
     crate::i8042_reset();
 }
 
-#[cfg(not(test))]
+// #[cfg(not(test))]
 pub extern "win64" fn update_capsule(
     _: *mut *mut CapsuleHeader,
     _: usize,
@@ -659,7 +659,7 @@ pub extern "win64" fn update_capsule(
     Status::UNSUPPORTED
 }
 
-#[cfg(not(test))]
+// #[cfg(not(test))]
 pub extern "win64" fn query_capsule_capabilities(
     _: *mut *mut CapsuleHeader,
     _: usize,
@@ -670,24 +670,24 @@ pub extern "win64" fn query_capsule_capabilities(
     Status::UNSUPPORTED
 }
 
-#[cfg(not(test))]
+// #[cfg(not(test))]
 pub extern "win64" fn query_variable_info(_: u32, _: *mut u64, _: *mut u64, _: *mut u64) -> Status {
     crate::log!("EFI_STUB: query_variable_info - UNSUPPORTED\n");
     Status::UNSUPPORTED
 }
 
-#[cfg(not(test))]
+// #[cfg(not(test))]
 pub extern "win64" fn raise_tpl(_: Tpl) -> Tpl {
     crate::log!("EFI_STUB: raise_tpl\n");
     0
 }
 
-#[cfg(not(test))]
+// #[cfg(not(test))]
 pub extern "win64" fn restore_tpl(_: Tpl) {
     crate::log!("EFI_STUB: restore_tpl\n");
 }
 
-#[cfg(not(test))]
+// #[cfg(not(test))]
 pub extern "win64" fn allocate_pages(
     allocate_type: AllocateType,
     memory_type: MemoryType,
@@ -713,12 +713,12 @@ pub extern "win64" fn allocate_pages(
     status
 }
 
-#[cfg(not(test))]
+// #[cfg(not(test))]
 pub extern "win64" fn free_pages(address: PhysicalAddress, _: usize) -> Status {
     ALLOCATOR.lock().free_pages(address)
 }
 
-#[cfg(not(test))]
+// #[cfg(not(test))]
 pub extern "win64" fn get_memory_map(
     memory_map_size: *mut usize,
     out: *mut MemoryDescriptor,
@@ -750,7 +750,7 @@ pub extern "win64" fn get_memory_map(
     Status::SUCCESS
 }
 
-#[cfg(not(test))]
+// #[cfg(not(test))]
 pub extern "win64" fn allocate_pool(
     memory_type: MemoryType,
     size: usize,
@@ -774,12 +774,12 @@ pub extern "win64" fn allocate_pool(
     status
 }
 
-#[cfg(not(test))]
+// #[cfg(not(test))]
 pub extern "win64" fn free_pool(ptr: *mut c_void) -> Status {
     ALLOCATOR.lock().free_pages(ptr as u64)
 }
 
-#[cfg(not(test))]
+// #[cfg(not(test))]
 pub extern "win64" fn create_event(
     r#type: u32,
     notify_tpl: Tpl,
@@ -803,36 +803,36 @@ pub extern "win64" fn create_event(
     status
 }
 
-#[cfg(not(test))]
+// #[cfg(not(test))]
 pub extern "win64" fn set_timer(_: Event, _: TimerDelay, _: u64) -> Status {
     crate::log!("EFI_STUB: set_timer - UNSUPPORTED\n");
     Status::UNSUPPORTED
 }
 
-#[cfg(not(test))]
+// #[cfg(not(test))]
 pub extern "win64" fn wait_for_event(_: usize, _: *mut Event, _: *mut usize) -> Status {
     Status::UNSUPPORTED
 }
 
-#[cfg(not(test))]
+// #[cfg(not(test))]
 pub extern "win64" fn signal_event(_: Event) -> Status {
     crate::log!("EFI_STUB: signal_event - UNSUPPORTED\n");
     Status::UNSUPPORTED
 }
 
-#[cfg(not(test))]
+// #[cfg(not(test))]
 pub extern "win64" fn close_event(_: Event) -> Status {
     crate::log!("EFI_STUB: close_event - UNSUPPORTED\n");
     Status::UNSUPPORTED
 }
 
-#[cfg(not(test))]
+// #[cfg(not(test))]
 pub extern "win64" fn check_event(_: Event) -> Status {
     crate::log!("EFI_STUB: check_event - UNSUPPORTED\n");
     Status::UNSUPPORTED
 }
 
-#[cfg(not(test))]
+// #[cfg(not(test))]
 pub extern "win64" fn install_protocol_interface(
     handle: *mut Handle,
     guid: *mut Guid,
@@ -854,7 +854,7 @@ pub extern "win64" fn install_protocol_interface(
     status
 }
 
-#[cfg(not(test))]
+// #[cfg(not(test))]
 pub extern "win64" fn reinstall_protocol_interface(
     _: Handle,
     _: *mut Guid,
@@ -865,7 +865,7 @@ pub extern "win64" fn reinstall_protocol_interface(
     Status::UNSUPPORTED
 }
 
-#[cfg(not(test))]
+// #[cfg(not(test))]
 pub extern "win64" fn uninstall_protocol_interface(
     _: Handle,
     _: *mut Guid,
@@ -875,7 +875,7 @@ pub extern "win64" fn uninstall_protocol_interface(
     Status::SUCCESS
 }
 
-#[cfg(not(test))]
+// #[cfg(not(test))]
 pub extern "win64" fn handle_protocol(
     handle: Handle,
     guid: *mut Guid,
@@ -901,7 +901,7 @@ pub extern "win64" fn handle_protocol(
     status
 }
 
-#[cfg(not(test))]
+// #[cfg(not(test))]
 pub extern "win64" fn register_protocol_notify(
     _: *mut Guid,
     _: Event,
@@ -911,7 +911,7 @@ pub extern "win64" fn register_protocol_notify(
     Status::UNSUPPORTED
 }
 
-#[cfg(not(test))]
+// #[cfg(not(test))]
 pub extern "win64" fn locate_handle(
     locate_search_type: LocateSearchType,
     guid: *mut Guid,
@@ -1032,7 +1032,7 @@ pub extern "win64" fn locate_device_path(protocol: *mut Guid, device_path: *mut 
 
 }
 
-#[cfg(not(test))]
+// #[cfg(not(test))]
 pub extern "win64" fn install_configuration_table(_: *mut Guid, _: *mut c_void) -> Status {
     crate::log!("EFI_STUB: install_configuration_table - UNSUPPORTED\n");
 
@@ -1125,7 +1125,7 @@ pub extern "win64" fn load_image(
     status
 }
 
-#[cfg(not(test))]
+// #[cfg(not(test))]
 pub extern "win64" fn start_image(
     image_handle: Handle,
     exit_data_size: *mut usize,
@@ -1145,43 +1145,43 @@ pub extern "win64" fn start_image(
     status
 }
 
-#[cfg(not(test))]
+// #[cfg(not(test))]
 pub extern "win64" fn exit(_: Handle, _: Status, _: usize, _: *mut Char16) -> Status {
     crate::log!("EFI_STUB: exit - UNSUPPORTED\n");
     Status::UNSUPPORTED
 }
 
-#[cfg(not(test))]
+// #[cfg(not(test))]
 pub extern "win64" fn unload_image(_: Handle) -> Status {
     crate::log!("EFI_STUB: unload_image - UNSUPPORTED\n");
     Status::UNSUPPORTED
 }
 
-#[cfg(not(test))]
+// #[cfg(not(test))]
 pub extern "win64" fn exit_boot_services(_: Handle, _: usize) -> Status {
     crate::log!("EFI_STUB: exit_boot_services\n");
     Status::SUCCESS
 }
 
-#[cfg(not(test))]
+// #[cfg(not(test))]
 pub extern "win64" fn get_next_monotonic_count(_: *mut u64) -> Status {
     crate::log!("EFI_STUB: get_next_monotonic_count - UNSUPPORTED\n");
     Status::UNSUPPORTED
 }
 
-#[cfg(not(test))]
+// #[cfg(not(test))]
 pub extern "win64" fn stall(_: usize) -> Status {
     crate::log!("EFI_STUB: stall - called\n");
     Status::SUCCESS
 }
 
-#[cfg(not(test))]
+// #[cfg(not(test))]
 pub extern "win64" fn set_watchdog_timer(_: usize, _: u64, _: usize, _: *mut Char16) -> Status {
     crate::log!("EFI_STUB: set_watchdog_timer\n");
     Status::SUCCESS
 }
 
-#[cfg(not(test))]
+// #[cfg(not(test))]
 pub extern "win64" fn connect_controller(
     _: Handle,
     _: *mut Handle,
@@ -1192,13 +1192,13 @@ pub extern "win64" fn connect_controller(
     Status::UNSUPPORTED
 }
 
-#[cfg(not(test))]
+// #[cfg(not(test))]
 pub extern "win64" fn disconnect_controller(_: Handle, _: Handle, _: Handle) -> Status {
     crate::log!("EFI_STUB: disconnect_controller - UNSUPPORTED\n");
     Status::UNSUPPORTED
 }
 
-#[cfg(not(test))]
+// #[cfg(not(test))]
 pub extern "win64" fn open_protocol(
     handle: Handle,
     guid: *mut Guid,
@@ -1227,13 +1227,13 @@ pub extern "win64" fn open_protocol(
     status
 }
 
-#[cfg(not(test))]
+// #[cfg(not(test))]
 pub extern "win64" fn close_protocol(_: Handle, _: *mut Guid, _: Handle, _: Handle) -> Status {
     crate::log!("EFI_STUB: close_protocol\n");
     Status::SUCCESS
 }
 
-#[cfg(not(test))]
+// #[cfg(not(test))]
 pub extern "win64" fn open_protocol_information(
     _: Handle,
     _: *mut Guid,
@@ -1244,7 +1244,7 @@ pub extern "win64" fn open_protocol_information(
     Status::UNSUPPORTED
 }
 
-#[cfg(not(test))]
+// #[cfg(not(test))]
 pub extern "win64" fn protocols_per_handle(
     _: Handle,
     _: *mut *mut *mut Guid,
@@ -1254,7 +1254,7 @@ pub extern "win64" fn protocols_per_handle(
     Status::UNSUPPORTED
 }
 
-#[cfg(not(test))]
+// #[cfg(not(test))]
 pub extern "win64" fn locate_handle_buffer(
     locate_search_type: LocateSearchType,
     guid: *mut Guid,
@@ -1291,7 +1291,7 @@ pub extern "win64" fn locate_handle_buffer(
     status
 }
 
-#[cfg(not(test))]
+// #[cfg(not(test))]
 pub extern "win64" fn locate_protocol(guid: *mut Guid, registration: *mut c_void, interface: *mut *mut c_void) -> Status {
     crate::log!("EFI_STUB: locate_protocol - {:?}\n", unsafe{*guid});
     if guid == core::ptr::null_mut() {
@@ -1323,7 +1323,7 @@ pub extern "win64" fn locate_protocol(guid: *mut Guid, registration: *mut c_void
 // NOTE: Current EDKII has use case with 5 guid/interface pairs.
 // So we hardcode to support 8 pairs as maximum. It should be enought.
 //
-#[cfg(not(test))]
+// #[cfg(not(test))]
 pub extern "win64" fn install_multiple_protocol_interfaces_real(
     handle: *mut Handle,
     guid1: *mut Guid,
@@ -1434,7 +1434,7 @@ pub extern "win64" fn uninstall_multiple_protocol_interfaces_real(
     Status::UNSUPPORTED
 }
 
-#[cfg(not(test))]
+// #[cfg(not(test))]
 pub extern "win64" fn install_multiple_protocol_interfaces(
     handle: *mut Handle,
     guid: *mut c_void,
@@ -1450,7 +1450,7 @@ pub extern "win64" fn install_multiple_protocol_interfaces(
     Status::UNSUPPORTED
 }
 
-#[cfg(not(test))]
+// #[cfg(not(test))]
 pub extern "win64" fn uninstall_multiple_protocol_interfaces(
     _: *mut Handle,
     _: *mut c_void,
@@ -1460,22 +1460,22 @@ pub extern "win64" fn uninstall_multiple_protocol_interfaces(
     Status::UNSUPPORTED
 }
 
-#[cfg(not(test))]
+// #[cfg(not(test))]
 pub extern "win64" fn calculate_crc32(_: *mut c_void, _: usize, _: *mut u32) -> Status {
     Status::SUCCESS
 }
 
-#[cfg(not(test))]
+// #[cfg(not(test))]
 pub extern "win64" fn copy_mem(dest: *mut c_void, source: *mut c_void, size: usize) {
     unsafe {core::ptr::copy (source, dest, size);}
 }
 
-#[cfg(not(test))]
+// #[cfg(not(test))]
 pub extern "win64" fn set_mem(buffer: *mut c_void, size: usize, val: u8) {
     unsafe {core::ptr::write_bytes (buffer, val, size);}
 }
 
-#[cfg(not(test))]
+// #[cfg(not(test))]
 pub extern "win64" fn create_event_ex(
     _: u32,
     _: Tpl,
@@ -1497,13 +1497,13 @@ pub extern "win64" fn create_event_ex(
     Status::SUCCESS
 }
 
-#[cfg(not(test))]
+// #[cfg(not(test))]
 extern "win64" fn image_unload(_: Handle) -> Status {
     crate::log!("EFI_STUB: image_unload - UNSUPPORTED\n");
     efi::Status::UNSUPPORTED
 }
 
-#[cfg(not(test))]
+// #[cfg(not(test))]
 pub const PAGE_SIZE: u64 = 4096;
 
 pub static mut STDIN : SimpleTextInputProtocol = SimpleTextInputProtocol {

@@ -16,27 +16,27 @@
 
 use cpuio::Port;
 
-#[cfg(not(test))]
+// #[cfg(not(test))]
 use crate::virtio::Error as VirtioError;
-#[cfg(not(test))]
+// #[cfg(not(test))]
 use crate::virtio::VirtioTransport;
 
 use crate::mem;
 
-#[cfg(not(test))]
+// #[cfg(not(test))]
 const CONFIG_ADDRESS: u16 = 0xcf8;
-#[cfg(not(test))]
+// #[cfg(not(test))]
 const CONFIG_DATA: u16 = 0xcfc;
 
-#[cfg(not(test))]
+// #[cfg(not(test))]
 const MAX_DEVICES: u8 = 32;
-#[cfg(not(test))]
+// #[cfg(not(test))]
 const MAX_FUNCTIONS: u8 = 8;
 
-#[cfg(not(test))]
+// #[cfg(not(test))]
 const INVALID_VENDOR_ID: u16 = 0xffff;
 
-#[cfg(not(test))]
+// #[cfg(not(test))]
 fn pci_config_read_u32(bus: u8, device: u8, func: u8, offset: u8) -> u32 {
     assert_eq!(offset % 4, 0);
     assert!(device < MAX_DEVICES);
@@ -56,18 +56,18 @@ fn pci_config_read_u32(bus: u8, device: u8, func: u8, offset: u8) -> u32 {
     config_data_port.read()
 }
 
-#[cfg(not(test))]
+// #[cfg(not(test))]
 fn pci_config_read_u8(bus: u8, device: u8, func: u8, offset: u8) -> u8 {
     (pci_config_read_u32(bus, device, func, offset & !3) >> ((offset % 4) * 8)) as u8
 }
 
-#[cfg(not(test))]
+// #[cfg(not(test))]
 fn pci_config_read_u16(bus: u8, device: u8, func: u8, offset: u8) -> u16 {
     assert_eq!(offset % 2, 0);
     (pci_config_read_u32(bus, device, func, offset & !3) >> ((offset % 4) * 8)) as u16
 }
 
-#[cfg(not(test))]
+// #[cfg(not(test))]
 fn pci_config_write_u32(bus: u8, device: u8, func: u8, offset: u8, value: u32) -> () {
     assert_eq!(offset % 4, 0);
     assert!(device < MAX_DEVICES);
@@ -87,7 +87,7 @@ fn pci_config_write_u32(bus: u8, device: u8, func: u8, offset: u8, value: u32) -
     config_data_port.write(value)
 }
 
-#[cfg(not(test))]
+// #[cfg(not(test))]
 fn pci_config_write_u16(bus: u8, device: u8, func: u8, offset: u8, value: u16) -> () {
     assert_eq!(offset % 2, 0);
     assert!(device < MAX_DEVICES);
@@ -107,7 +107,7 @@ fn pci_config_write_u16(bus: u8, device: u8, func: u8, offset: u8, value: u16) -
     config_data_port.write(value)
 }
 
-#[cfg(not(test))]
+// #[cfg(not(test))]
 fn pci_config_write_u8(bus: u8, device: u8, func: u8, offset: u8, value: u8) -> () {
     assert!(device < MAX_DEVICES);
     assert!(func < MAX_FUNCTIONS);
@@ -126,7 +126,7 @@ fn pci_config_write_u8(bus: u8, device: u8, func: u8, offset: u8, value: u8) -> 
     config_data_port.write(value)
 }
 
-#[cfg(not(test))]
+// #[cfg(not(test))]
 fn get_device_details(bus: u8, device: u8, func: u8) -> (u16, u16) {
     (
         pci_config_read_u16(bus, device, func, 0),
@@ -134,7 +134,7 @@ fn get_device_details(bus: u8, device: u8, func: u8) -> (u16, u16) {
     )
 }
 
-#[cfg(not(test))]
+// #[cfg(not(test))]
 pub fn print_bus() {
     for device in 0..MAX_DEVICES {
         let (vendor_id, device_id) = get_device_details(0, device, 0);
@@ -150,7 +150,7 @@ pub fn print_bus() {
     }
 }
 
-#[cfg(not(test))]
+// #[cfg(not(test))]
 pub fn search_bus(target_vendor_id: u16, target_device_id: u16) -> Option<PciDevice> {
     for device in 0..MAX_DEVICES {
         let (vendor_id, device_id) = get_device_details(0, device, 0);
@@ -161,7 +161,7 @@ pub fn search_bus(target_vendor_id: u16, target_device_id: u16) -> Option<PciDev
     None
 }
 
-#[cfg(not(test))]
+// #[cfg(not(test))]
 #[derive(Default)]
 pub struct PciDevice {
     bus: u8,
@@ -172,7 +172,7 @@ pub struct PciDevice {
     device_id: u16,
 }
 
-#[cfg(not(test))]
+// #[cfg(not(test))]
 #[derive(Debug)]
 enum PciBarType {
     Unused,
@@ -181,21 +181,21 @@ enum PciBarType {
     IoSpace,
 }
 
-#[cfg(not(test))]
+// #[cfg(not(test))]
 impl Default for PciBarType {
     fn default() -> Self {
         PciBarType::Unused
     }
 }
 
-#[cfg(not(test))]
+// #[cfg(not(test))]
 #[derive(Default)]
 struct PciBar {
     bar_type: PciBarType,
     address: u64,
 }
 
-#[cfg(not(test))]
+// #[cfg(not(test))]
 impl PciDevice {
     fn new(bus: u8, device: u8, func: u8) -> PciDevice {
         PciDevice {
@@ -291,7 +291,7 @@ impl PciDevice {
     }
 }
 
-#[cfg(not(test))]
+// #[cfg(not(test))]
 #[allow(clippy::enum_variant_names)]
 enum VirtioPciCapabilityType {
     CommonConfig = 1,
@@ -304,7 +304,7 @@ enum VirtioPciCapabilityType {
     PciConfig = 5,
 }
 
-#[cfg(not(test))]
+// #[cfg(not(test))]
 #[derive(Default)]
 pub struct VirtioPciTransport {
     device: PciDevice,
@@ -314,7 +314,7 @@ pub struct VirtioPciTransport {
     device_config_region: mem::MemoryRegion, // device specific region
 }
 
-#[cfg(not(test))]
+// #[cfg(not(test))]
 impl VirtioPciTransport {
     pub fn new(device: PciDevice) -> VirtioPciTransport {
         VirtioPciTransport {
@@ -342,7 +342,7 @@ impl VirtioPciTransport {
 /// le64 queue_avail;               // 0x28 // read-write
 /// le64 queue_used;                // 0x30 // read-write
 
-#[cfg(not(test))]
+// #[cfg(not(test))]
 impl VirtioTransport for VirtioPciTransport {
     fn init(&mut self, _device_type: u32) -> Result<(), VirtioError> {
         self.device.init();

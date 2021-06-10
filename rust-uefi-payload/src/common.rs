@@ -14,7 +14,7 @@
 
 #![allow(unused)]
 
-#[cfg(not(test))]
+// #[cfg(not(test))]
 #[macro_export]
 macro_rules! offset_of {
     ($container:ty, $field:ident) => {
@@ -22,7 +22,7 @@ macro_rules! offset_of {
     };
 }
 
-#[cfg(not(test))]
+// #[cfg(not(test))]
 #[macro_export]
 macro_rules! container_of {
     ($ptr:ident, $container:ty, $field:ident) => {{
@@ -30,7 +30,7 @@ macro_rules! container_of {
     }};
 }
 
-#[cfg(not(test))]
+// #[cfg(not(test))]
 #[macro_export]
 macro_rules! container_of_mut {
     ($ptr:ident, $container:ty, $field:ident) => {{
@@ -38,7 +38,7 @@ macro_rules! container_of_mut {
     }};
 }
 
-#[cfg(not(test))]
+// #[cfg(not(test))]
 pub fn ucs2_as_ascii_length(input: *const u16) -> usize {
     let mut len = 0;
     loop {
@@ -52,7 +52,7 @@ pub fn ucs2_as_ascii_length(input: *const u16) -> usize {
     len
 }
 
-#[cfg(not(test))]
+// #[cfg(not(test))]
 pub fn ucs2_to_ascii(input: *const u16, output: &mut [u8]) {
     let mut i: usize = 0;
     assert!(output.len() >= ucs2_as_ascii_length(input));
@@ -67,7 +67,7 @@ pub fn ucs2_to_ascii(input: *const u16, output: &mut [u8]) {
     }
 }
 
-#[cfg(not(test))]
+// #[cfg(not(test))]
 pub fn ascii_to_ucs2(input: &str, output: &mut [u16]) {
     assert!(output.len() >= input.len());
 
@@ -76,7 +76,7 @@ pub fn ascii_to_ucs2(input: &str, output: &mut [u16]) {
     }
 }
 
-#[cfg(not(test))]
+// #[cfg(not(test))]
 pub fn ascii_length(input: *const u8, maxlen: usize) -> usize {
     let mut len = 0;
     loop {

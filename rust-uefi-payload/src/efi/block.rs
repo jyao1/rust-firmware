@@ -20,7 +20,7 @@ use r_efi::efi::{AllocateType, MemoryType, Status};
 use r_efi::protocols::device_path::Protocol as DevicePathProtocol;
 use r_efi::{eficall, eficall_abi};
 
-#[cfg(not(test))]
+// #[cfg(not(test))]
 #[repr(packed)]
 pub struct HardDiskDevicePathProtocol {
     pub device_path: DevicePathProtocol,
@@ -32,7 +32,7 @@ pub struct HardDiskDevicePathProtocol {
     pub signature_type: u8,
 }
 
-#[cfg(not(test))]
+// #[cfg(not(test))]
 #[repr(C)]
 pub struct BlockIoMedia {
     media_id: u32,
@@ -46,7 +46,7 @@ pub struct BlockIoMedia {
     last_block: u64,
 }
 
-#[cfg(not(test))]
+// #[cfg(not(test))]
 #[repr(C)]
 pub struct BlockIoProtocol {
     revision: u64,
@@ -74,13 +74,13 @@ pub struct BlockIoProtocol {
     ) -> Status},
 }
 
-#[cfg(not(test))]
+// #[cfg(not(test))]
 pub extern "win64" fn reset(_: *mut BlockIoProtocol, _: bool) -> Status {
     crate::log!("reset unsupported");
     Status::UNSUPPORTED
 }
 
-#[cfg(not(test))]
+// #[cfg(not(test))]
 pub extern "win64" fn read_blocks(
     proto: *mut BlockIoProtocol,
     _: u32,
@@ -109,7 +109,7 @@ pub extern "win64" fn read_blocks(
     Status::SUCCESS
 }
 
-#[cfg(not(test))]
+// #[cfg(not(test))]
 pub extern "win64" fn write_blocks(
     _: *mut BlockIoProtocol,
     _: u32,
@@ -121,20 +121,20 @@ pub extern "win64" fn write_blocks(
     Status::UNSUPPORTED
 }
 
-#[cfg(not(test))]
+// #[cfg(not(test))]
 pub extern "win64" fn flush_blocks(_: *mut BlockIoProtocol) -> Status {
     crate::log!("flush_blocks unsupported");
     Status::UNSUPPORTED
 }
 
-#[cfg(not(test))]
+// #[cfg(not(test))]
 #[repr(C)]
 pub struct ControllerDevicePathProtocol {
     pub device_path: DevicePathProtocol,
     controller: u32,
 }
 
-#[cfg(not(test))]
+// #[cfg(not(test))]
 #[repr(C)]
 pub struct BlockWrapper<'a> {
     hw: super::HandleWrapper,
@@ -148,13 +148,13 @@ pub struct BlockWrapper<'a> {
     start_lba: u64,
 }
 
-#[cfg(not(test))]
+// #[cfg(not(test))]
 pub struct BlockWrappers<'a> {
     pub wrappers: [*mut BlockWrapper<'a>; 16],
     pub count: usize,
 }
 
-#[cfg(not(test))]
+// #[cfg(not(test))]
 impl<'a> BlockWrapper<'a> {
     pub fn new(
         block: *const crate::block::VirtioBlockDevice,
@@ -277,7 +277,7 @@ impl<'a> BlockWrapper<'a> {
     }
 }
 
-#[cfg(not(test))]
+// #[cfg(not(test))]
 #[allow(clippy::transmute_ptr_to_ptr)]
 pub fn populate_block_wrappers(
     wrappers: &mut BlockWrappers,
@@ -312,7 +312,7 @@ pub fn populate_block_wrappers(
     efi_part_id
 }
 
-#[cfg(not(test))]
+// #[cfg(not(test))]
 #[allow(clippy::transmute_ptr_to_ptr)]
 pub fn get_block_io_media_str(wrappers: &mut BlockWrappers, index: usize) -> (*mut c_void) {
     unsafe{let ref_1: &mut BlockIoMedia = &mut (*wrappers.wrappers[index]).media;

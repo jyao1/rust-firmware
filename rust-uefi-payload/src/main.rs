@@ -45,7 +45,7 @@ mod pe;
 mod virtio;
 mod r_efi_ext;
 
-#[cfg(not(test))]
+// #[cfg(not(test))]
 #[panic_handler]
 #[allow(clippy::empty_loop)]
 fn panic(_info: &PanicInfo) -> ! {
@@ -53,7 +53,7 @@ fn panic(_info: &PanicInfo) -> ! {
     loop {}
 }
 
-#[cfg(not(test))]
+// #[cfg(not(test))]
 /// Reset the VM via the keyboard controller
 fn i8042_reset() -> ! {
     log!("i8042_reset...\n");
@@ -67,7 +67,7 @@ fn i8042_reset() -> ! {
     }
 }
 
-//#[cfg(not(test))]
+//// #[cfg(not(test))]
 /// Enable SSE2 for XMM registers (needed for EFI calling)
 //fn enable_sse2() {
 //    unsafe {
@@ -80,7 +80,7 @@ fn i8042_reset() -> ! {
 //    }
 //}
 
-#[cfg(not(test))]
+// #[cfg(not(test))]
 #[no_mangle]
 #[cfg_attr(target_os = "uefi", export_name = "efi_main")]
 pub extern "win64" fn _start(hob: *const c_void) -> ! {
