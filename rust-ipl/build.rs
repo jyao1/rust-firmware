@@ -56,7 +56,7 @@ fn dump_env() {
         ];
     eprintln!("dump env: ");
     for v in env_list {
-        eprintln!("{}: {}", *v, env::var(*v).unwrap_or("Not preset".to_string()));
+        eprintln!("{}: {}", *v, env::var(*v).unwrap_or_else(|_| "Not preset".to_string()));
     }
 }
 

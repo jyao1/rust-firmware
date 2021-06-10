@@ -16,7 +16,7 @@ use x86_64::{
     VirtAddr,
 };
 
-use super::frame::{BMFrameAllocator, FRAME_ALLOCATOR};
+use super::frame::BMFrameAllocator;
 use super::consts::PAGE_TABLE_BASE;
 
 pub fn create_mapping(pt: &mut OffsetPageTable, allocator: &mut BMFrameAllocator, mut pa: PhysAddr, mut va: VirtAddr, mut sz: u64) {
