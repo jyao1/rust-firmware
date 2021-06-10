@@ -10,9 +10,6 @@ use std::fs::File;
 use std::io::Seek;
 use std::io::Write;
 
-mod mem;
-mod pe;
-
 use core::mem::size_of;
 use r_efi::efi::Guid;
 use r_uefi_pi::fv::{
@@ -465,7 +462,7 @@ fn main() -> std::io::Result<()> {
             - size_of::<PayloadFvHeaderByte>()
             - size_of::<PayloadFvFfsSectionHeader>()
     ];
-    pe::relocate(
+    pe_loader::pe::relocate(
         &rust_ipl_bin,
         &mut new_rust_ipl_buf,
         LOADED_IPL_ADDRESS + rust_ipl_header_buffer.len(),
