@@ -7,7 +7,6 @@ use crate::logger;
 
 use crate::pcd;
 use r_uefi_pi::fv;
-use crate::elf;
 use crate::pci;
 
 use r_efi::efi;
@@ -89,8 +88,16 @@ pub fn FindAndReportEntryPoint(firmwareVolumePtr: * const fv::FirmwareVolumeHead
 {
     let firmware_buffer = unsafe { core::slice::from_raw_parts(firmwareVolumePtr as *const u8, pcd::pcd_get_PcdOvmfDxeMemFvSize() as usize) };
     let image = uefi_pi::fv_lib::get_image_from_fv(firmware_buffer, fv::FV_FILETYPE_DXE_CORE, fv::SECTION_PE32).unwrap();
-    // elf_loader::elf::relocate_elf(image as *const [u8] as *const c_void, image.len())
-    pe_loader::pe::relocate_pe_mem(image, loaded_buffer)
+    if elf_loader::elf::is_elf(image) {
+        log!("payload is elf image\n");
+        elf_loader::elf::relocate_elf(image, loaded_buffer)
+    } else if pe_loader::pe::is_pe(image) {
+        log!("payload is pe image\n");
+        pe_loader::pe::relocate_pe_mem(image, loaded_buffer)
+    } else {
+        panic!("format not support")
+    }
+
 }
 
 #[allow(non_snake_case)]

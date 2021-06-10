@@ -22,8 +22,6 @@ mod memslice;
 extern crate plain;
 extern crate bitfield;
 
-mod elf;
-
 use r_efi::efi;
 
 use crate::pi::hob;
