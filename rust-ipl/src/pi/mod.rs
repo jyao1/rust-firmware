@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-pub mod hob;
 pub mod boot_mode;
+pub mod hob;
 
 pub mod hob_lib;

@@ -315,7 +315,8 @@ pub fn populate_block_wrappers(
 // #[cfg(not(test))]
 #[allow(clippy::transmute_ptr_to_ptr)]
 pub fn get_block_io_media_str(wrappers: &mut BlockWrappers, index: usize) -> (*mut c_void) {
-    unsafe{let ref_1: &mut BlockIoMedia = &mut (*wrappers.wrappers[index]).media;
-    return ref_1 as *mut BlockIoMedia as *mut c_void;
+    unsafe {
+        let ref_1: &mut BlockIoMedia = &mut (*wrappers.wrappers[index]).media;
+        return ref_1 as *mut BlockIoMedia as *mut c_void;
     }
 }

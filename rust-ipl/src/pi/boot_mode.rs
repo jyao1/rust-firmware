@@ -16,16 +16,15 @@
 
 pub type BootMode = u32;
 
-pub const BOOT_WITH_FULL_CONFIGURATION:                   u32 = 0x00;
-pub const BOOT_WITH_MINIMAL_CONFIGURATION:                u32 = 0x01;
-pub const BOOT_ASSUMING_NO_CONFIGURATION_CHANGES:         u32 = 0x02;
-pub const BOOT_WITH_FULL_CONFIGURATION_PLUS_DIAGNOSTICS:  u32 = 0x03;
-pub const BOOT_WITH_DEFAULT_SETTINGS:                     u32 = 0x04;
-pub const BOOT_ON_S4_RESUME:                              u32 = 0x05;
-pub const BOOT_ON_S5_RESUME:                              u32 = 0x06;
-pub const BOOT_WITH_MFG_MODE_SETTINGS:                    u32 = 0x07;
-pub const BOOT_ON_S2_RESUME:                              u32 = 0x10;
-pub const BOOT_ON_S3_RESUME:                              u32 = 0x11;
-pub const BOOT_ON_FLASH_UPDATE:                           u32 = 0x12;
-pub const BOOT_IN_RECOVERY_MODE:                          u32 = 0x20;
-
+pub const BOOT_WITH_FULL_CONFIGURATION: u32 = 0x00;
+pub const BOOT_WITH_MINIMAL_CONFIGURATION: u32 = 0x01;
+pub const BOOT_ASSUMING_NO_CONFIGURATION_CHANGES: u32 = 0x02;
+pub const BOOT_WITH_FULL_CONFIGURATION_PLUS_DIAGNOSTICS: u32 = 0x03;
+pub const BOOT_WITH_DEFAULT_SETTINGS: u32 = 0x04;
+pub const BOOT_ON_S4_RESUME: u32 = 0x05;
+pub const BOOT_ON_S5_RESUME: u32 = 0x06;
+pub const BOOT_WITH_MFG_MODE_SETTINGS: u32 = 0x07;
+pub const BOOT_ON_S2_RESUME: u32 = 0x10;
+pub const BOOT_ON_S3_RESUME: u32 = 0x11;
+pub const BOOT_ON_FLASH_UPDATE: u32 = 0x12;
+pub const BOOT_IN_RECOVERY_MODE: u32 = 0x20;

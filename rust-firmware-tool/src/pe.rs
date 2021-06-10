@@ -189,8 +189,11 @@ struct ImageBaseRelocation {
     size_of_block: u32,
 }
 
-pub fn relocate(pe_image: &Vec<u8>, new_pe_image: &mut Vec<u8>, new_image_base: usize) -> Result<(), String> {
-
+pub fn relocate(
+    pe_image: &Vec<u8>,
+    new_pe_image: &mut Vec<u8>,
+    new_image_base: usize,
+) -> Result<(), String> {
     let image_buffer = &pe_image[..];
     let new_image_buffer = &new_pe_image[..];
 
@@ -200,7 +203,7 @@ pub fn relocate(pe_image: &Vec<u8>, new_pe_image: &mut Vec<u8>, new_image_base: 
     );
 
     println!("relocate to - 0x{:x}", new_image_base);
-    
+
     let dos_region = MemoryRegion::from_slice(&image_buffer);
     if dos_region.read_u16(0) != DOS_SIGNATURE {
         return Err(String::from("DOS signature error!"));
@@ -219,22 +222,19 @@ pub fn relocate(pe_image: &Vec<u8>, new_pe_image: &mut Vec<u8>, new_image_base: 
     if optional_region.read_u16(0) != OPTIONAL_HDR64_MAGIC {
         return Err(String::from("PE magic error!"));
     }
-    
+
     let entry_point = optional_region.read_u32(16);
     let image_base = optional_region.read_u64(24);
     let image_size = optional_region.read_u32(56) as usize;
     let size_of_headers = optional_region.read_u32(60) as usize;
 
     let sections = &image_buffer[(24 + pe_header_offset + optional_header_size)..];
-    let sections: &[Section] = unsafe {
-        core::slice::from_raw_parts(
-            sections.as_ptr() as *const Section,
-            num_sections,
-        )
-    };
+    let sections: &[Section] =
+        unsafe { core::slice::from_raw_parts(sections.as_ptr() as *const Section, num_sections) };
 
     // Load the PE header into the destination memory
-    let total_header_size = (24 + pe_header_offset + optional_header_size + num_sections * 40) as usize;
+    let total_header_size =
+        (24 + pe_header_offset + optional_header_size + num_sections * 40) as usize;
     let l: &mut [u8] = loaded_region.as_mut_slice(0, total_header_size as u64);
     l.copy_from_slice(&image_buffer[0..total_header_size]);
     loaded_region.write_u64((24 + pe_header_offset + 24) as u64, new_image_base as u64);
@@ -244,15 +244,20 @@ pub fn relocate(pe_image: &Vec<u8>, new_pe_image: &mut Vec<u8>, new_image_base: 
             loaded_region.write_u8((x + section.virtual_address) as u64, 0);
         }
         let section_size = core::cmp::min(section.size_of_raw_data, section.virtual_size);
-        let l: &mut [u8] = loaded_region.as_mut_slice(section.virtual_address as u64, section_size as u64);
-        l.copy_from_slice(&image_buffer[section.pointer_to_raw_data as usize..(section.pointer_to_raw_data + section_size) as usize]);
+        let l: &mut [u8] =
+            loaded_region.as_mut_slice(section.virtual_address as u64, section_size as u64);
+        l.copy_from_slice(
+            &image_buffer[section.pointer_to_raw_data as usize
+                ..(section.pointer_to_raw_data + section_size) as usize],
+        );
     }
 
     // Relocate image in the destination memory
     for section in sections {
         if &section.name[0..6] == b".reloc" {
             let section_size = core::cmp::min(section.size_of_raw_data, section.virtual_size);
-            let l: &mut [u8] = loaded_region.as_mut_slice(section.virtual_address as u64, section_size as u64);
+            let l: &mut [u8] =
+                loaded_region.as_mut_slice(section.virtual_address as u64, section_size as u64);
 
             let reloc_region = MemoryRegion::from_slice(l);
 
@@ -273,10 +278,13 @@ pub fn relocate(pe_image: &Vec<u8>, new_pe_image: &mut Vec<u8>, new_image_base: 
                         REL_BASED_DIR64 => {
                             let location = (page_rva + entry_offset) as u64;
                             let value = loaded_region.read_u64(location);
-                            loaded_region.write_u64(location, value - image_base + new_image_base as u64);
+                            loaded_region
+                                .write_u64(location, value - image_base + new_image_base as u64);
                         }
                         REL_BASED_ABSOLUTE => {}
-                        _ => {panic!("unknown reloc type");}
+                        _ => {
+                            panic!("unknown reloc type");
+                        }
                     }
                     block_offset += 2;
                 }

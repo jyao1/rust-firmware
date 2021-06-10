@@ -15,7 +15,7 @@
 #![allow(unused)]
 
 use core::ffi::c_void;
-use r_efi::efi::{Guid};
+use r_efi::efi::Guid;
 
 pub type FvbAttributes2 = u32;
 
@@ -58,35 +58,41 @@ pub struct FirmwareVolumeExtEntry {
 }
 
 pub const FIRMWARE_FILE_SYSTEM2_GUID: r_efi::base::Guid = r_efi::base::Guid::from_fields(
-    0x8c8ce578, 0x8a3d, 0x4f1c, 0x99, 0x35, &[0x89, 0x61, 0x85, 0xc3, 0x2d, 0xd3]
+    0x8c8ce578,
+    0x8a3d,
+    0x4f1c,
+    0x99,
+    0x35,
+    &[0x89, 0x61, 0x85, 0xc3, 0x2d, 0xd3],
 );
 
 pub const FIRMWARE_FILE_SYSTEM3_GUID: r_efi::base::Guid = r_efi::base::Guid::from_fields(
-    0x5473c07a, 0x3dcb, 0x4dca, 0xbd, 0x6f, &[0x1e, 0x96, 0x89, 0xe7, 0x34, 0x9a]
+    0x5473c07a,
+    0x3dcb,
+    0x4dca,
+    0xbd,
+    0x6f,
+    &[0x1e, 0x96, 0x89, 0xe7, 0x34, 0x9a],
 );
-
-
-
-
 
 pub type FvFileType = u8;
 
-pub const FV_FILETYPE_RAW:                    u8 = 0x01;
-pub const FV_FILETYPE_FREEFORM:               u8 = 0x02;
-pub const FV_FILETYPE_SECURITY_CORE:          u8 = 0x03;
-pub const FV_FILETYPE_PEI_CORE:               u8 = 0x04;
-pub const FV_FILETYPE_DXE_CORE:               u8 = 0x05;
-pub const FV_FILETYPE_PEIM:                   u8 = 0x06;
-pub const FV_FILETYPE_DRIVER:                 u8 = 0x07;
-pub const FV_FILETYPE_COMBINED_PEIM_DRIVER:   u8 = 0x08;
-pub const FV_FILETYPE_APPLICATION:            u8 = 0x09;
-pub const FV_FILETYPE_MM:                     u8 = 0x0A;
-pub const FV_FILETYPE_FIRMWARE_VOLUME_IMAGE:  u8 = 0x0B;
-pub const FV_FILETYPE_COMBINED_MM_DXE:        u8 = 0x0C;
-pub const FV_FILETYPE_MM_CORE:                u8 = 0x0D;
-pub const FV_FILETYPE_MM_STANDALONE:          u8 = 0x0E;
-pub const FV_FILETYPE_MM_CORE_STANDALONE:     u8 = 0x0F;
-pub const FV_FILETYPE_FFS_PAD:                u8 = 0xF0;
+pub const FV_FILETYPE_RAW: u8 = 0x01;
+pub const FV_FILETYPE_FREEFORM: u8 = 0x02;
+pub const FV_FILETYPE_SECURITY_CORE: u8 = 0x03;
+pub const FV_FILETYPE_PEI_CORE: u8 = 0x04;
+pub const FV_FILETYPE_DXE_CORE: u8 = 0x05;
+pub const FV_FILETYPE_PEIM: u8 = 0x06;
+pub const FV_FILETYPE_DRIVER: u8 = 0x07;
+pub const FV_FILETYPE_COMBINED_PEIM_DRIVER: u8 = 0x08;
+pub const FV_FILETYPE_APPLICATION: u8 = 0x09;
+pub const FV_FILETYPE_MM: u8 = 0x0A;
+pub const FV_FILETYPE_FIRMWARE_VOLUME_IMAGE: u8 = 0x0B;
+pub const FV_FILETYPE_COMBINED_MM_DXE: u8 = 0x0C;
+pub const FV_FILETYPE_MM_CORE: u8 = 0x0D;
+pub const FV_FILETYPE_MM_STANDALONE: u8 = 0x0E;
+pub const FV_FILETYPE_MM_CORE_STANDALONE: u8 = 0x0F;
+pub const FV_FILETYPE_FFS_PAD: u8 = 0xF0;
 
 pub type FfsFileAttributes = u8;
 pub type FfsFileState = u8;
@@ -114,30 +120,26 @@ pub struct FfsFileHeader2 {
     pub extended_size: u32,
 }
 
-
-
-
-
 pub type SectionType = u8;
 
-pub const SECTION_ALL:                    u8 = 0x00;
+pub const SECTION_ALL: u8 = 0x00;
 
-pub const SECTION_COMPRESSION:            u8 = 0x01;
-pub const SECTION_GUID_DEFINED:           u8 = 0x02;
-pub const SECTION_DISPOSABLE:             u8 = 0x03;
+pub const SECTION_COMPRESSION: u8 = 0x01;
+pub const SECTION_GUID_DEFINED: u8 = 0x02;
+pub const SECTION_DISPOSABLE: u8 = 0x03;
 
-pub const SECTION_PE32:                   u8 = 0x10;
-pub const SECTION_PIC:                    u8 = 0x11;
-pub const SECTION_TE:                     u8 = 0x12;
-pub const SECTION_DXE_DEPEX:              u8 = 0x13;
-pub const SECTION_VERSION:                u8 = 0x14;
-pub const SECTION_USER_INTERFACE:         u8 = 0x15;
-pub const SECTION_COMPATIBILITY16:        u8 = 0x16;
-pub const SECTION_FIRMWARE_VOLUME_IMAGE:  u8 = 0x17;
-pub const SECTION_FREEFORM_SUBTYPE_GUID:  u8 = 0x18;
-pub const SECTION_RAW:                    u8 = 0x19;
-pub const SECTION_PEI_DEPEX:              u8 = 0x1B;
-pub const SECTION_MM_DEPEX:               u8 = 0x1C;
+pub const SECTION_PE32: u8 = 0x10;
+pub const SECTION_PIC: u8 = 0x11;
+pub const SECTION_TE: u8 = 0x12;
+pub const SECTION_DXE_DEPEX: u8 = 0x13;
+pub const SECTION_VERSION: u8 = 0x14;
+pub const SECTION_USER_INTERFACE: u8 = 0x15;
+pub const SECTION_COMPATIBILITY16: u8 = 0x16;
+pub const SECTION_FIRMWARE_VOLUME_IMAGE: u8 = 0x17;
+pub const SECTION_FREEFORM_SUBTYPE_GUID: u8 = 0x18;
+pub const SECTION_RAW: u8 = 0x19;
+pub const SECTION_PEI_DEPEX: u8 = 0x1B;
+pub const SECTION_MM_DEPEX: u8 = 0x1C;
 
 #[repr(C)]
 #[derive(Copy, Clone, Debug)]

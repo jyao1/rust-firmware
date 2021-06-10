@@ -100,7 +100,6 @@ pub struct Filesystem<'a> {
     root_cluster: u32, // FAT32 only
 }
 
-
 pub struct DirectoryEntry {
     pub name: [u8; 11],
     pub long_name: [u8; 255],
@@ -156,8 +155,8 @@ fn ucs2_to_ascii(input: &[u16]) -> [u8; 255] {
 fn get_short_name(input: &[u8; 11]) -> [u8; 11] {
     let mut index = 0;
     let mut i = 0;
-    let mut name_vec: [u8;11] = [0;11];
-    for i in 0..8  {
+    let mut name_vec: [u8; 11] = [0; 11];
+    for i in 0..8 {
         if input[i] != 32 {
             name_vec[index] = input[i];
             index += 1;
@@ -167,7 +166,7 @@ fn get_short_name(input: &[u8; 11]) -> [u8; 11] {
         name_vec[index] = 46;
         index += 1;
         for i in 8..11 {
-            if input[i] !=32 {
+            if input[i] != 32 {
                 name_vec[index] = name_vec[i];
             }
         }
@@ -429,8 +428,8 @@ impl<'a> Filesystem<'a> {
             Ok(_) => {}
             Err(_) => {
                 crate::log!("EFI_STUB: filesystem read error\n");
-                return Err(Error::BlockError)
-            },
+                return Err(Error::BlockError);
+            }
         };
 
         let h = unsafe { &*(data.as_ptr() as *const Header) };
@@ -554,7 +553,7 @@ impl<'a> Filesystem<'a> {
             _ => {
                 crate::log!("next_cluster unsupported error!\n");
                 Err(Error::Unsupported)
-            },
+            }
         }
     }
 
@@ -582,7 +581,7 @@ impl<'a> Filesystem<'a> {
             _ => {
                 crate::log!("root unsupported error!\n");
                 Err(Error::Unsupported)
-            },
+            }
         }
     }
 
@@ -614,7 +613,7 @@ impl<'a> Filesystem<'a> {
 
         let mut current_dir = self.root().unwrap();
         let mut current_directory_entry = DirectoryEntry {
-            name: [0;11],
+            name: [0; 11],
             file_type: FileType::Directory,
             cluster: self.root().unwrap().cluster.unwrap(),
             size: 0,
@@ -643,11 +642,19 @@ impl<'a> Filesystem<'a> {
                     // +1 due to above find working on substring
                     let sub = &residual[1..=*x];
                     residual = &residual[(*x + 1)..];
-                    crate::log!("EFI_STUB - open sub is {:?}, residual is: {:?}\n", sub, residual);
+                    crate::log!(
+                        "EFI_STUB - open sub is {:?}, residual is: {:?}\n",
+                        sub,
+                        residual
+                    );
                     sub
                 }
             };
-            log!("EFI_STUB - sub is: {:?}, residual is: {:?}\n", sub, residual);
+            log!(
+                "EFI_STUB - sub is: {:?}, residual is: {:?}\n",
+                sub,
+                residual
+            );
             if sub.len() == 0 {
                 crate::log!("EFI_STUB - open - sub.len is 0\n");
                 //return Err(Error::NotFound);
@@ -656,14 +663,23 @@ impl<'a> Filesystem<'a> {
 
             loop {
                 match current_dir.next_entry() {
-                    Err(Error::EndOfFile) => return {crate::log!("EFI_STUB: next_entry end\n"); return Err(Error::NotFound);},
+                    Err(Error::EndOfFile) => {
+                        return {
+                            crate::log!("EFI_STUB: next_entry end\n");
+                            return Err(Error::NotFound);
+                        }
+                    }
                     Err(e) => {
                         crate::log!("EFI_STUB - open - error\n");
                         return Err(e);
-                    },
+                    }
                     Ok(de) => {
-                        let filename = unsafe{core::str::from_utf8_unchecked(&de.name)};
-                        log!("EFI-STUB: fsopen: {:?}, filesize: {:?}\n", filename, de.size);
+                        let filename = unsafe { core::str::from_utf8_unchecked(&de.name) };
+                        log!(
+                            "EFI-STUB: fsopen: {:?}, filesize: {:?}\n",
+                            filename,
+                            de.size
+                        );
                         if compare_name(sub, &de) {
                             match de.file_type {
                                 FileType::Directory => {

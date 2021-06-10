@@ -7,8 +7,8 @@ mod consts;
 mod frame;
 pub mod paging;
 
-pub use consts::*;
 use crate::frame::BMFrameAllocator;
+pub use consts::*;
 
 use log::*;
 use x86_64::{

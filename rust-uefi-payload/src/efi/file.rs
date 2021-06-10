@@ -14,13 +14,13 @@
 
 use core::ffi::c_void;
 
+use crate::efi::fat::DirectoryEntry;
+use crate::efi::fat::Error as FatError;
+use crate::efi::fat::FileType;
 use r_efi::efi::{AllocateType, Char16, Guid, MemoryType, Status};
 use r_efi::protocols::device_path::Protocol as DevicePathProtocol;
 use r_efi::protocols::file::Protocol as FileProtocol;
 use r_efi::protocols::simple_file_system::Protocol as SimpleFileSystemProtocol;
-use crate::efi::fat::Error as FatError;
-use crate::efi::fat::DirectoryEntry;
-use crate::efi::fat::FileType;
 
 // #[cfg(not(test))]
 #[repr(C)]
@@ -70,7 +70,11 @@ pub extern "win64" fn open(
     crate::common::ucs2_to_ascii(path_in, &mut path);
     let path = unsafe { core::str::from_utf8_unchecked(&path) };
     let path = &path[0..length] as &str;
-    log!("EFI_STUB - enter open - file_in address: {:x} - path: {}\n", file_in as *mut FileProtocol as u64, path);
+    log!(
+        "EFI_STUB - enter open - file_in address: {:x} - path: {}\n",
+        file_in as *mut FileProtocol as u64,
+        path
+    );
 
     if path == "\\" {
         log!("EFI-STUB: path = \\\n");
@@ -83,7 +87,9 @@ pub extern "win64" fn open(
     }
     if path == "." {
         log!("EFI-STUB: path = .\n");
-        unsafe{*file_out = file_in;}
+        unsafe {
+            *file_out = file_in;
+        }
         return Status::SUCCESS;
     }
     if path == ".." {
@@ -92,8 +98,8 @@ pub extern "win64" fn open(
             return Status::NOT_FOUND;
         }
 
-        let protocol_address = unsafe{(*wrapper).parent};
-        unsafe{
+        let protocol_address = unsafe { (*wrapper).parent };
+        unsafe {
             *file_out = protocol_address as *mut c_void as *mut FileProtocol;
         }
         return Status::SUCCESS;
@@ -104,34 +110,36 @@ pub extern "win64" fn open(
             log!("EFI-STUB: file protocol open function ok\n");
             let fs_wrapper = unsafe { &(*wrapper.fs_wrapper) };
             if let Some(file_out_wrapper) = fs_wrapper.create_file(false) {
-                let filename = unsafe{core::str::from_utf8_unchecked(&f.name)};
-                log!("EFI-STUB: file protocol open function filename: {:?}, filesize: {:?}\n", filename, f.size);
+                let filename = unsafe { core::str::from_utf8_unchecked(&f.name) };
+                log!(
+                    "EFI-STUB: file protocol open function filename: {:?}, filesize: {:?}\n",
+                    filename,
+                    f.size
+                );
                 match f.file_type {
-                    FileType::Directory => {
-                        unsafe{
-                            (*file_out_wrapper).directory = wrapper.fs.get_directory(f.cluster).unwrap();
-                            (*file_out_wrapper).dir_entry = DirectoryEntry {
-                                name: f.name,
-                                cluster: f.cluster,
-                                file_type:  FileType::Directory,
-                                size: f.size,
-                                long_name: f.long_name,
-                            };
-                            (*file_out_wrapper).parent = unsafe{&(*wrapper).proto as *const FileProtocol as u64};
-                        }
-                    }
-                    FileType::File => {
-                        unsafe {
-                            (*file_out_wrapper).file = wrapper.fs.get_file(f.cluster, f.size).unwrap();
-                            (*file_out_wrapper).dir_entry = DirectoryEntry {
-                                name: f.name,
-                                cluster: f.cluster,
-                                file_type:  FileType::File,
-                                size: f.size,
-                                long_name: f.long_name,
-                            };
-                        }
-                    }
+                    FileType::Directory => unsafe {
+                        (*file_out_wrapper).directory =
+                            wrapper.fs.get_directory(f.cluster).unwrap();
+                        (*file_out_wrapper).dir_entry = DirectoryEntry {
+                            name: f.name,
+                            cluster: f.cluster,
+                            file_type: FileType::Directory,
+                            size: f.size,
+                            long_name: f.long_name,
+                        };
+                        (*file_out_wrapper).parent =
+                            unsafe { &(*wrapper).proto as *const FileProtocol as u64 };
+                    },
+                    FileType::File => unsafe {
+                        (*file_out_wrapper).file = wrapper.fs.get_file(f.cluster, f.size).unwrap();
+                        (*file_out_wrapper).dir_entry = DirectoryEntry {
+                            name: f.name,
+                            cluster: f.cluster,
+                            file_type: FileType::File,
+                            size: f.size,
+                            long_name: f.long_name,
+                        };
+                    },
                 }
                 unsafe {
                     *file_out = &mut (*file_out_wrapper).proto;
@@ -142,15 +150,15 @@ pub extern "win64" fn open(
                 log!("EFI-STUB: file.rs open failed device_error\n");
                 Status::DEVICE_ERROR
             }
-        },
+        }
         Err(FatError::NotFound) => {
             log!("EFI-STUB: open failed not found {:?}\n", path);
             Status::NOT_FOUND
-        },
+        }
         Err(_) => {
             log!("EFI-STUB: file.rs open failed device_error\n");
             Status::DEVICE_ERROR
-        },
+        }
     }
 }
 
@@ -171,7 +179,7 @@ pub extern "win64" fn delete(_: *mut FileProtocol) -> Status {
 // #[cfg(not(test))]
 pub extern "win64" fn read(file: *mut FileProtocol, size: *mut usize, buf: *mut c_void) -> Status {
     let wrapper = container_of_mut!(file, FileWrapper, proto);
-    let wrapper_value = unsafe{&(*wrapper)};
+    let wrapper_value = unsafe { &(*wrapper) };
     match wrapper_value.dir_entry.file_type {
         crate::fat::FileType::File => {
             let mut current_offset = 0;
@@ -228,7 +236,7 @@ pub extern "win64" fn read(file: *mut FileProtocol, size: *mut usize, buf: *mut 
                                 long_name[i] = de.name[i];
                             }
                         }
-                        let mut fname = unsafe{core::str::from_utf8_unchecked(&long_name)};
+                        let mut fname = unsafe { core::str::from_utf8_unchecked(&long_name) };
                         let filename = &fname as &str;
                         crate::common::ascii_to_ucs2(filename, &mut (*info).file_name);
                         match de.file_type {
@@ -253,8 +261,6 @@ pub extern "win64" fn read(file: *mut FileProtocol, size: *mut usize, buf: *mut 
             return Status::SUCCESS;
         }
     }
-
-
 }
 
 // #[cfg(not(test))]
@@ -311,7 +317,7 @@ pub extern "win64" fn get_info(
                         long_name[i] = (*wrapper).dir_entry.name[i];
                     }
                 }
-                let filename = unsafe{core::str::from_utf8_unchecked(&long_name)};
+                let filename = unsafe { core::str::from_utf8_unchecked(&long_name) };
                 //log!("EFI-STUB: get_info: dir_entry.name: {:?}, dir_entry.long_name: {:?}\n", (*wrapper).dir_entry.name, filename);
                 let filename = &filename[0..255] as &str;
                 crate::common::ascii_to_ucs2(filename, &mut (*info).file_name);
@@ -379,7 +385,6 @@ pub struct FileSystemWrapper<'a> {
 
 // #[cfg(not(test))]
 impl<'a> FileSystemWrapper<'a> {
-
     // alloc a new FileWrapper
     fn create_file(&self, root: bool) -> Option<*mut FileWrapper> {
         let size = core::mem::size_of::<FileWrapper>();

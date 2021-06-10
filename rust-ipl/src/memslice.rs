@@ -47,12 +47,10 @@ pub fn get_dynamic_mem_slice_mut<'a>(t: SliceType, base_address: usize) -> &'a m
                 base_address as *const u8 as *mut u8,
                 RUNTIME_PAYLOAD_HOB_SIZE as usize,
             ),
-            SliceType::RuntimePayloadSlice => {
-                core::slice::from_raw_parts_mut(
-                    base_address as *const u8 as *mut u8,
-                    RUNTIME_PAYLOAD_SIZE
-                )
-            },
+            SliceType::RuntimePayloadSlice => core::slice::from_raw_parts_mut(
+                base_address as *const u8 as *mut u8,
+                RUNTIME_PAYLOAD_SIZE,
+            ),
             _ => {
                 panic!("not support")
             }

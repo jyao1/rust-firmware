@@ -6,30 +6,29 @@
 use crate::logger;
 
 use crate::pcd;
-use r_uefi_pi::fv;
 use crate::pci;
+use r_uefi_pi::fv;
 
-use r_efi::efi;
-use core::panic::PanicInfo;
-use core::ffi::c_void;
 use core::convert::TryInto;
+use core::ffi::c_void;
+use core::panic::PanicInfo;
 use core::slice;
+use r_efi::efi;
 
+use bitfield::Bit;
+use bitfield::BitRange;
 use x86::bits64::paging;
 use x86::msr;
-use bitfield::BitRange;
-use bitfield::Bit;
 
-pub const SIZE_4KB  :u64 = 0x00001000u64;
-pub const SIZE_1MB  :u64 = 0x00100000u64;
-pub const SIZE_2MB  :u64 = 0x00200000u64;
-pub const SIZE_16MB :u64 = 0x01000000u64;
+pub const SIZE_4KB: u64 = 0x00001000u64;
+pub const SIZE_1MB: u64 = 0x00100000u64;
+pub const SIZE_2MB: u64 = 0x00200000u64;
+pub const SIZE_16MB: u64 = 0x01000000u64;
 
-pub const LOCAL_APIC_MODE_XAPIC :u64 = 0x1;
-pub const LOCAL_APIC_MODE_X2APIC :u64 = 0x2;
+pub const LOCAL_APIC_MODE_XAPIC: u64 = 0x1;
+pub const LOCAL_APIC_MODE_X2APIC: u64 = 0x2;
 
-fn cmos_read8(index: u8) -> u8
-{
+fn cmos_read8(index: u8) -> u8 {
     let mut res: u8 = 0;
     unsafe {
         x86::io::outb(0x70, index);
@@ -38,8 +37,7 @@ fn cmos_read8(index: u8) -> u8
     res
 }
 
-fn cmos_write8(index: u8, value: u8) -> u8
-{
+fn cmos_write8(index: u8, value: u8) -> u8 {
     let mut res: u8 = 0;
     unsafe {
         x86::io::outb(0x70, index);
@@ -61,21 +59,18 @@ pub fn GetSystemMemorySizeBelow4Gb() -> u64 {
 }
 
 #[allow(non_snake_case)]
-pub fn EfiSizeToPage(size: u64) -> u64
-{
+pub fn EfiSizeToPage(size: u64) -> u64 {
     (size + SIZE_4KB - 1) / SIZE_4KB
 }
 
 #[allow(non_snake_case)]
-pub fn EfiPageToSize(page: u64) -> u64
-{
+pub fn EfiPageToSize(page: u64) -> u64 {
     page * SIZE_4KB
 }
 
 /// flag  ture align to low address else high address
 #[allow(non_snake_case)]
-fn AlignValue(value: u64, align: u64, flag: bool) -> u64
-{
+fn AlignValue(value: u64, align: u64, flag: bool) -> u64 {
     if flag {
         value & ((!(align - 1)) as u64)
     } else {
@@ -84,10 +79,22 @@ fn AlignValue(value: u64, align: u64, flag: bool) -> u64
 }
 
 #[allow(non_snake_case)]
-pub fn FindAndReportEntryPoint(firmwareVolumePtr: * const fv::FirmwareVolumeHeader, loaded_buffer: &mut [u8]) -> (u64, u64, u64)
-{
-    let firmware_buffer = unsafe { core::slice::from_raw_parts(firmwareVolumePtr as *const u8, pcd::pcd_get_PcdOvmfDxeMemFvSize() as usize) };
-    let image = uefi_pi::fv_lib::get_image_from_fv(firmware_buffer, fv::FV_FILETYPE_DXE_CORE, fv::SECTION_PE32).unwrap();
+pub fn FindAndReportEntryPoint(
+    firmwareVolumePtr: *const fv::FirmwareVolumeHeader,
+    loaded_buffer: &mut [u8],
+) -> (u64, u64, u64) {
+    let firmware_buffer = unsafe {
+        core::slice::from_raw_parts(
+            firmwareVolumePtr as *const u8,
+            pcd::pcd_get_PcdOvmfDxeMemFvSize() as usize,
+        )
+    };
+    let image = uefi_pi::fv_lib::get_image_from_fv(
+        firmware_buffer,
+        fv::FV_FILETYPE_DXE_CORE,
+        fv::SECTION_PE32,
+    )
+    .unwrap();
     if elf_loader::elf::is_elf(image) {
         log!("payload is elf image\n");
         elf_loader::elf::relocate_elf(image, loaded_buffer)
@@ -97,12 +104,10 @@ pub fn FindAndReportEntryPoint(firmwareVolumePtr: * const fv::FirmwareVolumeHead
     } else {
         panic!("format not support")
     }
-
 }
 
 #[allow(non_snake_case)]
-pub fn PciExBarInitialization()
-{
+pub fn PciExBarInitialization() {
     let pci_exbar_base = pcd::pcd_get_PcdPciExpressBaseAddress();
 
     //
@@ -115,14 +120,17 @@ pub fn PciExBarInitialization()
     // MMCONFIG area size and enabling decoding at once.
     //
     log!("pci_exbar_base {:x}\n", pci_exbar_base);
-    log!("pci_exbar_base {:x}, {:x}\n", (pci_exbar_base >> 32) as u32, (pci_exbar_base << 32 >> 32 | 0x1) as u32);
+    log!(
+        "pci_exbar_base {:x}, {:x}\n",
+        (pci_exbar_base >> 32) as u32,
+        (pci_exbar_base << 32 >> 32 | 0x1) as u32
+    );
     pci::PciCf8Write32(0, 0, 0, 0x64, (pci_exbar_base >> 32) as u32);
     pci::PciCf8Write32(0, 0, 0, 0x60, (pci_exbar_base << 32 >> 32 | 0x1) as u32);
 }
 
 #[allow(non_snake_case)]
-pub fn InitPci()
-{
+pub fn InitPci() {
     pci::PciCf8Write32(0, 3, 0, 0x14, 0xC1085000);
     pci::PciCf8Write32(0, 3, 0, 0x20, 0xC200000C);
     pci::PciCf8Write32(0, 3, 0, 0x24, 0x00000008);
@@ -130,36 +138,38 @@ pub fn InitPci()
 }
 
 #[allow(non_snake_case)]
-pub fn VirtIoBlk()
-{
+pub fn VirtIoBlk() {
     let base: usize = 0x8C2000000usize;
     use core::intrinsics::volatile_store;
 
     log!("VIRTIO_STATUS_RESET\n");
-    unsafe{volatile_store((base + 0x14usize) as *mut u32, 0u32);}
+    unsafe {
+        volatile_store((base + 0x14usize) as *mut u32, 0u32);
+    }
     log!("VIRTIO_STATUS_ACKNOWLEDGE\n");
-    unsafe{volatile_store((base + 0x14usize) as *mut u32, 1u32);}
+    unsafe {
+        volatile_store((base + 0x14usize) as *mut u32, 1u32);
+    }
     log!("VIRTIO_STATUS_DRIVER\n");
-    unsafe{volatile_store((base + 0x14usize) as *mut u32, 2u32);}
+    unsafe {
+        volatile_store((base + 0x14usize) as *mut u32, 2u32);
+    }
 }
 
 #[allow(non_snake_case)]
-pub fn CpuGetMemorySpaceSize() -> u8
-{
+pub fn CpuGetMemorySpaceSize() -> u8 {
     let res = x86::cpuid::cpuid!(0x80000000u32);
     if res.eax > 0x80000008u32 {
         let res = x86::cpuid::cpuid!(0x80000008u32);
         let sizeofmemoryspace = (res.eax & 0xffu32) as u8;
         sizeofmemoryspace
-    }else {
+    } else {
         0u8
     }
 }
 
-
 #[allow(non_snake_case)]
-pub fn LocalApicBaseAddressMsrSupported() -> bool
-{
+pub fn LocalApicBaseAddressMsrSupported() -> bool {
     let res = x86::cpuid::cpuid!(1u32);
     let res: u32 = res.eax.bit_range(11, 8);
     if res == 0x4 || res == 0x05 {
@@ -170,13 +180,12 @@ pub fn LocalApicBaseAddressMsrSupported() -> bool
 }
 
 #[allow(non_snake_case)]
-pub fn GetApicMode() -> u64
-{
+pub fn GetApicMode() -> u64 {
     use x86::msr;
     match LocalApicBaseAddressMsrSupported() {
         false => LOCAL_APIC_MODE_XAPIC,
         true => {
-            let base = unsafe{msr::rdmsr(msr::IA32_APIC_BASE)};
+            let base = unsafe { msr::rdmsr(msr::IA32_APIC_BASE) };
 
             //
             // [Bit 10] Enable x2APIC mode. Introduced at Display Family / Display
@@ -201,7 +210,6 @@ pub fn SetApicMode(mode: u64) {
             base.set_bit(10, true);
             msr::wrmsr(msr::IA32_APIC_BASE, base);
         }
-
     }
 
     if CurrentMode == LOCAL_APIC_MODE_X2APIC && mode == LOCAL_APIC_MODE_XAPIC {
@@ -260,8 +268,12 @@ pub enum TimerMode {
 }
 
 #[allow(non_snake_case)]
-pub fn InitializeApicTimer(DivideValue: TimerDivide, InitCount: u32, PeriodicMode: TimerMode, Vector: u8)
-{
+pub fn InitializeApicTimer(
+    DivideValue: TimerDivide,
+    InitCount: u32,
+    PeriodicMode: TimerMode,
+    Vector: u8,
+) {
     //
     // Ensure local APIC is in software-enabled state.
     //
@@ -289,12 +301,10 @@ pub fn InitializeApicTimer(DivideValue: TimerDivide, InitCount: u32, PeriodicMod
 
         msr::wrmsr(msr::IA32_X2APIC_LVT_TIMER, lvt_timer_register);
     }
-
 }
 
 #[allow(non_snake_case)]
-pub fn DisableApicTimerInterrupt()
-{
+pub fn DisableApicTimerInterrupt() {
     unsafe {
         let mut lvt_timer_register = msr::rdmsr(msr::IA32_X2APIC_LVT_TIMER);
         lvt_timer_register.set_bit(16, true);
@@ -304,18 +314,17 @@ pub fn DisableApicTimerInterrupt()
 }
 
 #[allow(non_snake_case)]
-fn InitializeLocalApicSoftwareEnable(b: bool)
-{
-    let mut srv = unsafe {msr::rdmsr(msr::IA32_X2APIC_SIVR)};
+fn InitializeLocalApicSoftwareEnable(b: bool) {
+    let mut srv = unsafe { msr::rdmsr(msr::IA32_X2APIC_SIVR) };
     if b {
         if srv.bit(8) == false {
             srv.set_bit(8, true);
-            unsafe { msr::wrmsr(msr::IA32_X2APIC_SIVR, srv)}
+            unsafe { msr::wrmsr(msr::IA32_X2APIC_SIVR, srv) }
         }
     } else {
         if srv.bit(8) == true {
             srv.set_bit(8, false);
-            unsafe { msr::wrmsr(msr::IA32_X2APIC_SIVR, srv)}
+            unsafe { msr::wrmsr(msr::IA32_X2APIC_SIVR, srv) }
         }
     }
 }

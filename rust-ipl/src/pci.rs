@@ -5,12 +5,11 @@
 use bitfield::Bit;
 use bitfield::BitRange;
 
-pub const PCI_CONFIGURATION_ADDRESS_PORT:  u16 = 0xCF8;
+pub const PCI_CONFIGURATION_ADDRESS_PORT: u16 = 0xCF8;
 pub const PCI_CONFIGURATION_DATA_PORT: u16 = 0xCFC;
 
 #[allow(non_snake_case)]
-pub fn PciCf8Read32(bus: u8, device: u8, fnc: u8, reg: u8) -> u32
-{
+pub fn PciCf8Read32(bus: u8, device: u8, fnc: u8, reg: u8) -> u32 {
     let data = u32::from(bus) << 16;
     let data = data | u32::from(device) << 11;
     let data = data | u32::from(fnc) << 8;
@@ -26,8 +25,7 @@ pub fn PciCf8Read32(bus: u8, device: u8, fnc: u8, reg: u8) -> u32
 }
 
 #[allow(non_snake_case)]
-pub fn PciCf8Write32(bus: u8, device: u8, fnc: u8, reg: u8, value: u32)
-{
+pub fn PciCf8Write32(bus: u8, device: u8, fnc: u8, reg: u8, value: u32) {
     let data = u32::from(bus) << 16;
     let data = data | u32::from(device) << 11;
     let data = data | u32::from(fnc) << 8;
@@ -41,8 +39,7 @@ pub fn PciCf8Write32(bus: u8, device: u8, fnc: u8, reg: u8, value: u32)
 }
 
 #[allow(non_snake_case)]
-pub fn PciCf8Write8(bus: u8, device: u8, fnc: u8, reg: u8, value: u8)
-{
+pub fn PciCf8Write8(bus: u8, device: u8, fnc: u8, reg: u8, value: u8) {
     let data = u32::from(bus) << 16;
     let data = data | u32::from(device) << 11;
     let data = data | u32::from(fnc) << 8;
@@ -55,10 +52,8 @@ pub fn PciCf8Write8(bus: u8, device: u8, fnc: u8, reg: u8, value: u8)
     }
 }
 
-
 #[allow(non_snake_case)]
-pub fn PciCf8Read8(bus: u8, device: u8, fnc: u8, reg: u8) -> u8
-{
+pub fn PciCf8Read8(bus: u8, device: u8, fnc: u8, reg: u8) -> u8 {
     let data = u32::from(bus) << 16;
     let data = data | u32::from(device) << 11;
     let data = data | u32::from(fnc) << 8;
@@ -74,8 +69,7 @@ pub fn PciCf8Read8(bus: u8, device: u8, fnc: u8, reg: u8) -> u8
 }
 
 #[allow(non_snake_case)]
-pub fn InitializeAcpiPm()
-{
+pub fn InitializeAcpiPm() {
     let mut PmbaAndVal = 0xffffffffu32;
     PmbaAndVal.set_bit_range(15, 7, 0x0u32);
     let PmbaOrVal = 0x600u32;

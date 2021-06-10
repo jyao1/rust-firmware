@@ -13,7 +13,6 @@
 // limitations under the License.
 
 #![allow(unused)]
-
 #![feature(asm)]
 #![cfg_attr(not(test), no_std)]
 #![cfg_attr(not(test), no_main)]
@@ -34,7 +33,6 @@ use cpuio::Port;
 mod block;
 mod bzimage;
 mod efi;
-mod pi;
 mod fat;
 mod loader;
 mod mem;
@@ -42,8 +40,9 @@ mod mmio;
 mod part;
 mod pci;
 mod pe;
-mod virtio;
+mod pi;
 mod r_efi_ext;
+mod virtio;
 
 // #[cfg(not(test))]
 #[panic_handler]
@@ -84,7 +83,6 @@ fn i8042_reset() -> ! {
 #[no_mangle]
 #[cfg_attr(target_os = "uefi", export_name = "efi_main")]
 pub extern "win64" fn _start(hob: *const c_void) -> ! {
-
     log!("Starting UEFI hob - {:p}\n", hob);
 
     //enable_sse2();

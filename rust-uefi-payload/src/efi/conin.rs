@@ -15,14 +15,14 @@
 // Inspired by https://github.com/phil-opp/blog_os/blob/post-03/src/vga_buffer.rs
 // from Philipp Oppermann
 
+use core::ffi::c_void;
 use core::fmt;
+use cpuio::Port;
 use lazy_static::lazy_static;
 use spin::Mutex;
-use cpuio::Port;
-use core::ffi::c_void;
 
 const LSR_TXRDY: u8 = 0x20;
-const LSR_RXDA : u8 = 0x01;
+const LSR_RXDA: u8 = 0x01;
 const LSR_OFFSET: u16 = 0x05;
 
 pub struct ConIn {
@@ -32,10 +32,9 @@ pub struct ConIn {
 
 impl ConIn {
     pub fn read_byte(&mut self) -> u8 {
-
         let data = self.lsr_port.read();
         if (data & LSR_RXDA) == 0 {
-          return 0;
+            return 0;
         }
         let byte = self.port.read();
         byte

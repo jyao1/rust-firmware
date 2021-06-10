@@ -18,12 +18,12 @@ use r_efi::efi;
 use r_efi::efi::{
     AllocateType, Boolean, CapsuleHeader, Char16, Event, EventNotify, Guid, Handle, InterfaceType,
     LocateSearchType, MemoryDescriptor, MemoryType, OpenProtocolInformationEntry, PhysicalAddress,
-    ResetType, Status, Time, TimeCapabilities, TimerDelay, Tpl, MEMORY_WB
+    ResetType, Status, Time, TimeCapabilities, TimerDelay, Tpl, MEMORY_WB,
 };
 
 use core::ffi::c_void;
-use core::mem::transmute;
 use core::mem::size_of;
+use core::mem::transmute;
 
 const EVENT_STRUCT_SIGNATURE: u32 = 0x54564549; // 'I','E','V','T'
 
@@ -36,7 +36,7 @@ struct EventStruct {
     notify_context: usize,
 }
 
-const MAX_EVENT_STRUCT : usize = 16;
+const MAX_EVENT_STRUCT: usize = 16;
 
 #[derive(Default)]
 pub struct EventInfo {
@@ -45,19 +45,19 @@ pub struct EventInfo {
 }
 
 impl EventInfo {
-    pub fn create_event (
+    pub fn create_event(
         &mut self,
         r#type: u32,
         notify_tpl: Tpl,
         notify_function: EventNotify,
         notify_context: *mut c_void,
     ) -> (Status, Event) {
-        let (status, new_event) = self.get_new_event ();
+        let (status, new_event) = self.get_new_event();
         if status != Status::SUCCESS {
-          return (status, core::ptr::null_mut());
+            return (status, core::ptr::null_mut());
         }
 
-        let event_struct = unsafe {transmute::<Event, &mut EventStruct>(new_event)};
+        let event_struct = unsafe { transmute::<Event, &mut EventStruct>(new_event) };
         event_struct.signature = EVENT_STRUCT_SIGNATURE;
         event_struct.r#type = r#type;
         event_struct.notify_tpl = notify_tpl;
@@ -66,17 +66,12 @@ impl EventInfo {
 
         (Status::SUCCESS, new_event)
     }
-    pub fn close_event (
-        &mut self,
-        event: Event
-    ) -> (Status) {
+    pub fn close_event(&mut self, event: Event) -> (Status) {
         (Status::UNSUPPORTED)
     }
-    fn get_new_event (
-        &mut self
-    ) -> (Status, Event) {
+    fn get_new_event(&mut self) -> (Status, Event) {
         if self.event_count >= MAX_EVENT_STRUCT {
-          return (Status::OUT_OF_RESOURCES, core::ptr::null_mut());
+            return (Status::OUT_OF_RESOURCES, core::ptr::null_mut());
         }
         let event_struct = &mut self.event_struct[self.event_count];
         self.event_count = self.event_count + 1;
@@ -93,4 +88,3 @@ impl EventInfo {
         }
     }
 }
-

@@ -99,8 +99,7 @@ unsafe impl FrameAllocator<Size4KiB> for BMFrameAllocator {
 
 /// Initialize the physical frame allocator.
 pub(super) fn init() {
-    *FRAME_ALLOCATOR.lock() =
-        BMFrameAllocator::new(PAGE_TABLE_BASE as usize, PAGE_TABLE_SIZE);
+    *FRAME_ALLOCATOR.lock() = BMFrameAllocator::new(PAGE_TABLE_BASE as usize, PAGE_TABLE_SIZE);
 
     // The first frame should've already been allocated to level 4 PT
     unsafe { FRAME_ALLOCATOR.lock().alloc() };

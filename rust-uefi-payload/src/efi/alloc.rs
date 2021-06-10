@@ -47,21 +47,21 @@ pub struct Allocator {
 
 impl Default for Allocator {
     fn default() -> Allocator {
-      Allocator {
-        allocations: [Allocation{
-                        in_use: false,
-                        next_allocation: None,
-                        descriptor: MemoryDescriptor{
-                                      r#type: 0,
-                                      physical_start: 0,
-                                      virtual_start: 0,
-                                      number_of_pages: 0,
-                                      attribute: 0,
-                                      },
-                      } ; MAX_ALLOCATIONS],
-        key: 0,
-        first_allocation: None,
-      }
+        Allocator {
+            allocations: [Allocation {
+                in_use: false,
+                next_allocation: None,
+                descriptor: MemoryDescriptor {
+                    r#type: 0,
+                    physical_start: 0,
+                    virtual_start: 0,
+                    number_of_pages: 0,
+                    attribute: 0,
+                },
+            }; MAX_ALLOCATIONS],
+            key: 0,
+            first_allocation: None,
+        }
     }
 }
 
@@ -74,7 +74,12 @@ impl Allocator {
         address: u64,
         attributes: u64,
     ) -> Status {
-        log!("add_initial_allocation {} : 0x{:016x}-0x{:016x}\n", memory_type as u32, address, address + page_count * PAGE_SIZE - 1);
+        log!(
+            "add_initial_allocation {} : 0x{:016x}-0x{:016x}\n",
+            memory_type as u32,
+            address,
+            address + page_count * PAGE_SIZE - 1
+        );
         self.key += 1;
 
         if self.first_allocation == None {
@@ -309,7 +314,7 @@ impl Allocator {
             let next_allocation = self.allocations[cur.unwrap()].next_allocation;
 
             if next_allocation.is_none() {
-            //    log!("{}:{} out of resource\n", file!(), line!());
+                //    log!("{}:{} out of resource\n", file!(), line!());
                 return;
             }
 

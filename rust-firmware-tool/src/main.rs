@@ -16,39 +16,37 @@ mod pe;
 use core::mem::size_of;
 use r_efi::efi::Guid;
 use r_uefi_pi::fv::{
-    FirmwareVolumeHeader, FirmwareVolumeExtHeader, FvBlockMap, FfsFileHeader,
-    CommonSectionHeader,
-    FIRMWARE_FILE_SYSTEM2_GUID, FVH_SIGNATURE, FV_FILETYPE_FFS_PAD,
-    FV_FILETYPE_DXE_CORE, FV_FILETYPE_SECURITY_CORE, SECTION_PE32, SECTION_PIC,
-    FV_FILETYPE_RAW, SECTION_RAW
+    CommonSectionHeader, FfsFileHeader, FirmwareVolumeExtHeader, FirmwareVolumeHeader, FvBlockMap,
+    FIRMWARE_FILE_SYSTEM2_GUID, FVH_SIGNATURE, FV_FILETYPE_DXE_CORE, FV_FILETYPE_FFS_PAD,
+    FV_FILETYPE_RAW, FV_FILETYPE_SECURITY_CORE, SECTION_PE32, SECTION_PIC, SECTION_RAW,
 };
 
 use scroll::{Pread, Pwrite};
 
-const SIZE_1K:      u64     = 0x400;
-const SIZE_2K:      u64     = 0x800;
-const SIZE_4K:      u64     = 0x1000;
-const SIZE_8K:      u64     = 0x2000;
-const SIZE_16K:     u64     = 0x4000;
-const SIZE_32K:     u64     = 0x8000;
-const SIZE_64K:     u64     = 0x1_0000;
-const SIZE_128K:    u64     = 0x2_0000;
-const SIZE_256K:    u64     = 0x4_0000;
-const SIZE_512K:    u64     = 0x8_0000;
-const SIZE_1M:      u64     = 0x10_0000;
-const SIZE_2M:      u64     = 0x20_0000;
-const SIZE_4M:      u64     = 0x40_0000;
-const SIZE_8M:      u64     = 0x80_0000;
-const SIZE_16M:     u64     = 0x100_0000;
-const SIZE_32M:     u64     = 0x200_0000;
-const SIZE_64M:     u64     = 0x400_0000;
-const SIZE_128M:    u64     = 0x800_0000;
-const SIZE_256M:    u64     = 0x1000_0000;
-const SIZE_512M:    u64     = 0x2000_0000;
-const SIZE_1G:      u64     = 0x4000_0000;
-const SIZE_2G:      u64     = 0x8000_0000;
-const SIZE_4G:      u64     = 0x1_0000_0000;
-const SIZE_8G:      u64     = 0x2_0000_0000;
+const SIZE_1K: u64 = 0x400;
+const SIZE_2K: u64 = 0x800;
+const SIZE_4K: u64 = 0x1000;
+const SIZE_8K: u64 = 0x2000;
+const SIZE_16K: u64 = 0x4000;
+const SIZE_32K: u64 = 0x8000;
+const SIZE_64K: u64 = 0x1_0000;
+const SIZE_128K: u64 = 0x2_0000;
+const SIZE_256K: u64 = 0x4_0000;
+const SIZE_512K: u64 = 0x8_0000;
+const SIZE_1M: u64 = 0x10_0000;
+const SIZE_2M: u64 = 0x20_0000;
+const SIZE_4M: u64 = 0x40_0000;
+const SIZE_8M: u64 = 0x80_0000;
+const SIZE_16M: u64 = 0x100_0000;
+const SIZE_32M: u64 = 0x200_0000;
+const SIZE_64M: u64 = 0x400_0000;
+const SIZE_128M: u64 = 0x800_0000;
+const SIZE_256M: u64 = 0x1000_0000;
+const SIZE_512M: u64 = 0x2000_0000;
+const SIZE_1G: u64 = 0x4000_0000;
+const SIZE_2G: u64 = 0x8000_0000;
+const SIZE_4G: u64 = 0x1_0000_0000;
+const SIZE_8G: u64 = 0x2_0000_0000;
 
 /*
     Image Layout:
@@ -131,8 +129,8 @@ impl Default for PayloadFvHeaderByte {
     fn default() -> Self {
         PayloadFvHeaderByte {
             data: [0u8; size_of::<PayloadFvHeader>()
-            + size_of::<PayloadFvFfsHeader>()
-            + size_of::<PayloadFvFfsSectionHeader>()],
+                + size_of::<PayloadFvFfsHeader>()
+                + size_of::<PayloadFvFfsSectionHeader>()],
         }
     }
 }
@@ -195,7 +193,9 @@ fn build_payload_fv_header(payload_fv_header_buffer: &mut [u8], payload_bin: &[u
 
     payload_fv_header.pad = [0u8; 4];
 
-    let res1 = payload_fv_header_buffer.pwrite(payload_fv_header, 0).unwrap();
+    let res1 = payload_fv_header_buffer
+        .pwrite(payload_fv_header, 0)
+        .unwrap();
     assert_eq!(res1, 120);
 
     let mut tdx_payload_fv_ffs_header = PayloadFvFfsHeader::default();
@@ -215,7 +215,9 @@ fn build_payload_fv_header(payload_fv_header_buffer: &mut [u8], payload_bin: &[u
     tdx_payload_fv_ffs_header.ffs_header.r#type = FV_FILETYPE_DXE_CORE;
     tdx_payload_fv_ffs_header.ffs_header.attributes = 0x00;
     write_u24(
-        (payload_bin.len() + size_of::<PayloadFvFfsHeader>() + size_of::<PayloadFvFfsSectionHeader>()) as u32,
+        (payload_bin.len()
+            + size_of::<PayloadFvFfsHeader>()
+            + size_of::<PayloadFvFfsSectionHeader>()) as u32,
         &mut tdx_payload_fv_ffs_header.ffs_header.size,
     );
     tdx_payload_fv_ffs_header.ffs_header.state = 0xF8u8;
@@ -246,7 +248,11 @@ type IplFvFfsHeader = PayloadFvFfsHeader;
 type IplFvFfsSectionHeader = PayloadFvFfsSectionHeader;
 type IplFvHeaderByte = PayloadFvHeaderByte;
 
-fn build_ipl_fv_header(ipl_fv_header_buffer: &mut [u8], ipl_relocate_buffer: &[u8], reset_vector_bin: &[u8]) {
+fn build_ipl_fv_header(
+    ipl_fv_header_buffer: &mut [u8],
+    ipl_relocate_buffer: &[u8],
+    reset_vector_bin: &[u8],
+) {
     let mut ipl_fv_header = IplFvHeader::default();
 
     let fv_header_size = (size_of::<IplFvHeader>()) as usize;
@@ -325,7 +331,9 @@ fn build_ipl_fv_header(ipl_fv_header_buffer: &mut [u8], ipl_relocate_buffer: &[u
     ipl_fv_ffs_header.ffs_header.r#type = FV_FILETYPE_SECURITY_CORE;
     ipl_fv_ffs_header.ffs_header.attributes = 0x00;
     write_u24(
-        (ipl_relocate_buffer.len() + size_of::<IplFvFfsHeader>() + size_of::<IplFvFfsSectionHeader>()) as u32,
+        (ipl_relocate_buffer.len()
+            + size_of::<IplFvFfsHeader>()
+            + size_of::<IplFvFfsSectionHeader>()) as u32,
         &mut ipl_fv_ffs_header.ffs_header.size,
     );
     ipl_fv_ffs_header.ffs_header.state = 0xF8u8;
@@ -352,9 +360,9 @@ fn build_ipl_fv_header(ipl_fv_header_buffer: &mut [u8], ipl_relocate_buffer: &[u
 #[repr(C)]
 #[derive(Debug, Default, Pwrite)]
 struct ResetVectorHeader {
-    ffs_header: FfsFileHeader, // 24
-    section_header_pad: CommonSectionHeader, // 4
-    pad: [u8; 8], // 8
+    ffs_header: FfsFileHeader,                        // 24
+    section_header_pad: CommonSectionHeader,          // 4
+    pad: [u8; 8],                                     // 8
     section_header_reset_vector: CommonSectionHeader, //4
 }
 
@@ -412,7 +420,13 @@ fn build_reset_vector_header(reset_vector_header_buffer: &mut [u8], reset_vector
 }
 
 fn main() -> std::io::Result<()> {
-    assert_eq!(RUST_VAR_AND_PADDING_SIZE + RUST_PAYLOAD_MAX_SIZE + RUST_IPL_MAX_SIZE + RUST_RESET_VECTOR_MAX_SIZE, RUST_FIRMWARE_SIZE);
+    assert_eq!(
+        RUST_VAR_AND_PADDING_SIZE
+            + RUST_PAYLOAD_MAX_SIZE
+            + RUST_IPL_MAX_SIZE
+            + RUST_RESET_VECTOR_MAX_SIZE,
+        RUST_FIRMWARE_SIZE
+    );
     assert!(RUST_PAYLOAD_MAX_SIZE > size_of::<PayloadFvHeader>());
 
     let args: Vec<String> = env::args().collect();
@@ -445,13 +459,30 @@ fn main() -> std::io::Result<()> {
     let mut rust_ipl_header_bytes = IplFvHeaderByte::default();
     let rust_ipl_header_buffer = &mut rust_ipl_header_bytes.data[..];
 
-    let mut new_rust_ipl_buf = vec![0x00u8; RUST_IPL_MAX_SIZE - size_of::<PayloadFvHeaderByte>() - size_of::<PayloadFvFfsSectionHeader>()];
-    pe::relocate(&rust_ipl_bin, &mut new_rust_ipl_buf, LOADED_IPL_ADDRESS + rust_ipl_header_buffer.len()).expect("fail to relocate PE image");
+    let mut new_rust_ipl_buf = vec![
+        0x00u8;
+        RUST_IPL_MAX_SIZE
+            - size_of::<PayloadFvHeaderByte>()
+            - size_of::<PayloadFvFfsSectionHeader>()
+    ];
+    pe::relocate(
+        &rust_ipl_bin,
+        &mut new_rust_ipl_buf,
+        LOADED_IPL_ADDRESS + rust_ipl_header_buffer.len(),
+    )
+    .expect("fail to relocate PE image");
 
-    build_ipl_fv_header(rust_ipl_header_buffer, new_rust_ipl_buf.as_slice(), reset_vector_bin.as_slice());
+    build_ipl_fv_header(
+        rust_ipl_header_buffer,
+        new_rust_ipl_buf.as_slice(),
+        reset_vector_bin.as_slice(),
+    );
 
     let mut rust_reset_vector_header_buffer = [0u8; size_of::<ResetVectorByte>()];
-    build_reset_vector_header(&mut rust_reset_vector_header_buffer, reset_vector_bin.as_slice());
+    build_reset_vector_header(
+        &mut rust_reset_vector_header_buffer,
+        reset_vector_bin.as_slice(),
+    );
 
     let mut total_writen = 0usize;
 
@@ -464,17 +495,18 @@ fn main() -> std::io::Result<()> {
     rust_firmware_file
         .write_all(&rust_payload_header_buffer[..])
         .expect("fail to write rust payload header");
-        total_writen += &rust_payload_header_buffer[..].len();
+    total_writen += &rust_payload_header_buffer[..].len();
 
     rust_firmware_file
         .write_all(&rust_payload_bin[..])
         .expect("fail to write rust payload");
-        total_writen += &rust_payload_bin[..].len();
-    let pad_size = RUST_PAYLOAD_MAX_SIZE - rust_payload_bin.len() - rust_payload_header_buffer.len();
+    total_writen += &rust_payload_bin[..].len();
+    let pad_size =
+        RUST_PAYLOAD_MAX_SIZE - rust_payload_bin.len() - rust_payload_header_buffer.len();
     rust_firmware_file
         .write_all(&zero_buf[..pad_size])
         .expect("fail to write pad");
-        total_writen += &zero_buf[..pad_size].len();
+    total_writen += &zero_buf[..pad_size].len();
     assert_eq!(total_writen, RUST_IPL_OFFSET);
 
     rust_firmware_file
@@ -484,10 +516,14 @@ fn main() -> std::io::Result<()> {
         .write_all(&new_rust_ipl_buf[..])
         .expect("fail to write rust IPL");
 
-    let pad_size = RUST_IPL_MAX_SIZE + RUST_RESET_VECTOR_MAX_SIZE - new_rust_ipl_buf.len() - rust_ipl_header_buffer.len() - rust_reset_vector_header_buffer.len() - reset_vector_bin.len();
+    let pad_size = RUST_IPL_MAX_SIZE + RUST_RESET_VECTOR_MAX_SIZE
+        - new_rust_ipl_buf.len()
+        - rust_ipl_header_buffer.len()
+        - rust_reset_vector_header_buffer.len()
+        - reset_vector_bin.len();
     rust_firmware_file
-    .write_all(&zero_buf[..pad_size])
-    .expect("fail to write rust IPL");
+        .write_all(&zero_buf[..pad_size])
+        .expect("fail to write rust IPL");
 
     rust_firmware_file
         .write_all(&rust_reset_vector_header_buffer[..])

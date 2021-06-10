@@ -140,7 +140,11 @@ pub fn load_default_entry(fs: &fat::Filesystem) -> Result<(u64), Error> {
     let cmdline = ascii_strip(&entry.cmdline);
 
     let mut bzimage_file = fs.open(bzimage_path)?;
-    let jump_address = bzimage::load_kernel(&mut fs.get_file(bzimage_file.cluster, bzimage_file.size).unwrap())?;
+    let jump_address = bzimage::load_kernel(
+        &mut fs
+            .get_file(bzimage_file.cluster, bzimage_file.size)
+            .unwrap(),
+    )?;
 
     if !initrd_path.is_empty() {
         let mut initrd_file = fs.open(initrd_path)?;

@@ -16,10 +16,16 @@ use x86_64::{
     VirtAddr,
 };
 
-use super::frame::BMFrameAllocator;
 use super::consts::PAGE_TABLE_BASE;
+use super::frame::BMFrameAllocator;
 
-pub fn create_mapping(pt: &mut OffsetPageTable, allocator: &mut BMFrameAllocator, mut pa: PhysAddr, mut va: VirtAddr, mut sz: u64) {
+pub fn create_mapping(
+    pt: &mut OffsetPageTable,
+    allocator: &mut BMFrameAllocator,
+    mut pa: PhysAddr,
+    mut va: VirtAddr,
+    mut sz: u64,
+) {
     // const ALIGN_4K_BITS: u64 = 12;
     // const ALIGN_4K: u64 = 4096;
     const ALIGN_2M_BITS: u64 = 21;

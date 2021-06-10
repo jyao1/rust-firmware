@@ -80,7 +80,7 @@ pub fn ascii_to_ucs2(input: &str, output: &mut [u16]) {
 pub fn ascii_length(input: *const u8, maxlen: usize) -> usize {
     let mut len = 0;
     loop {
-        let v = unsafe{ *(((input as u64) + (len as u64)) as *const u8)} as u8 ;
+        let v = unsafe { *(((input as u64) + (len as u64)) as *const u8) } as u8;
         if v == 0 {
             break;
         }

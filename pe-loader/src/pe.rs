@@ -21,7 +21,7 @@ pub fn is_pe(pe_image: &[u8]) -> bool {
     let pe_header_offset = pe_image.pread::<u32>(0x3c).unwrap() as usize;
 
     if pe_image.len() <= pe_header_offset {
-        return false
+        return false;
     }
 
     let pe_region = &pe_image[pe_header_offset..];
@@ -46,7 +46,7 @@ pub fn relocate(pe_image: &[u8], new_pe_image: &mut [u8], new_image_base: usize)
 
     let num_sections = pe_region.pread::<u16>(6).unwrap() as usize;
     let optional_header_size = pe_region.pread::<u16>(20).unwrap() as usize;
-    let optional_region = &image_buffer[24+pe_header_offset..];
+    let optional_region = &image_buffer[24 + pe_header_offset..];
 
     // check optional_hdr64_magic
     if optional_region.pread::<u16>(0).unwrap() != OPTIONAL_HDR64_MAGIC {
@@ -109,22 +109,22 @@ pub fn relocate_pe_mem(image: &[u8], loaded_buffer: &mut [u8]) -> (u64, u64, u64
 
 #[derive(Debug, Default, Pread, Pwrite)]
 pub struct Section {
-    name: [u8; 8], // 8
-    virtual_size: u32, //4
-    virtual_address: u32, //4
-    size_of_raw_data: u32,//4
-    pointer_to_raw_data: u32,//4
-    pointer_to_relocations: u32,//4
-    pointer_to_line_numbers: u32,//4
-    number_of_relocations: u16,//2
-    number_of_line_numbers: u16,//2
-    characteristics: u32,//4
+    name: [u8; 8],                // 8
+    virtual_size: u32,            //4
+    virtual_address: u32,         //4
+    size_of_raw_data: u32,        //4
+    pointer_to_raw_data: u32,     //4
+    pointer_to_relocations: u32,  //4
+    pointer_to_line_numbers: u32, //4
+    number_of_relocations: u16,   //2
+    number_of_line_numbers: u16,  //2
+    characteristics: u32,         //4
 }
 
 pub struct Sections<'a> {
     index: usize,
     entries: &'a [u8],
-    num_sections: usize
+    num_sections: usize,
 }
 
 impl<'a> Sections<'a> {

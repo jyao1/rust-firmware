@@ -156,7 +156,8 @@ pub fn find_efi_partition(r: &dyn SectorRead) -> Result<(u64, u64), Error> {
         }
 
         // Safe as size of partition struct * 4 is 512 bytes (size of data)
-        let parts = unsafe { core::slice::from_raw_parts(data.as_ptr() as *const PartitionEntry, 4) };
+        let parts =
+            unsafe { core::slice::from_raw_parts(data.as_ptr() as *const PartitionEntry, 4) };
 
         for p in parts {
             if p.is_efi_partition() {
