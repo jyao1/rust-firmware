@@ -43,6 +43,7 @@ mod part;
 mod pci;
 mod pe;
 mod virtio;
+mod r_efi_ext;
 
 #[cfg(not(test))]
 #[panic_handler]

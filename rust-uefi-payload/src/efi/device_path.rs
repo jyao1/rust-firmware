@@ -30,6 +30,8 @@ use r_efi::protocols::device_path::{
   TYPE_END
 };
 
+use crate::r_efi_ext;
+
 #[repr(C)]
 #[derive(Copy, Clone, Debug)]
 pub struct MemoryMaped {
@@ -84,7 +86,7 @@ pub fn get_device_path_size (
     loop {
       let node_size = get_device_path_node_size(device_path_node);
       size = size + node_size;
-      if get_device_path_node_type(device_path_node) == r_efi::protocols::device_path::TYPE_END && 
+      if get_device_path_node_type(device_path_node) == r_efi::protocols::device_path::TYPE_END &&
          get_device_path_node_sub_type(device_path_node) == r_efi::protocols::device_path::End::SUBTYPE_ENTIRE {
         break;
       }
@@ -173,7 +175,7 @@ pub fn get_file_path_media_device_path(device_path: *mut DevicePathProtocol) -> 
           return None
       }
       if get_device_path_node_type(device_path_node) == r_efi::protocols::device_path::TYPE_MEDIA &&
-        get_device_path_node_sub_type(device_path_node) == r_efi::protocols::device_path::Media::SUBTYPE_FILE_PATH {
+        get_device_path_node_sub_type(device_path_node) == r_efi_ext::protocols::device_path::Media::SUBTYPE_FILE_PATH {
           return Some(unsafe{(device_path_node as usize + 4 as usize) as *mut u16})
       }
       if get_device_path_node_type(device_path_node) == r_efi::protocols::device_path::TYPE_END &&
