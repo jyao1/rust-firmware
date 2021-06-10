@@ -57,8 +57,7 @@ struct E820Entry {
     entry_type: u32,
 }
 
-#[cfg(not(test))]
-pub fn load_initrd(f: &mut Read) -> Result<(), Error> {
+pub fn load_initrd(f: &mut dyn Read) -> Result<(), Error> {
     let mut zero_page = crate::mem::MemoryRegion::new(ZERO_PAGE_START as u64, 4096);
 
     let mut max_load_address = u64::from(zero_page.read_u32(0x22c));
@@ -149,7 +148,7 @@ pub fn append_commandline(addition: &str) -> Result<(), Error> {
 }
 
 #[cfg(not(test))]
-pub fn load_kernel(f: &mut Read) -> Result<(u64), Error> {
+pub fn load_kernel(f: &mut dyn Read) -> Result<(u64), Error> {
     f.seek(0)?;
 
     let mut buf: [u8; 1024] = [0; 1024];

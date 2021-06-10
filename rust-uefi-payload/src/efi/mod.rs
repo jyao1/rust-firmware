@@ -948,7 +948,6 @@ pub extern "win64" fn locate_handle(
     status
 }
 
-#[cfg(not(test))]
 pub extern "win64" fn locate_device_path(protocol: *mut Guid, device_path: *mut *mut c_void, device: *mut Handle) -> Status {
 
     let source_path: *mut DevicePathProtocol = unsafe{*device_path as *mut DevicePathProtocol};
@@ -992,7 +991,7 @@ pub extern "win64" fn locate_device_path(protocol: *mut Guid, device_path: *mut 
     for index in 0 .. handle_count {
         unsafe{handle = (*handles)[index];}
         let (status, interface) = HANDLE_DATABASE.lock().handle_protocol(handle,
-            &mut r_efi::protocols::device_path::PROTOCOL_GUID as *mut Guid);
+            &mut r_efi::protocols::device_path::PROTOCOL_GUID.clone() as *mut Guid);
         if status != Status::SUCCESS {
             crate::log!("EFI_STUB: locate_device_path: error {:?}\n", status);
             continue;
@@ -1001,7 +1000,7 @@ pub extern "win64" fn locate_device_path(protocol: *mut Guid, device_path: *mut 
         // crate::log!("EFI_STUB: locate_device_path: interface address: {:?}, interface data: {:?}\n", interface, unsafe{*(interface as *mut DevicePathProtocol)});
         let size = crate::efi::device_path::get_device_path_size(interface as *mut DevicePathProtocol) - 4;
 
-        if (size as u64 <= source_size) && crate::efi::device_path::compare_device_path(interface as *mut DevicePathProtocol, source_path, size) == true {
+        if (size as u64 <= source_size) && crate::efi::device_path::compare_device_path(interface as *mut DevicePathProtocol, source_path, size) {
             if size as i32 == best_match {
                 crate::log!("EFI_STUB: locate_device_path: duplicate device path for 2 different device handles\n");
             }
@@ -1018,7 +1017,7 @@ pub extern "win64" fn locate_device_path(protocol: *mut Guid, device_path: *mut 
         return Status::NOT_FOUND;
     }
 
-    if device == core::ptr::null_mut() {
+    if device.is_null() {
         return Status::INVALID_PARAMETER;
     }
 
@@ -1040,7 +1039,6 @@ pub extern "win64" fn install_configuration_table(_: *mut Guid, _: *mut c_void) 
     Status::UNSUPPORTED
 }
 
-#[cfg(not(test))]
 pub extern "win64" fn load_image(
     boot_policy: Boolean,
     parent_image_handle: Handle,
@@ -1080,7 +1078,7 @@ pub extern "win64" fn load_image(
                 }
                 let mut buffer = [0u8; core::mem::size_of::<efi::protocols::file::Info>() + 1024];
                 let mut buffer_size:usize = core::mem::size_of::<efi::protocols::file::Info>() + 1024;
-                status = ((*desfile).get_info)(desfile, &mut efi::protocols::file::INFO_ID as *mut efi::Guid, &mut buffer_size, &mut buffer[0] as *mut u8 as *mut core::ffi::c_void);
+                status = ((*desfile).get_info)(desfile, &mut efi::protocols::file::INFO_ID.clone() as *mut efi::Guid, &mut buffer_size, &mut buffer[0] as *mut u8 as *mut core::ffi::c_void);
                 if status.is_error() {
                     log!("EFI_STUB: load image get_info error 0x{:x}\n", status.value());
                 }
@@ -1677,8 +1675,6 @@ fn dup_device_path(device_path: *mut c_void) -> *mut core::ffi::c_void{
     device_path_buffer
 }
 
-
-#[cfg(not(test))]
 pub fn enter_uefi(hob: *const c_void) -> ! {
 
     unsafe {
@@ -1756,7 +1752,7 @@ pub fn enter_uefi(hob: *const c_void) -> ! {
                 let mut handle : Handle = core::ptr::null_mut();
                 let status = crate::efi::install_protocol_interface (
                     &mut handle as *mut Handle,
-                    &mut r_efi::protocols::simple_file_system::PROTOCOL_GUID as *mut Guid,
+                    &mut r_efi::protocols::simple_file_system::PROTOCOL_GUID.clone() as *mut Guid,
                     InterfaceType::NativeInterface,
                     &mut wrapped_fs.proto as *mut SimpleFileSystemProtocol as *mut c_void
                     );
@@ -1791,7 +1787,7 @@ pub fn enter_uefi(hob: *const c_void) -> ! {
                 log!("device_path_buffer address: {:?}, device_path: {:?}\n", device_path_buffer, unsafe{*(device_path_buffer as *mut DevicePathProtocol)});
                 let status = crate::efi::install_protocol_interface (
                         &mut handle,
-                        &mut r_efi::protocols::device_path::PROTOCOL_GUID as *mut Guid,
+                        &mut r_efi::protocols::device_path::PROTOCOL_GUID.clone() as *mut Guid,
                         InterfaceType::NativeInterface,
                         device_path_buffer
                         );

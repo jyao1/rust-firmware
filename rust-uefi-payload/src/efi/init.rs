@@ -120,13 +120,12 @@ pub fn find_loader(hob: *const c_void) -> (*const c_void, usize) {
   (image, size)
 }
 
-#[cfg(not(test))]
 pub fn initialize_variable() {
   let mut var_name: [Char16; 13] = [0x50, 0x6c, 0x61, 0x74, 0x66, 0x6F, 0x72, 0x6d, 0x4c, 0x61, 0x6e, 0x67, 0x00]; // L"PlatformLang"
   let mut var_data: [u8; 3] = [0x65, 0x6e, 0x00]; // "en"
   crate::efi::set_variable(
     &mut var_name as *mut [Char16; 13] as *mut Char16,
-    &mut crate::efi::variable::GLOBAL_VARIABLE_GUID as *mut Guid,
+    &mut crate::efi::variable::GLOBAL_VARIABLE_GUID.clone() as *mut Guid,
     VARIABLE_NON_VOLATILE | VARIABLE_BOOTSERVICE_ACCESS | VARIABLE_RUNTIME_ACCESS,
     3,
     &mut var_data as *mut [u8; 3] as *mut c_void
@@ -137,25 +136,25 @@ pub fn initialize_console(system_table: *mut efi::SystemTable, con_in_ex: *mut c
   unsafe {
     let status = crate::efi::install_protocol_interface (
                        &mut (*system_table).console_in_handle as *mut Handle,
-                       &mut r_efi::protocols::simple_text_input::PROTOCOL_GUID as *mut Guid,
+                       &mut r_efi::protocols::simple_text_input::PROTOCOL_GUID.clone() as *mut Guid,
                        InterfaceType::NativeInterface,
                        (*system_table).con_in as *mut c_void
                        );
     let status = crate::efi::install_protocol_interface (
                        &mut (*system_table).console_in_handle as *mut Handle,
-                       &mut r_efi::protocols::simple_text_input_ex::PROTOCOL_GUID as *mut Guid,
+                       &mut r_efi::protocols::simple_text_input_ex::PROTOCOL_GUID.clone() as *mut Guid,
                        InterfaceType::NativeInterface,
                        con_in_ex
                        );
     let status = crate::efi::install_protocol_interface (
                        &mut (*system_table).console_out_handle as *mut Handle,
-                       &mut r_efi::protocols::simple_text_output::PROTOCOL_GUID as *mut Guid,
+                       &mut r_efi::protocols::simple_text_output::PROTOCOL_GUID.clone() as *mut Guid,
                        InterfaceType::NativeInterface,
                        (*system_table).con_out as *mut c_void
                        );
     let status = crate::efi::install_protocol_interface (
                        &mut (*system_table).standard_error_handle as *mut Handle,
-                       &mut r_efi::protocols::simple_text_output::PROTOCOL_GUID as *mut Guid,
+                       &mut r_efi::protocols::simple_text_output::PROTOCOL_GUID.clone() as *mut Guid,
                        InterfaceType::NativeInterface,
                        (*system_table).std_err as *mut c_void
                        );
@@ -233,7 +232,7 @@ pub fn initialize_fs() {
     let mut handle : Handle = core::ptr::null_mut();
     let status = crate::efi::install_protocol_interface (
                        &mut handle as *mut Handle,
-                       &mut r_efi::protocols::simple_file_system::PROTOCOL_GUID as *mut Guid,
+                       &mut r_efi::protocols::simple_file_system::PROTOCOL_GUID.clone() as *mut Guid,
                        InterfaceType::NativeInterface,
                        &mut wrapped_fs.proto as *mut SimpleFileSystemProtocol as *mut c_void
                        );
@@ -269,7 +268,7 @@ pub fn initialize_fs() {
     log!("device_path_buffer address: {:?}, device_path: {:?}\n", device_path_buffer, unsafe{*(device_path_buffer as *mut DevicePathProtocol)});
     let status = crate::efi::install_protocol_interface (
             &mut handle,
-            &mut r_efi::protocols::device_path::PROTOCOL_GUID as *mut Guid,
+            &mut r_efi::protocols::device_path::PROTOCOL_GUID.clone() as *mut Guid,
             InterfaceType::NativeInterface,
             device_path_buffer
             );

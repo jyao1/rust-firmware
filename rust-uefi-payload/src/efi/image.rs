@@ -146,7 +146,7 @@ impl Image {
         let mut image_handle : Handle = core::ptr::null_mut();
         let status = crate::efi::install_protocol_interface (
                        &mut image_handle,
-                       &mut IMAGE_INFO_GUID as *mut Guid,
+                       &mut IMAGE_INFO_GUID.clone() as *mut Guid,
                        InterfaceType::NativeInterface,
                        handle_address
                        );
@@ -170,14 +170,14 @@ impl Image {
 
         let status = crate::efi::install_protocol_interface (
                        &mut loaded_image.device_handle as *mut Handle,
-                       &mut r_efi::protocols::device_path::PROTOCOL_GUID as *mut Guid,
+                       &mut r_efi::protocols::device_path::PROTOCOL_GUID.clone() as *mut Guid,
                        InterfaceType::NativeInterface,
                        device_path_buffer
                        );
 
         let status = crate::efi::install_protocol_interface (
                        &mut image_handle,
-                       &mut r_efi::protocols::loaded_image::PROTOCOL_GUID as *mut Guid,
+                       &mut r_efi::protocols::loaded_image::PROTOCOL_GUID.clone() as *mut Guid,
                        InterfaceType::NativeInterface,
                        loaded_image_address
                        );
@@ -192,7 +192,7 @@ impl Image {
         let mut handle_address: *mut c_void = core::ptr::null_mut();
         let status = crate::efi::handle_protocol (
                        image_handle,
-                       &mut IMAGE_INFO_GUID,
+                       &mut IMAGE_INFO_GUID.clone(),
                        &mut handle_address
                        );
         if status != Status::SUCCESS {

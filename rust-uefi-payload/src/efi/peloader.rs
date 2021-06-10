@@ -14,6 +14,8 @@
 
 #![allow(unused)]
 
+// TBD remove this
+#![allow(safe_packed_borrows)]
 use core::ffi::c_void;
 use core::mem::transmute;
 use core::mem::size_of;
