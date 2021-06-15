@@ -14,6 +14,9 @@
 
 #![allow(unused)]
 
+#[macro_use]
+use fw_logger::*;
+
 use cpuio::Port;
 
 // #[cfg(not(test))]

@@ -19,7 +19,7 @@
 #![cfg_attr(test, allow(unused_imports))]
 
 #[macro_use]
-mod logger;
+use fw_logger::*;
 
 #[macro_use]
 mod common;

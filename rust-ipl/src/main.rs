@@ -11,7 +11,6 @@
 #![cfg_attr(test, allow(unused_imports))]
 
 #[macro_use]
-mod logger;
 mod memslice;
 mod pcd;
 mod pci;
@@ -25,9 +24,11 @@ use r_efi::efi;
 
 use crate::pi::hob;
 
+use core::ffi::c_void;
 use core::panic::PanicInfo;
 
-use core::ffi::c_void;
+#[macro_use]
+use fw_logger::*;
 
 #[allow(non_snake_case)]
 #[repr(C)]

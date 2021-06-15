@@ -14,6 +14,9 @@
 
 #![allow(unused)]
 
+#[macro_use]
+use fw_logger::*;
+
 use core::ffi::c_void;
 
 use r_efi::efi::{AllocateType, MemoryType, Status};

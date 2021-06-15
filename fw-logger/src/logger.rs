@@ -1,25 +1,12 @@
-// Copyright © 2019 Intel Corporation
+// Copyright (c) 2020 Intel Corporation
 //
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-License-Identifier: BSD-2-Clause-Patent
 
-// Inspired by https://github.com/phil-opp/blog_os/blob/post-03/src/vga_buffer.rs
-// from Philipp Oppermann
+#![allow(dead_code)]
 
 use core::fmt;
-use lazy_static::lazy_static;
-use spin::Mutex;
-
 use cpuio::Port;
+use spin::Mutex;
 
 pub const LOG_LEVEL_VERBOSE: usize = 1000;
 pub const LOG_LEVEL_INFO: usize = 100;
@@ -44,26 +31,28 @@ pub const LOG_MASK_FILE_SYSTEM: u64 = 0x200000000;
 // All
 pub const LOG_MASK_ALL: u64 = 0xFFFFFFFFFFFFFFFF;
 
-lazy_static! {
-    static ref LOGGER: Mutex<Logger> = Mutex::new(Logger {
-        port: unsafe { Port::new(0x3f8) },
-        level: LOG_LEVEL_VERBOSE,
-        mask: LOG_MASK_ALL,
-    });
-}
+pub static LOGGER: Mutex<Logger> = Mutex::new(Logger {
+    port: unsafe { Port::new(0x3f8) },
+    level: LOG_LEVEL_VERBOSE,
+    mask: LOG_MASK_ALL,
+});
 
-struct Logger {
+pub struct Logger {
     port: Port<u8>,
     level: usize,
     mask: u64,
 }
 
 impl Logger {
+    fn port_write(&mut self, byte: u8) {
+        self.port.write(byte);
+    }
+
     pub fn write_byte(&mut self, byte: u8) {
-        if byte == '\n' as u8 {
-            self.port.write('\r' as u8)
+        if byte == b'\n' {
+            self.port_write(b'\r')
         }
-        self.port.write(byte)
+        self.port_write(byte)
     }
 
     pub fn write_string(&mut self, s: &str) {
@@ -96,27 +85,27 @@ impl fmt::Write for Logger {
 
 #[macro_export]
 macro_rules! log {
-    ($($arg:tt)*) => ($crate::logger::_log_ex(crate::logger::LOG_LEVEL_VERBOSE, crate::logger::LOG_MASK_COMMON, format_args!($($arg)*)));
-    //($($arg:tt)*) => ($crate::logger::_log_ex(crate::logger::LOG_LEVEL_VERBOSE, 0, format_args!($($arg)*)));
+    ($($arg:tt)*) => (crate::logger::_log_ex(crate::logger::LOG_LEVEL_VERBOSE, crate::logger::LOG_MASK_COMMON, format_args!($($arg)*)));
+    //($($arg:tt)*) => (crate::logger::_log_ex(crate::logger::LOG_LEVEL_VERBOSE, 0, format_args!($($arg)*)));
 }
 
 #[macro_export]
 macro_rules! log_ex {
-    ($level:expr, $mask:expr, $($arg:tt)*) => ($crate::logger::_log_ex($level, $mask, format_args!($($arg)*)));
+    ($level:expr, $mask:expr, $($arg:tt)*) => (crate::logger::_log_ex($level, $mask, format_args!($($arg)*)));
 }
 
 #[macro_export]
 macro_rules! log_always {
-    ($($arg:tt)*) => ($crate::logger::_log(format_args!($($arg)*)));
+    ($($arg:tt)*) => (crate::logger::_log(format_args!($($arg)*)));
 }
 
-// #[cfg(not(test))]
+#[cfg(not(test))]
 pub fn _log(args: fmt::Arguments) {
     use core::fmt::Write;
     LOGGER.lock().write_fmt(args).unwrap();
 }
 
-// #[cfg(not(test))]
+#[cfg(not(test))]
 pub fn _log_ex(level: usize, mask: u64, args: fmt::Arguments) {
     if level > LOGGER.lock().get_level() {
         return;

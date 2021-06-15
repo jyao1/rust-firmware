@@ -14,6 +14,9 @@
 
 #![allow(unused)]
 
+#[macro_use]
+use fw_logger::*;
+
 use crate::pi::hob::*;
 use core::ffi::c_void;
 use core::mem::transmute;

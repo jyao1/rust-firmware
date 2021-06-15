@@ -14,6 +14,9 @@
 
 #![allow(unused)]
 
+#[macro_use]
+use fw_logger::*;
+
 use r_efi::efi;
 use r_efi::efi::{
     AllocateType, Boolean, CapsuleHeader, Char16, Event, EventNotify, Guid, Handle, InterfaceType,

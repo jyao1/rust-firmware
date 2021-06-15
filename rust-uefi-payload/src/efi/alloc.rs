@@ -14,6 +14,9 @@
 
 #![allow(unused)]
 
+#[macro_use]
+use fw_logger::*;
+
 const PAGE_SIZE: u64 = 4096;
 
 use r_efi::efi::{AllocateType, MemoryType, PhysicalAddress, Status, VirtualAddress};

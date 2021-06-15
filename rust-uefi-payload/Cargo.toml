@@ -17,10 +17,10 @@ panic = "abort" # disable stack unwinding on panic
 
 [dependencies]
 cpuio = "*"
+fw-logger = { path = "../fw-logger" }
 spin = "0.4.9"
 r-efi = "3.2.0"
 
 [dependencies.lazy_static]
 version = "1.0"
 features = ["spin_no_std"]
-

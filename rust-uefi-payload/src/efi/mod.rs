@@ -14,6 +14,9 @@
 
 #![allow(unused)]
 
+#[macro_use]
+use fw_logger::*;
+
 mod alloc;
 mod block;
 mod conin;
@@ -984,7 +987,7 @@ pub extern "win64" fn locate_handle(
 
 pub extern "win64" fn locate_device_path(
     protocol: *mut Guid,
-    device_path: *mut *mut core::ffi::c_void,
+    device_path: *mut *mut r_efi::protocols::device_path::Protocol,
     device: *mut Handle,
 ) -> Status {
     let source_path: *mut DevicePathProtocol = unsafe { *device_path as *mut DevicePathProtocol };
@@ -1073,7 +1076,7 @@ pub extern "win64" fn locate_device_path(
     unsafe {
         *device = best_device;
         let dp = (source_path as u64 + best_match as u64) as *mut DevicePathProtocol;
-        *device_path = dp as *mut c_void;
+        *device_path = dp as *mut r_efi::protocols::device_path::Protocol;
         // crate::log!("EFI_STUB: locate_device_path: device_path address {:?}, device_path {:?}, device: {:?}\n", dp, *dp, best_device);
     }
 

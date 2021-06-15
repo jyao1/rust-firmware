@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: BSD-2-Clause-Patent
 
 #[macro_use]
-use crate::logger;
+use fw_logger::*;
 
 use crate::pcd;
 use crate::pci;

@@ -16,13 +16,12 @@ panic = "abort" # disable stack unwinding on panic
 panic = "abort" # disable stack unwinding on panic
 
 [dependencies]
-cpuio = "0.3.0"
-spin = "0.4.9"
 r-efi = "3.2.0"
 x86 = "0.34.0"
 plain = "0.2.3"
 bitfield = "0.13.2"
 linked_list_allocator = "0.8.11"
+fw-logger = { path = "../fw-logger" }
 paging = { path = "../rust-paging" }
 r-uefi-pi =  { path = "../r-uefi-pi" }
 uefi-pi =  { path = "../uefi-pi" }

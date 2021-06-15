@@ -14,6 +14,9 @@
 
 use core::ffi::c_void;
 
+#[macro_use]
+use fw_logger::*;
+
 use crate::efi::fat::DirectoryEntry;
 use crate::efi::fat::Error as FatError;
 use crate::efi::fat::FileType;

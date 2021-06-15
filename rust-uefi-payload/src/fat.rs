@@ -14,6 +14,9 @@
 
 use crate::block::SectorRead;
 
+#[macro_use]
+use fw_logger::*;
+
 #[repr(packed)]
 struct Header {
     _magic: [u8; 3],
