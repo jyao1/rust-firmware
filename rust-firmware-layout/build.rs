@@ -1,0 +1,338 @@
+// Copyright (c) 2021 Intel Corporation
+//
+// SPDX-License-Identifier: BSD-2-Clause-Patent
+
+use serde::Deserialize;
+use std::env;
+use std::io::{Read, Write};
+use std::path::Path;
+use std::{fs, fs::File};
+
+macro_rules! BUILD_TIME_TEMPLATE {
+    () => {
+"// Copyright (c) 2021 Intel Corporation
+//
+// SPDX-License-Identifier: BSD-2-Clause-Patent
+
+/*
+    Image Layout:
+                  Binary                       Address
+            {var_offset:#010X} -> +--------------+ <-  {var_base:#010X}
+            ({var_size:#010X})  |   VAR PAD    |
+            {padding_offset:#010X} -> +--------------+ <-  {padding_base:#010X}
+            ({padding_size:#010X})  |   VAR PAD    |
+            {payload_offset:#010X} -> +--------------+ <-  {payload_base:#010X}
+           ({payload_size:#010X})   | Rust Payload |
+                          |     (pad)    |
+            {ipl_offset:#010X} -> +--------------+ <-  {ipl_base:#010X}
+           ({ipl_size:#010X})   |   Rust IPL   |
+                          |     (pad)    |
+            {reset_vector_offset:#010X} -> +--------------+ <-  {reset_vector_base:#010X}
+           ({reset_vector_size:#010X})   | Reset Vector |
+            {image_size:#010X} -> +--------------+ <- 0x100000000 (4G)
+*/
+
+// Image
+pub const FIRMWARE_VAR_OFFSET: u32 = {var_offset:#X};
+pub const FIRMWARE_PADDING_OFFSET: u32 = {padding_offset:#X};
+pub const FIRMWARE_PAYLOAD_OFFSET: u32 = {payload_offset:#X};
+pub const FIRMWARE_IPL_OFFSET: u32 = {ipl_offset:#X};
+pub const FIRMWARE_RESET_VECTOR_OFFSET: u32 = {reset_vector_offset:#X};
+
+pub const FIRMWARE_SIZE: u32 = {image_size:#X};
+pub const FIRMWARE_VAR_SIZE: u32 = {var_size:#X};
+pub const FIRMWARE_PADDING_SIZE: u32 = {padding_size:#X};
+pub const FIRMWARE_PAYLOAD_SIZE: u32 = {payload_size:#X};
+pub const FIRMWARE_IPL_SIZE: u32 = {ipl_size:#X};
+pub const FIRMWARE_RESET_VECTOR_SIZE: u32 = {reset_vector_size:#X};
+
+// Image loaded
+pub const LOADED_VAR_BASE: u32 = {var_base:#X};
+pub const LOADED_PADDING_BASE: u32 = {padding_base:#X};
+pub const LOADED_PAYLOAD_BASE: u32 = {payload_base:#X};
+pub const LOADED_IPL_BASE: u32 = {ipl_base:#X};
+pub const LOADED_RESET_VECTOR_BASE: u32 = {reset_vector_base:#X};
+"
+};
+}
+
+macro_rules! RUNTIME_TEMPLATE {
+    () => {
+        "// Copyright (c) 2021 Intel Corporation
+//
+// SPDX-License-Identifier: BSD-2-Clause-Patent
+
+/*
+    Mem Layout:
+                                            Address
+                    +--------------+ <-  0x0
+                    |     Legacy   |
+                    +--------------+ <-  0x00100000 (1M)
+                    |   ........   |
+                    +--------------+
+                    |   ........   |
+                    +--------------+ <-  {heap_base:#010X}
+                    |     HEAP     |    ({heap_size:#010X})
+                    +--------------+ <-  {stack_base:#010X}
+                    |     STACK    |    ({stack_size:#010X})
+                    +--------------+ <-  {payload_base:#010X}
+                    |    PAYLOAD   |    ({payload_size:#010X})
+                    +--------------+ <-  {pt_base:#010X}
+                    |  Page Table  |    ({pt_size:#010X})
+                    +--------------+ <-  {hob_base:#010X}
+                    |      HOB     |    ({hob_size:#010X})
+                    +--------------+ <-  0x80000000 (2G) - for example
+*/
+
+pub const RUNTIME_HOB_SIZE: u32 = {hob_size:#X};
+pub const RUNTIME_PAGE_TABLE_SIZE: u32 = {pt_size:#X};
+pub const RUNTIME_PAYLOAD_SIZE: u32 = {payload_size:#X};
+pub const RUNTIME_STACK_SIZE: u32 = {stack_size:#X};
+pub const RUNTIME_HEAP_SIZE: u32 = {heap_size:#X};
+"
+    };
+}
+
+#[derive(Debug, PartialEq, Deserialize, Clone)]
+struct TdLayoutConfig {
+    image_layout: TdImageLayoutConfig,
+    runtime_layout: TdRuntimeLayoutConfig,
+}
+
+#[derive(Debug, PartialEq, Deserialize, Clone)]
+struct TdImageLayoutConfig {
+    image_size: u32,
+    var_size: u32,
+    padding_size: u32,
+    payload_size: u32,
+    ipl_size: u32,
+    reset_vector_size: u32,
+}
+
+#[derive(Debug, PartialEq, Deserialize, Clone)]
+struct TdRuntimeLayoutConfig {
+    hob_size: u32,
+    stack_size: u32,
+    heap_size: u32,
+    payload_size: u32,
+    page_table_size: u32,
+}
+
+#[derive(Debug, PartialEq)]
+struct TdLayout {
+    config: TdLayoutConfig,
+    img: TdLayoutImage,
+    img_loaded: TdLayoutImageLoaded,
+    runtime: TdLayoutRuntime,
+}
+
+impl TdLayout {
+    fn new_from_config(config: &TdLayoutConfig) -> Self {
+        let img = TdLayoutImage::new_from_config(config);
+        let img_loaded = TdLayoutImageLoaded::new_from_image(config);
+
+        TdLayout {
+            config: config.clone(),
+            img,
+            img_loaded,
+            runtime: TdLayoutRuntime::new_from_config(config),
+        }
+    }
+
+    fn generate_build_time_rs(&self) {
+        let mut to_generate = Vec::new();
+        write!(
+            &mut to_generate,
+            BUILD_TIME_TEMPLATE!(),
+            var_size = self.config.image_layout.var_size,
+            padding_size = self.config.image_layout.padding_size,
+            payload_size = self.config.image_layout.payload_size,
+            ipl_size = self.config.image_layout.ipl_size,
+            reset_vector_size = self.config.image_layout.reset_vector_size,
+            var_offset = self.img.var_offset,
+            padding_offset = self.img.padding_offset,
+            payload_offset = self.img.payload_offset,
+            ipl_offset = self.img.ipl_offset,
+            reset_vector_offset = self.img.reset_vector_offset,
+            var_base = self.img_loaded.var_base,
+            padding_base = self.img_loaded.padding_base,
+            payload_base = self.img_loaded.payload_base,
+            ipl_base = self.img_loaded.ipl_base,
+            reset_vector_base = self.img_loaded.reset_vector_base,
+            image_size = self.config.image_layout.image_size,
+        )
+        .expect("Failed to generate configuration code from the template and JSON config");
+
+        let dest_path = Path::new(TD_LAYOUT_CONFIG_RS_OUT_DIR).join(TD_LAYOUT_BUILD_TIME_RS_OUT);
+        fs::write(&dest_path, to_generate).unwrap();
+    }
+
+    fn generate_runtime_rs(&self) {
+        let mut to_generate = Vec::new();
+        write!(
+            &mut to_generate,
+            RUNTIME_TEMPLATE!(),
+            hob_base = self.runtime.hob_base,
+            hob_size = self.config.runtime_layout.hob_size,
+            pt_base = self.runtime.pt_base,
+            pt_size = self.config.runtime_layout.page_table_size,
+            payload_base = self.runtime.payload_base,
+            payload_size = self.config.runtime_layout.payload_size,
+            heap_base = self.runtime.heap_base,
+            heap_size = self.config.runtime_layout.heap_size,
+            stack_base = self.runtime.stack_base,
+            stack_size = self.config.runtime_layout.stack_size,
+
+        )
+        .expect("Failed to generate configuration code from the template and JSON config");
+
+        let dest_path = Path::new(TD_LAYOUT_CONFIG_RS_OUT_DIR).join(TD_LAYOUT_RUNTIME_RS_OUT);
+        fs::write(&dest_path, to_generate).unwrap();
+    }
+}
+
+#[derive(Debug, Default, PartialEq)]
+struct TdLayoutImage {
+    var_offset: u32,
+    padding_offset: u32,
+    payload_offset: u32,
+    ipl_offset: u32,
+    reset_vector_offset: u32,
+}
+
+impl TdLayoutImage {
+    fn new_from_config(config: &TdLayoutConfig) -> Self {
+        let current_size = 0x0;
+        let var_offset = current_size;
+
+        let current_size = current_size + config.image_layout.var_size;
+        let padding_offset = current_size;
+
+        let current_size = current_size + config.image_layout.padding_size;
+        let payload_offset = current_size;
+
+        let current_size = current_size + config.image_layout.payload_size;
+        let ipl_offset = current_size;
+
+        let current_size= current_size + config.image_layout.ipl_size;
+        let reset_vector_offset = current_size;
+
+        TdLayoutImage {
+            var_offset,
+            padding_offset,
+            payload_offset,
+            ipl_offset,
+            reset_vector_offset,
+        }
+    }
+}
+
+#[derive(Debug, Default, PartialEq)]
+struct TdLayoutImageLoaded {
+    var_base: u32,
+    padding_base: u32,
+    payload_base: u32,
+    ipl_base: u32,
+    reset_vector_base: u32,
+}
+
+impl TdLayoutImageLoaded {
+    fn new_from_image(config: &TdLayoutConfig) -> Self {
+        let firmware_base =  0xFFFFFFFF - config.image_layout.image_size + 1;
+        let var_base = firmware_base;
+
+        let current_base = var_base + config.image_layout.var_size;
+        let padding_base = current_base;
+
+        let current_base = current_base + config.image_layout.padding_size;
+        let payload_base = current_base;
+
+        let current_base = current_base + config.image_layout.payload_size;
+        let ipl_base = current_base;
+
+        let current_base = current_base + config.image_layout.ipl_size;
+        let reset_vector_base = current_base;
+
+        TdLayoutImageLoaded {
+            var_base,
+            padding_base,
+            payload_base,
+            ipl_base,
+            reset_vector_base,
+        }
+    }
+}
+
+#[derive(Debug, Default, PartialEq)]
+struct TdLayoutRuntime {
+    hob_base: u32,
+    pt_base: u32,
+    payload_base: u32,
+    stack_base: u32,
+    heap_base: u32,
+}
+
+impl TdLayoutRuntime {
+    fn new_from_config(config: &TdLayoutConfig) -> Self {
+        // TBD: assume LOW_MEM_TOP, to remove;
+        const LOW_MEM_TOP: u32 = 0x80000000;
+        let hob_base = LOW_MEM_TOP - config.runtime_layout.hob_size;
+        let current_base = hob_base;
+
+        let current_base = current_base - config.runtime_layout.page_table_size;
+        let pt_base = current_base;
+
+        let current_base = current_base - config.runtime_layout.payload_size;
+        let payload_base = current_base;
+
+        let current_base = current_base - config.runtime_layout.stack_size;
+        let stack_base = current_base;
+
+        let current_base = current_base - config.runtime_layout.heap_size;
+        let heap_base = current_base;
+
+        TdLayoutRuntime {
+            hob_base,
+            pt_base,
+            payload_base,
+            stack_base,
+            heap_base,
+        }
+    }
+}
+
+const TD_LAYOUT_CONFIG_ENV: &str = "TD_LAYOUT_CONFIG";
+const TD_LAYOUT_CONFIG_JSON_DEFAULT_PATH: &str = "etc/config.json";
+const TD_LAYOUT_CONFIG_RS_OUT_DIR: &str = "src";
+const TD_LAYOUT_BUILD_TIME_RS_OUT: &str = "build_time.rs";
+const TD_LAYOUT_RUNTIME_RS_OUT: &str = "runtime.rs";
+
+fn main() {
+    // Read and parse the TD layout configuration file.
+    let mut data = String::new();
+    let td_layout_config_json_file_path = env::var(TD_LAYOUT_CONFIG_ENV)
+        .unwrap_or_else(|_| TD_LAYOUT_CONFIG_JSON_DEFAULT_PATH.to_string());
+    let mut td_layout_config_json_file = File::open(td_layout_config_json_file_path)
+        .expect("The TD layout configuration file does not exist");
+    td_layout_config_json_file
+        .read_to_string(&mut data)
+        .expect("Unable to read string");
+    let td_layout_config: TdLayoutConfig =
+        json5::from_str(&data).expect("It is not a valid TD layout configuration file.");
+
+    let layout = TdLayout::new_from_config(&td_layout_config);
+    // TODO: sanity checks on the layouts.
+
+    // Generate config .rs file from the template and JSON inputs, then write to fs.
+    layout.generate_build_time_rs();
+    layout.generate_runtime_rs();
+
+    // Re-run the build script if the files at the given paths or envs have changed.
+    println!("cargo:rerun-if-changed=build.rs");
+    println!("cargo:rerun-if-changed=../Cargo.lock");
+    println!(
+        "cargo:rerun-if-changed={}",
+        TD_LAYOUT_CONFIG_JSON_DEFAULT_PATH
+    );
+    println!("cargo:rerun-if-env-changed={}", TD_LAYOUT_CONFIG_ENV);
+}

@@ -1,0 +1,17 @@
+{
+    "image_layout": {
+        "image_size": 0x400000,
+        "var_size": 0x40000,
+        "padding_size": 0x40000,
+        "payload_size": 0x280000,
+        "ipl_size": 0xFF000,
+        "reset_vector_size": 0x1000
+    },
+    "runtime_layout": {
+        "hob_size": 0x700000,
+        "page_table_size": 0x800000,
+        "payload_size": 0x800000,
+        "stack_size": 0x800000,
+        "heap_size": 0x1000000
+    }
+}

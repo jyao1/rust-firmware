@@ -1,0 +1,15 @@
+[package]
+name = "rust-firmware-layout"
+version = "0.1.0"
+authors = ["Jiewen Yao <jiewen.yao@intel.com>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+scroll = { version = "0.10", default-features = false }
+
+[build-dependencies]
+json5 = "0.3.0"
+serde = { version = "1.0", features = ["derive"] }
+scroll = { version = "0.10", default-features = false }
