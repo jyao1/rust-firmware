@@ -20,75 +20,18 @@ use r_uefi_pi::fv::{
 
 use scroll::{Pread, Pwrite};
 
-const SIZE_1K: u64 = 0x400;
-const SIZE_2K: u64 = 0x800;
-const SIZE_4K: u64 = 0x1000;
-const SIZE_8K: u64 = 0x2000;
-const SIZE_16K: u64 = 0x4000;
-const SIZE_32K: u64 = 0x8000;
-const SIZE_64K: u64 = 0x1_0000;
-const SIZE_128K: u64 = 0x2_0000;
-const SIZE_256K: u64 = 0x4_0000;
-const SIZE_512K: u64 = 0x8_0000;
-const SIZE_1M: u64 = 0x10_0000;
-const SIZE_2M: u64 = 0x20_0000;
-const SIZE_4M: u64 = 0x40_0000;
-const SIZE_8M: u64 = 0x80_0000;
-const SIZE_16M: u64 = 0x100_0000;
-const SIZE_32M: u64 = 0x200_0000;
-const SIZE_64M: u64 = 0x400_0000;
-const SIZE_128M: u64 = 0x800_0000;
-const SIZE_256M: u64 = 0x1000_0000;
-const SIZE_512M: u64 = 0x2000_0000;
-const SIZE_1G: u64 = 0x4000_0000;
-const SIZE_2G: u64 = 0x8000_0000;
-const SIZE_4G: u64 = 0x1_0000_0000;
-const SIZE_8G: u64 = 0x2_0000_0000;
+use rust_firmware_layout::build_time::*;
 
-/*
-    Image Layout:
-                  Binary                       Address
-            0x00000000 -> +--------------+ <-  0xFFC00000
-             SIZE_256K    |     VAR      |
-            0x00040000 -> +--------------+ <-  0xFFC40000
-             SIZE_256K    |    PADDING   |
-             SIZE_4K      |              | <-
-            0x00081000 -> +--------------+ <-  0xFFC81000
-SIZE_3M - SIZE_512K       | RUST PAYLAOD |
-- SIZE4K                  |              |
-                          |    (pad)     |
-            0x00300000 -> +--------------+ <-  0xFFF00000
- SIZE_1M - SIZE_4K        |   Rust IPL   |
-                          |     (pad)    |
-            0x003FF000 -> +--------------+ <-  0xFFFFF000
-           SIZE_4K        |     (pad)    |
-                          | Reset Vector |
-            0x00400000 -> +--------------+ <- 0x100000000 (4G)
-*/
+const RUST_VAR_AND_PADDING_SIZE: usize = (FIRMWARE_VAR_SIZE + FIRMWARE_PADDING_SIZE) as usize;
+const RUST_PAYLOAD_MAX_SIZE: usize = FIRMWARE_PAYLOAD_SIZE as usize;
+const RUST_IPL_MAX_SIZE: usize = FIRMWARE_IPL_SIZE as usize;
+const RUST_RESET_VECTOR_MAX_SIZE: usize = FIRMWARE_RESET_VECTOR_SIZE as usize;
 
-const RUST_FIRMWARE_SIZE: usize = SIZE_4M as usize;
-
-const RUST_VAR_AND_PADDING_SIZE: usize = (SIZE_256K + SIZE_256K + SIZE_4K) as usize;
-const RUST_PAYLOAD_MAX_SIZE: usize = (SIZE_2M + SIZE_1M) as usize - RUST_VAR_AND_PADDING_SIZE;
-const RUST_IPL_MAX_SIZE: usize = (SIZE_1M - SIZE_4K) as usize;
-const RUST_RESET_VECTOR_MAX_SIZE: usize = SIZE_4K as usize;
-
-const RUST_PAYLOAD_OFFSET: usize = RUST_VAR_AND_PADDING_SIZE;
-const RUST_IPL_OFFSET: usize = RUST_VAR_AND_PADDING_SIZE + RUST_PAYLOAD_MAX_SIZE;
+const RUST_PAYLOAD_OFFSET: usize = FIRMWARE_PAYLOAD_OFFSET as usize;
+const RUST_IPL_OFFSET: usize = FIRMWARE_IPL_OFFSET as usize;
 
 // this value is used by rust-ipl to find the firmware
-const LOADED_IPL_ADDRESS: usize = SIZE_4G as usize - RUST_FIRMWARE_SIZE + RUST_IPL_OFFSET;
-
-// const RUST_FIRMWARE_SIZE: usize = SIZE_4M as usize;
-
-// const RUST_PAYLOAD_OFFSET: usize = 0x084000;
-// const RUST_PAYLOAD_MAX_SIZE: usize = 0x248000;
-// const RUST_IPL_OFFSET: usize = RUST_PAYLOAD_OFFSET + RUST_PAYLOAD_MAX_SIZE;
-// const RUST_IPL_MAX_SIZE: usize = 0x133C20 as usize;
-// const RUST_RESET_VECTOR_OFFSET: usize = (RUST_IPL_OFFSET - RUST_IPL_MAX_SIZE) as usize;
-// const RUST_RESET_VECTOR_MAX_SIZE: usize = 0x0003E0 as usize;
-
-// const LOADED_IPL_ADDRESS: usize = SIZE_4G as usize - RUST_FIRMWARE_SIZE + RUST_IPL_OFFSET;
+const LOADED_IPL_ADDRESS: usize = LOADED_IPL_BASE as usize;
 
 // size_of::<FirmwareVolumeHeader> = 56
 // size_of::<FvBlockMap> = 8
@@ -422,7 +365,7 @@ fn main() -> std::io::Result<()> {
             + RUST_PAYLOAD_MAX_SIZE
             + RUST_IPL_MAX_SIZE
             + RUST_RESET_VECTOR_MAX_SIZE,
-        RUST_FIRMWARE_SIZE
+        FIRMWARE_SIZE as usize
     );
     assert!(RUST_PAYLOAD_MAX_SIZE > size_of::<PayloadFvHeader>());
 
@@ -446,7 +389,7 @@ fn main() -> std::io::Result<()> {
     let mut rust_firmware_file =
         File::create(rust_firmware_name).expect("fail to create rust firmware");
 
-    let zero_buf = vec![0xFFu8; RUST_FIRMWARE_SIZE];
+    let zero_buf = vec![0xFFu8; FIRMWARE_SIZE as usize];
 
     let mut rust_payload_header_bytes = PayloadFvHeaderByte::default();
 

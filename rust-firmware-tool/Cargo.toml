@@ -10,3 +10,4 @@ r-uefi-pi =  { path = "../r-uefi-pi" }
 simple_logger = "1.11.0"
 scroll = { version = "0.10", default-features=false }
 pe-loader = { path = "../pe-loader" }
+rust-firmware-layout = { path = "../rust-firmware-layout" }
