@@ -12,7 +12,6 @@
 
 #[macro_use]
 mod memslice;
-mod pcd;
 mod pci;
 mod pi;
 mod sec;
@@ -29,6 +28,10 @@ use core::panic::PanicInfo;
 
 #[macro_use]
 use fw_logger::*;
+
+use rust_firmware_layout::runtime::*;
+use rust_firmware_layout::RuntimeMemoryLayout;
+use rust_firmware_layout::build_time::*;
 
 #[allow(non_snake_case)]
 #[repr(C)]
@@ -71,38 +74,25 @@ pub extern "win64" fn _start(boot_fv: *const c_void, top_of_stack: *const c_void
         top_of_stack
     );
 
-    log!(
-        " EfiTop: {:p}\n",
-        ((top_of_stack as u64) - (pcd::pcd_get_PcdOvmfSecPeiTempRamSize() as u64)) as *const c_void
-    );
+    let memory_top = sec::GetSystemMemorySizeBelow4Gb();
+
+    let runtime_memory_layout = RuntimeMemoryLayout::new(memory_top);
 
     log!(
         " PcdOvmfDxeMemFvBase: 0x{:X}\n",
-        pcd::pcd_get_PcdOvmfDxeMemFvBase()
+        LOADED_PAYLOAD_BASE,
     );
     log!(
         " PcdOvmfDxeMemFvSize: 0x{:X}\n",
-        pcd::pcd_get_PcdOvmfDxeMemFvSize()
+        FIRMWARE_PAYLOAD_SIZE,
     );
     log!(
         " PcdOvmfPeiMemFvBase: 0x{:X}\n",
-        pcd::pcd_get_PcdOvmfPeiMemFvBase()
+        LOADED_IPL_BASE,
     );
     log!(
         " PcdOvmfPeiMemFvSize: 0x{:X}\n",
-        pcd::pcd_get_PcdOvmfPeiMemFvSize()
-    );
-    log!(
-        " PcdOvmfSecPageTablesBase: 0x{:X}\n",
-        pcd::pcd_get_PcdOvmfSecPageTablesBase()
-    );
-    log!(
-        " PcdOvmfSecPeiTempRamBase: 0x{:X}\n",
-        pcd::pcd_get_PcdOvmfSecPeiTempRamBase()
-    );
-    log!(
-        " PcdOvmfSecPeiTempRamSize: 0x{:X}\n",
-        pcd::pcd_get_PcdOvmfSecPeiTempRamSize()
+        FIRMWARE_IPL_SIZE,
     );
 
     sec::SetApicMode(sec::LOCAL_APIC_MODE_X2APIC);
@@ -121,7 +111,6 @@ pub extern "win64" fn _start(boot_fv: *const c_void, top_of_stack: *const c_void
         reserved: 0,
     };
 
-    let memory_top = sec::GetSystemMemorySizeBelow4Gb();
     let memory_bottom = memory_top - sec::SIZE_16MB;
     #[allow(non_snake_case)]
     let mut handoffInfoTable = hob::HandoffInfoTable {
@@ -139,7 +128,7 @@ pub extern "win64" fn _start(boot_fv: *const c_void, top_of_stack: *const c_void
             + sec::EfiPageToSize(sec::EfiSizeToPage(
                 core::mem::size_of::<HobTemplate>() as u64
             )),
-        efi_end_of_hob_list: memory_bottom + core::mem::size_of::<HobTemplate>() as u64,
+        efi_end_of_hob_list: runtime_memory_layout.runtime_hob_base + core::mem::size_of::<HobTemplate>() as u64,
     };
 
     #[allow(non_snake_case)]
@@ -161,8 +150,8 @@ pub extern "win64" fn _start(boot_fv: *const c_void, top_of_stack: *const c_void
             length: core::mem::size_of::<hob::FirmwareVolume>() as u16,
             reserved: 0,
         },
-        base_address: boot_fv as u64 - pcd::pcd_get_PcdOvmfDxeMemFvSize() as u64,
-        length: pcd::pcd_get_PcdOvmfDxeMemFvSize() as u64,
+        base_address: boot_fv as u64 - FIRMWARE_PAYLOAD_SIZE as u64,
+        length: FIRMWARE_PAYLOAD_SIZE as u64,
     };
 
     const MEMORY_ALLOCATION_STACK_GUID: efi::Guid = efi::Guid::from_fields(
@@ -181,8 +170,8 @@ pub extern "win64" fn _start(boot_fv: *const c_void, top_of_stack: *const c_void
         },
         alloc_descriptor: hob::MemoryAllocationHeader {
             name: MEMORY_ALLOCATION_STACK_GUID,
-            memory_base_address: pcd::pcd_get_PcdOvmfSecPeiTempRamBase() as u64,
-            memory_length: pcd::pcd_get_PcdOvmfSecPeiTempRamSize() as u64,
+            memory_base_address: runtime_memory_layout.runtime_stack_base as u64,
+            memory_length: RUNTIME_STACK_SIZE as u64,
             memory_type: efi::MemoryType::BootServicesData,
             reserved: [0u8; 4],
         },
@@ -200,7 +189,7 @@ pub extern "win64" fn _start(boot_fv: *const c_void, top_of_stack: *const c_void
     let memory_size = 0x1000000000; // TODO: hardcoding to 64GiB for now
 
     paging::setup_paging(
-        (pcd::pcd_get_PcdOvmfSecPeiTempRamBase() + pcd::pcd_get_PcdOvmfSecPeiTempRamSize()) as u64,
+        runtime_memory_layout.runtime_page_table_base as u64,
         memory_size,
     );
     #[allow(non_snake_case)]
@@ -213,7 +202,7 @@ pub extern "win64" fn _start(boot_fv: *const c_void, top_of_stack: *const c_void
         alloc_descriptor: hob::MemoryAllocationHeader {
             name: PAGE_TABLE_NAME_GUID,
             memory_base_address: unsafe { x86::controlregs::cr3() }, // TBD
-            memory_length: paging::PAGE_TABLE_SIZE as u64,
+            memory_length: RUNTIME_PAGE_TABLE_SIZE as u64,
             memory_type: efi::MemoryType::BootServicesData,
             reserved: [0u8; 4],
         },
@@ -285,8 +274,11 @@ pub extern "win64" fn _start(boot_fv: *const c_void, top_of_stack: *const c_void
     let loaded_buffer =
         memslice::get_dynamic_mem_slice_mut(memslice::SliceType::RuntimePayloadSlice, 0x1000000);
 
+
+    let payload_fv_buffer = memslice::get_mem_slice(memslice::SliceType::FirmwarePayloadSlice);
+    log!("payload_fv_start: 0x{:X}\n", payload_fv_buffer as *const [u8] as *const u8 as usize);
     let (entry, basefw, basefwsize) = sec::FindAndReportEntryPoint(
-        pcd::pcd_get_PcdOvmfDxeMemFvBase() as u64 as *const r_uefi_pi::fv::FirmwareVolumeHeader,
+        payload_fv_buffer,
         loaded_buffer,
     );
     let entry = entry as usize;

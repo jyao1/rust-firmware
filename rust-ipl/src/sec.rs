@@ -5,7 +5,6 @@
 #[macro_use]
 use fw_logger::*;
 
-use crate::pcd;
 use crate::pci;
 use r_uefi_pi::fv;
 
@@ -80,15 +79,9 @@ fn AlignValue(value: u64, align: u64, flag: bool) -> u64 {
 
 #[allow(non_snake_case)]
 pub fn FindAndReportEntryPoint(
-    firmwareVolumePtr: *const fv::FirmwareVolumeHeader,
+    firmware_buffer: &[u8],
     loaded_buffer: &mut [u8],
 ) -> (u64, u64, u64) {
-    let firmware_buffer = unsafe {
-        core::slice::from_raw_parts(
-            firmwareVolumePtr as *const u8,
-            pcd::pcd_get_PcdOvmfDxeMemFvSize() as usize,
-        )
-    };
     let image = uefi_pi::fv_lib::get_image_from_fv(
         firmware_buffer,
         fv::FV_FILETYPE_DXE_CORE,
@@ -108,7 +101,8 @@ pub fn FindAndReportEntryPoint(
 
 #[allow(non_snake_case)]
 pub fn PciExBarInitialization() {
-    let pci_exbar_base = pcd::pcd_get_PcdPciExpressBaseAddress();
+    // PcdPciExpressBaseAddress TBD
+    let pci_exbar_base = 0x80000000u64;
 
     //
     // Clear the PCIEXBAREN bit first, before programming the high register.
