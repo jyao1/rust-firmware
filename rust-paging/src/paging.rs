@@ -16,7 +16,6 @@ use x86_64::{
     VirtAddr,
 };
 
-use super::consts::PAGE_TABLE_BASE;
 use super::frame::BMFrameAllocator;
 
 pub fn create_mapping(
@@ -99,9 +98,9 @@ pub fn create_mapping(
     }
 }
 
-pub fn cr3_write() {
+pub fn cr3_write(page_table_base: u64) {
     unsafe {
-        x86::controlregs::cr3_write(PAGE_TABLE_BASE);
+        x86::controlregs::cr3_write(page_table_base);
     }
     log::info!("Cr3 - {:x}\n", unsafe { x86::controlregs::cr3() });
 }

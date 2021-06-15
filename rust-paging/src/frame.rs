@@ -4,7 +4,7 @@
 
 use bitmap_allocator::BitAlloc;
 use log::*;
-use spin::Mutex;
+// use spin::Mutex;
 use x86_64::{
     align_up,
     structures::paging::{FrameAllocator, PhysFrame, Size4KiB},
@@ -13,7 +13,7 @@ use x86_64::{
 
 use super::consts::*;
 
-pub static FRAME_ALLOCATOR: Mutex<BMFrameAllocator> = Mutex::new(BMFrameAllocator::empty());
+// pub static FRAME_ALLOCATOR: Mutex<BMFrameAllocator> = Mutex::new(BMFrameAllocator::empty());
 
 // Support max 256 * 4096 = 1MB memory.
 type FrameAlloc = bitmap_allocator::BitAlloc256;
@@ -97,15 +97,15 @@ unsafe impl FrameAllocator<Size4KiB> for BMFrameAllocator {
     }
 }
 
-/// Initialize the physical frame allocator.
-pub(super) fn init() {
-    *FRAME_ALLOCATOR.lock() = BMFrameAllocator::new(PAGE_TABLE_BASE as usize, PAGE_TABLE_SIZE);
+// /// Initialize the physical frame allocator.
+// pub(super) fn init() {
+//     *FRAME_ALLOCATOR.lock() = BMFrameAllocator::new(PAGE_TABLE_BASE as usize, PAGE_TABLE_SIZE);
 
-    // The first frame should've already been allocated to level 4 PT
-    unsafe { FRAME_ALLOCATOR.lock().alloc() };
+//     // The first frame should've already been allocated to level 4 PT
+//     unsafe { FRAME_ALLOCATOR.lock().alloc() };
 
-    info!(
-        "Frame allocator init done: {:#x?}\n",
-        PAGE_TABLE_BASE..PAGE_TABLE_BASE + PAGE_TABLE_SIZE as u64
-    );
-}
+//     info!(
+//         "Frame allocator init done: {:#x?}\n",
+//         PAGE_TABLE_BASE..PAGE_TABLE_BASE + PAGE_TABLE_SIZE as u64
+//     );
+// }

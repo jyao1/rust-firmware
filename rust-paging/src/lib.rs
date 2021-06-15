@@ -16,22 +16,22 @@ use x86_64::{
     PhysAddr, VirtAddr,
 };
 
-pub fn init() {
-    frame::init();
-}
+// pub fn init() {
+//     frame::init();
+// }
 
 /// page_table_memory_base: page_table_memory_base
 /// system_memory_size
 pub fn setup_paging(page_table_memory_base: u64, system_memory_size: u64) {
     // Global variable not writable in rust-firmware environment, using a local allocator
-    let mut allocator = BMFrameAllocator::new(PAGE_TABLE_BASE as usize, PAGE_TABLE_SIZE);
+    let mut allocator = BMFrameAllocator::new(page_table_memory_base as usize, PAGE_TABLE_SIZE as usize);
 
     // The first frame should've already been allocated to level 4 PT
     unsafe { allocator.alloc() };
 
     info!(
         "Frame allocator init done: {:#x?}\n",
-        PAGE_TABLE_BASE..PAGE_TABLE_BASE + PAGE_TABLE_SIZE as u64
+        page_table_memory_base..page_table_memory_base + PAGE_TABLE_SIZE as u64
     );
 
     let mut pt = unsafe {
@@ -47,5 +47,5 @@ pub fn setup_paging(page_table_memory_base: u64, system_memory_size: u64) {
         VirtAddr::new(0),
         system_memory_size,
     );
-    paging::cr3_write();
+    paging::cr3_write(page_table_memory_base);
 }
