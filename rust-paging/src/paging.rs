@@ -5,9 +5,6 @@
 use core::cmp::min;
 use log::*;
 use x86_64::{
-    // align_down, align_up,
-    // registers::control::{Cr3, Cr3Flags},
-    // structures::paging::page_table::PageTableEntry,
     structures::paging::PageTableFlags as Flags,
     structures::paging::{
         Mapper, OffsetPageTable, Page, PageSize, PhysFrame, Size1GiB, Size2MiB, Size4KiB,

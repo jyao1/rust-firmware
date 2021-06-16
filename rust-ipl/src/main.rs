@@ -190,6 +190,7 @@ pub extern "win64" fn _start(boot_fv: *const c_void, top_of_stack: *const c_void
 
     paging::setup_paging(
         runtime_memory_layout.runtime_page_table_base as u64,
+        RUNTIME_PAGE_TABLE_SIZE as u64,
         memory_size,
     );
     #[allow(non_snake_case)]

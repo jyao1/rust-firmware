@@ -12,4 +12,3 @@ x86 = "0.34.0"
 x86_64 = "0.13.1"
 log = "0.4.13"
 bitmap-allocator = { git = "https://github.com/rcore-os/bitmap-allocator", rev = "03bd9909" }
-spin = "0.7"

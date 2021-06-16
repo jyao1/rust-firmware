@@ -4,4 +4,3 @@
 
 pub const PHYS_VIRT_OFFSET: usize = 0;
 pub const PAGE_SIZE: usize = 4096;
-pub const PAGE_TABLE_SIZE: usize = 0x100000;
