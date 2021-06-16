@@ -5,6 +5,8 @@
 #![no_std]
 #![forbid(unsafe_code)]
 
+use core::fmt;
+
 pub mod consts;
 pub mod build_time;
 pub mod runtime;
@@ -49,5 +51,18 @@ impl RuntimeMemoryLayout {
             runtime_stack_base,
             runtime_heap_base,
         }
+    }
+}
+
+impl fmt::Debug for RuntimeMemoryLayout {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        f.debug_struct("RuntimeMemoryLayout")
+            .field("runtime_hob_base", &format_args!("0x{:x}", self.runtime_hob_base))
+            .field("runtime_page_table_base", &format_args!("0x{:x}", self.runtime_page_table_base))
+            .field("runtime_payload_base", &format_args!("0x{:x}", self.runtime_payload_base))
+            .field("runtime_stack_top", &format_args!("0x{:x}", self.runtime_stack_top))
+            .field("runtime_stack_base", &format_args!("0x{:x}", self.runtime_stack_base))
+            .field("runtime_heap_base", &format_args!("0x{:x}", self.runtime_heap_base))
+            .finish()
     }
 }
