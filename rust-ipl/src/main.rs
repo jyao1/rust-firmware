@@ -3,25 +3,19 @@
 // SPDX-License-Identifier: BSD-2-Clause-Patent
 
 #![allow(unused)]
-#![feature(llvm_asm)]
 #![feature(core_intrinsics)]
 #![feature(alloc_error_handler)]
 #![cfg_attr(not(test), no_std)]
 #![cfg_attr(not(test), no_main)]
 #![cfg_attr(test, allow(unused_imports))]
 
-#[macro_use]
 mod memslice;
 mod pci;
-mod pi;
 mod sec;
 
-extern crate bitfield;
-extern crate plain;
-
 use r_efi::efi;
-
-use crate::pi::hob;
+use r_uefi_pi::pi;
+use r_uefi_pi::hob;
 
 use core::ffi::c_void;
 use core::panic::PanicInfo;
@@ -170,10 +164,10 @@ pub extern "win64" fn _start(boot_fv: *const c_void, top_of_stack: *const c_void
             reserved: 0,
         },
         alloc_descriptor: hob::MemoryAllocationHeader {
-            name: MEMORY_ALLOCATION_STACK_GUID,
+            name: *MEMORY_ALLOCATION_STACK_GUID.as_bytes(),
             memory_base_address: runtime_memory_layout.runtime_stack_base as u64,
             memory_length: RUNTIME_STACK_SIZE as u64,
-            memory_type: efi::MemoryType::BootServicesData,
+            memory_type: efi::MemoryType::BootServicesData as u32,
             reserved: [0u8; 4],
         },
     };
@@ -202,10 +196,10 @@ pub extern "win64" fn _start(boot_fv: *const c_void, top_of_stack: *const c_void
             reserved: 0,
         },
         alloc_descriptor: hob::MemoryAllocationHeader {
-            name: PAGE_TABLE_NAME_GUID,
-            memory_base_address: unsafe { x86::controlregs::cr3() }, // TBD
+            name: *PAGE_TABLE_NAME_GUID.as_bytes(),
+            memory_base_address: runtime_memory_layout.runtime_page_table_base,
             memory_length: RUNTIME_PAGE_TABLE_SIZE as u64,
-            memory_type: efi::MemoryType::BootServicesData,
+            memory_type: efi::MemoryType::BootServicesData as u32,
             reserved: [0u8; 4],
         },
     };
@@ -226,14 +220,14 @@ pub extern "win64" fn _start(boot_fv: *const c_void, top_of_stack: *const c_void
             length: core::mem::size_of::<hob::ResourceDescription>() as u16,
             reserved: 0,
         },
-        owner: efi::Guid::from_fields(
+        owner: *efi::Guid::from_fields(
             0x4ED4BF27,
             0x4092,
             0x42E9,
             0x80,
             0x7D,
             &[0x52, 0x7B, 0x1D, 0x00, 0xC9, 0xBD],
-        ),
+        ).as_bytes(),
         resource_type: hob::RESOURCE_SYSTEM_MEMORY,
         resource_attribute: hob::RESOURCE_ATTRIBUTE_PRESENT
             | hob::RESOURCE_ATTRIBUTE_INITIALIZED
@@ -253,14 +247,14 @@ pub extern "win64" fn _start(boot_fv: *const c_void, top_of_stack: *const c_void
             length: core::mem::size_of::<hob::ResourceDescription>() as u16,
             reserved: 0,
         },
-        owner: efi::Guid::from_fields(
+        owner: *efi::Guid::from_fields(
             0x4ED4BF27,
             0x4092,
             0x42E9,
             0x80,
             0x7D,
             &[0x52, 0x7B, 0x1D, 0x00, 0xC9, 0xBD],
-        ),
+        ).as_bytes(),
         resource_type: hob::RESOURCE_SYSTEM_MEMORY,
         resource_attribute: hob::RESOURCE_ATTRIBUTE_PRESENT
             | hob::RESOURCE_ATTRIBUTE_INITIALIZED
@@ -301,22 +295,22 @@ pub extern "win64" fn _start(boot_fv: *const c_void, top_of_stack: *const c_void
             reserved: 0,
         },
         alloc_descriptor: hob::MemoryAllocationHeader {
-            name: HYPERVISORFW_NAME_GUID,
+            name: *HYPERVISORFW_NAME_GUID.as_bytes(),
             memory_base_address: basefw,
             memory_length: sec::EfiPageToSize(sec::EfiSizeToPage(basefwsize)),
-            memory_type: efi::MemoryType::BootServicesCode,
+            memory_type: efi::MemoryType::BootServicesCode as u32,
             reserved: [0u8; 4],
         },
     };
 
     let mut hob_template = HobTemplate {
-        handoffInfoTable: handoffInfoTable,
-        firmwareVolume: firmwareVolume,
-        cpu: cpu,
-        hypervisorFw: hypervisorFw,
-        pageTable: pageTable,
-        stack: stack,
-        memoryAbove1M: memoryAbove1M,
+        handoffInfoTable,
+        firmwareVolume,
+        cpu,
+        hypervisorFw,
+        pageTable,
+        stack,
+        memoryAbove1M,
         memoryBlow1M: memoryBelow1M,
         endOffHob: hob::Header {
             r#type: hob::HOB_TYPE_END_OF_HOB_LIST,
