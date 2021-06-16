@@ -77,6 +77,7 @@ pub extern "win64" fn _start(boot_fv: *const c_void, top_of_stack: *const c_void
     let memory_top = sec::GetSystemMemorySizeBelow4Gb();
 
     let runtime_memory_layout = RuntimeMemoryLayout::new(memory_top);
+    log!("runtime memory layout: {:?}\n", runtime_memory_layout);
 
     log!(
         " PcdOvmfDxeMemFvBase: 0x{:X}\n",
@@ -273,8 +274,7 @@ pub extern "win64" fn _start(boot_fv: *const c_void, top_of_stack: *const c_void
     };
 
     let loaded_buffer =
-        memslice::get_dynamic_mem_slice_mut(memslice::SliceType::RuntimePayloadSlice, 0x1000000);
-
+        memslice::get_dynamic_mem_slice_mut(memslice::SliceType::RuntimePayloadSlice, runtime_memory_layout.runtime_payload_base as usize);
 
     let payload_fv_buffer = memslice::get_mem_slice(memslice::SliceType::FirmwarePayloadSlice);
     log!("payload_fv_start: 0x{:X}\n", payload_fv_buffer as *const [u8] as *const u8 as usize);
