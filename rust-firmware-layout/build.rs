@@ -94,13 +94,13 @@ pub const RUNTIME_HEAP_SIZE: u32 = {heap_size:#X};
 }
 
 #[derive(Debug, PartialEq, Deserialize, Clone)]
-struct TdLayoutConfig {
-    image_layout: TdImageLayoutConfig,
-    runtime_layout: TdRuntimeLayoutConfig,
+struct FirmwareLayoutConfig {
+    image_layout: FirmwareImageLayoutConfig,
+    runtime_layout: FirmwareRuntimeLayoutConfig,
 }
 
 #[derive(Debug, PartialEq, Deserialize, Clone)]
-struct TdImageLayoutConfig {
+struct FirmwareImageLayoutConfig {
     image_size: u32,
     var_size: u32,
     padding_size: u32,
@@ -110,7 +110,7 @@ struct TdImageLayoutConfig {
 }
 
 #[derive(Debug, PartialEq, Deserialize, Clone)]
-struct TdRuntimeLayoutConfig {
+struct FirmwareRuntimeLayoutConfig {
     hob_size: u32,
     stack_size: u32,
     heap_size: u32,
@@ -119,23 +119,23 @@ struct TdRuntimeLayoutConfig {
 }
 
 #[derive(Debug, PartialEq)]
-struct TdLayout {
-    config: TdLayoutConfig,
-    img: TdLayoutImage,
-    img_loaded: TdLayoutImageLoaded,
-    runtime: TdLayoutRuntime,
+struct FirmwareLayout {
+    config: FirmwareLayoutConfig,
+    img: FirmwareLayoutImage,
+    img_loaded: FirmwareLayoutImageLoaded,
+    runtime: FirmwareLayoutRuntime,
 }
 
-impl TdLayout {
-    fn new_from_config(config: &TdLayoutConfig) -> Self {
-        let img = TdLayoutImage::new_from_config(config);
-        let img_loaded = TdLayoutImageLoaded::new_from_image(config);
+impl FirmwareLayout {
+    fn new_from_config(config: &FirmwareLayoutConfig) -> Self {
+        let img = FirmwareLayoutImage::new_from_config(config);
+        let img_loaded = FirmwareLayoutImageLoaded::new_from_image(config);
 
-        TdLayout {
+        FirmwareLayout {
             config: config.clone(),
             img,
             img_loaded,
-            runtime: TdLayoutRuntime::new_from_config(config),
+            runtime: FirmwareLayoutRuntime::new_from_config(config),
         }
     }
 
@@ -163,7 +163,7 @@ impl TdLayout {
         )
         .expect("Failed to generate configuration code from the template and JSON config");
 
-        let dest_path = Path::new(TD_LAYOUT_CONFIG_RS_OUT_DIR).join(TD_LAYOUT_BUILD_TIME_RS_OUT);
+        let dest_path = Path::new(FIRMWARE_LAYOUT_CONFIG_RS_OUT_DIR).join(FIRMWARE_LAYOUT_BUILD_TIME_RS_OUT);
         fs::write(&dest_path, to_generate).unwrap();
     }
 
@@ -186,13 +186,13 @@ impl TdLayout {
         )
         .expect("Failed to generate configuration code from the template and JSON config");
 
-        let dest_path = Path::new(TD_LAYOUT_CONFIG_RS_OUT_DIR).join(TD_LAYOUT_RUNTIME_RS_OUT);
+        let dest_path = Path::new(FIRMWARE_LAYOUT_CONFIG_RS_OUT_DIR).join(FIRMWARE_LAYOUT_RUNTIME_RS_OUT);
         fs::write(&dest_path, to_generate).unwrap();
     }
 }
 
 #[derive(Debug, Default, PartialEq)]
-struct TdLayoutImage {
+struct FirmwareLayoutImage {
     var_offset: u32,
     padding_offset: u32,
     payload_offset: u32,
@@ -200,8 +200,8 @@ struct TdLayoutImage {
     reset_vector_offset: u32,
 }
 
-impl TdLayoutImage {
-    fn new_from_config(config: &TdLayoutConfig) -> Self {
+impl FirmwareLayoutImage {
+    fn new_from_config(config: &FirmwareLayoutConfig) -> Self {
         let current_size = 0x0;
         let var_offset = current_size;
 
@@ -217,7 +217,7 @@ impl TdLayoutImage {
         let current_size= current_size + config.image_layout.ipl_size;
         let reset_vector_offset = current_size;
 
-        TdLayoutImage {
+        FirmwareLayoutImage {
             var_offset,
             padding_offset,
             payload_offset,
@@ -228,7 +228,7 @@ impl TdLayoutImage {
 }
 
 #[derive(Debug, Default, PartialEq)]
-struct TdLayoutImageLoaded {
+struct FirmwareLayoutImageLoaded {
     var_base: u32,
     padding_base: u32,
     payload_base: u32,
@@ -236,8 +236,8 @@ struct TdLayoutImageLoaded {
     reset_vector_base: u32,
 }
 
-impl TdLayoutImageLoaded {
-    fn new_from_image(config: &TdLayoutConfig) -> Self {
+impl FirmwareLayoutImageLoaded {
+    fn new_from_image(config: &FirmwareLayoutConfig) -> Self {
         let firmware_base =  0xFFFFFFFF - config.image_layout.image_size + 1;
         let var_base = firmware_base;
 
@@ -253,7 +253,7 @@ impl TdLayoutImageLoaded {
         let current_base = current_base + config.image_layout.ipl_size;
         let reset_vector_base = current_base;
 
-        TdLayoutImageLoaded {
+        FirmwareLayoutImageLoaded {
             var_base,
             padding_base,
             payload_base,
@@ -264,7 +264,7 @@ impl TdLayoutImageLoaded {
 }
 
 #[derive(Debug, Default, PartialEq)]
-struct TdLayoutRuntime {
+struct FirmwareLayoutRuntime {
     hob_base: u32,
     pt_base: u32,
     payload_base: u32,
@@ -272,8 +272,8 @@ struct TdLayoutRuntime {
     heap_base: u32,
 }
 
-impl TdLayoutRuntime {
-    fn new_from_config(config: &TdLayoutConfig) -> Self {
+impl FirmwareLayoutRuntime {
+    fn new_from_config(config: &FirmwareLayoutConfig) -> Self {
         // TBD: assume LOW_MEM_TOP, to remove;
         const LOW_MEM_TOP: u32 = 0x80000000;
         let hob_base = LOW_MEM_TOP - config.runtime_layout.hob_size;
@@ -291,7 +291,7 @@ impl TdLayoutRuntime {
         let current_base = current_base - config.runtime_layout.heap_size;
         let heap_base = current_base;
 
-        TdLayoutRuntime {
+        FirmwareLayoutRuntime {
             hob_base,
             pt_base,
             payload_base,
@@ -301,26 +301,26 @@ impl TdLayoutRuntime {
     }
 }
 
-const TD_LAYOUT_CONFIG_ENV: &str = "TD_LAYOUT_CONFIG";
-const TD_LAYOUT_CONFIG_JSON_DEFAULT_PATH: &str = "etc/config.json";
-const TD_LAYOUT_CONFIG_RS_OUT_DIR: &str = "src";
-const TD_LAYOUT_BUILD_TIME_RS_OUT: &str = "build_time.rs";
-const TD_LAYOUT_RUNTIME_RS_OUT: &str = "runtime.rs";
+const FIRMWARE_LAYOUT_CONFIG_ENV: &str = "FIRMWARE_LAYOUT_CONFIG";
+const FIRMWARE_LAYOUT_CONFIG_JSON_DEFAULT_PATH: &str = "etc/config.json";
+const FIRMWARE_LAYOUT_CONFIG_RS_OUT_DIR: &str = "src";
+const FIRMWARE_LAYOUT_BUILD_TIME_RS_OUT: &str = "build_time.rs";
+const FIRMWARE_LAYOUT_RUNTIME_RS_OUT: &str = "runtime.rs";
 
 fn main() {
-    // Read and parse the TD layout configuration file.
+    // Read and parse the Firmware layout configuration file.
     let mut data = String::new();
-    let td_layout_config_json_file_path = env::var(TD_LAYOUT_CONFIG_ENV)
-        .unwrap_or_else(|_| TD_LAYOUT_CONFIG_JSON_DEFAULT_PATH.to_string());
-    let mut td_layout_config_json_file = File::open(td_layout_config_json_file_path)
-        .expect("The TD layout configuration file does not exist");
-    td_layout_config_json_file
+    let firmware_layout_config_json_file_path = env::var(FIRMWARE_LAYOUT_CONFIG_ENV)
+        .unwrap_or_else(|_| FIRMWARE_LAYOUT_CONFIG_JSON_DEFAULT_PATH.to_string());
+    let mut firmware_layout_config_json_file = File::open(firmware_layout_config_json_file_path)
+        .expect("The Firmware layout configuration file does not exist");
+    firmware_layout_config_json_file
         .read_to_string(&mut data)
         .expect("Unable to read string");
-    let td_layout_config: TdLayoutConfig =
-        json5::from_str(&data).expect("It is not a valid TD layout configuration file.");
+    let firmware_layout_config: FirmwareLayoutConfig =
+        json5::from_str(&data).expect("It is not a valid Firmware layout configuration file.");
 
-    let layout = TdLayout::new_from_config(&td_layout_config);
+    let layout = FirmwareLayout::new_from_config(&firmware_layout_config);
     // TODO: sanity checks on the layouts.
 
     // Generate config .rs file from the template and JSON inputs, then write to fs.
@@ -332,7 +332,7 @@ fn main() {
     println!("cargo:rerun-if-changed=../Cargo.lock");
     println!(
         "cargo:rerun-if-changed={}",
-        TD_LAYOUT_CONFIG_JSON_DEFAULT_PATH
+        FIRMWARE_LAYOUT_CONFIG_JSON_DEFAULT_PATH
     );
-    println!("cargo:rerun-if-env-changed={}", TD_LAYOUT_CONFIG_ENV);
+    println!("cargo:rerun-if-env-changed={}", FIRMWARE_LAYOUT_CONFIG_ENV);
 }
