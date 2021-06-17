@@ -45,8 +45,8 @@ fn cmos_write8(index: u8, value: u8) -> u8 {
     res
 }
 
-#[allow(non_snake_case)]
-pub fn GetSystemMemorySizeBelow4Gb() -> u64 {
+
+pub fn get_system_memory_size_below4_gb() -> u64 {
     let mut cmos0x34: u8 = 0u8;
     let mut cmos0x35: u8 = 0u8;
 
@@ -57,19 +57,19 @@ pub fn GetSystemMemorySizeBelow4Gb() -> u64 {
     res
 }
 
-#[allow(non_snake_case)]
-pub fn EfiSizeToPage(size: u64) -> u64 {
+
+pub fn efi_size_to_page(size: u64) -> u64 {
     (size + SIZE_4KB - 1) / SIZE_4KB
 }
 
-#[allow(non_snake_case)]
-pub fn EfiPageToSize(page: u64) -> u64 {
+
+pub fn efi_page_to_size(page: u64) -> u64 {
     page * SIZE_4KB
 }
 
 /// flag  ture align to low address else high address
-#[allow(non_snake_case)]
-fn AlignValue(value: u64, align: u64, flag: bool) -> u64 {
+
+fn align_value(value: u64, align: u64, flag: bool) -> u64 {
     if flag {
         value & ((!(align - 1)) as u64)
     } else {
@@ -77,8 +77,8 @@ fn AlignValue(value: u64, align: u64, flag: bool) -> u64 {
     }
 }
 
-#[allow(non_snake_case)]
-pub fn FindAndReportEntryPoint(
+
+pub fn find_and_report_entry_point(
     firmware_buffer: &[u8],
     loaded_buffer: &mut [u8],
 ) -> (u64, u64, u64) {
@@ -99,15 +99,15 @@ pub fn FindAndReportEntryPoint(
     }
 }
 
-#[allow(non_snake_case)]
-pub fn PciExBarInitialization() {
+
+pub fn pci_ex_bar_initialization() {
     // PcdPciExpressBaseAddress TBD
     let pci_exbar_base = 0x80000000u64;
 
     //
     // Clear the PCIEXBAREN bit first, before programming the high register.
     //
-    pci::PciCf8Write32(0, 0, 0, 0x60, 0);
+    pci::pci_cf8_write32(0, 0, 0, 0x60, 0);
 
     //
     // Program the high register. Then program the low register, setting the
@@ -119,20 +119,20 @@ pub fn PciExBarInitialization() {
         (pci_exbar_base >> 32) as u32,
         (pci_exbar_base << 32 >> 32 | 0x1) as u32
     );
-    pci::PciCf8Write32(0, 0, 0, 0x64, (pci_exbar_base >> 32) as u32);
-    pci::PciCf8Write32(0, 0, 0, 0x60, (pci_exbar_base << 32 >> 32 | 0x1) as u32);
+    pci::pci_cf8_write32(0, 0, 0, 0x64, (pci_exbar_base >> 32) as u32);
+    pci::pci_cf8_write32(0, 0, 0, 0x60, (pci_exbar_base << 32 >> 32 | 0x1) as u32);
 }
 
-#[allow(non_snake_case)]
-pub fn InitPci() {
-    pci::PciCf8Write32(0, 3, 0, 0x14, 0xC1085000);
-    pci::PciCf8Write32(0, 3, 0, 0x20, 0xC200000C);
-    pci::PciCf8Write32(0, 3, 0, 0x24, 0x00000008);
-    pci::PciCf8Write8(0, 3, 0, 0x4, 0x07);
+
+pub fn init_pci() {
+    pci::pci_cf8_write32(0, 3, 0, 0x14, 0xC1085000);
+    pci::pci_cf8_write32(0, 3, 0, 0x20, 0xC200000C);
+    pci::pci_cf8_write32(0, 3, 0, 0x24, 0x00000008);
+    pci::pci_cf8_write8(0, 3, 0, 0x4, 0x07);
 }
 
-#[allow(non_snake_case)]
-pub fn VirtIoBlk() {
+
+pub fn virt_io_blk() {
     let base: usize = 0x8C2000000usize;
     use core::intrinsics::volatile_store;
 
@@ -150,8 +150,8 @@ pub fn VirtIoBlk() {
     }
 }
 
-#[allow(non_snake_case)]
-pub fn CpuGetMemorySpaceSize() -> u8 {
+
+pub fn cpu_get_memory_space_size() -> u8 {
     let res = x86::cpuid::cpuid!(0x80000000u32);
     if res.eax > 0x80000008u32 {
         let res = x86::cpuid::cpuid!(0x80000008u32);
@@ -162,8 +162,8 @@ pub fn CpuGetMemorySpaceSize() -> u8 {
     }
 }
 
-#[allow(non_snake_case)]
-pub fn LocalApicBaseAddressMsrSupported() -> bool {
+
+pub fn local_apic_base_address_msr_supported() -> bool {
     let res = x86::cpuid::cpuid!(1u32);
     let res: u32 = res.eax.bit_range(11, 8);
     if res == 0x4 || res == 0x05 {
@@ -173,10 +173,10 @@ pub fn LocalApicBaseAddressMsrSupported() -> bool {
     }
 }
 
-#[allow(non_snake_case)]
-pub fn GetApicMode() -> u64 {
+
+pub fn get_apic_mode() -> u64 {
     use x86::msr;
-    match LocalApicBaseAddressMsrSupported() {
+    match local_apic_base_address_msr_supported() {
         false => LOCAL_APIC_MODE_XAPIC,
         true => {
             let base = unsafe { msr::rdmsr(msr::IA32_APIC_BASE) };
@@ -195,10 +195,10 @@ pub fn GetApicMode() -> u64 {
     }
 }
 
-#[allow(non_snake_case)]
-pub fn SetApicMode(mode: u64) {
-    let CurrentMode = GetApicMode();
-    if CurrentMode == LOCAL_APIC_MODE_XAPIC && mode == LOCAL_APIC_MODE_X2APIC {
+
+pub fn set_apic_mode(mode: u64) {
+    let current_mode = get_apic_mode();
+    if current_mode == LOCAL_APIC_MODE_XAPIC && mode == LOCAL_APIC_MODE_X2APIC {
         unsafe {
             let mut base = msr::rdmsr(msr::IA32_APIC_BASE);
             base.set_bit(10, true);
@@ -206,7 +206,7 @@ pub fn SetApicMode(mode: u64) {
         }
     }
 
-    if CurrentMode == LOCAL_APIC_MODE_X2APIC && mode == LOCAL_APIC_MODE_XAPIC {
+    if current_mode == LOCAL_APIC_MODE_X2APIC && mode == LOCAL_APIC_MODE_XAPIC {
         //
         //  Transition from x2APIC mode to xAPIC mode is a two-step process:
         //    x2APIC -> Local APIC disabled -> xAPIC
@@ -226,7 +226,7 @@ pub fn SetApicMode(mode: u64) {
 ///
 /// Defines the APIC timer frequency as the processor frequency divided by a
 /// specified value.
-#[allow(non_snake_case)]
+
 #[derive(Debug, Copy, Clone)]
 #[repr(u8)]
 pub enum TimerDivide {
@@ -249,7 +249,7 @@ pub enum TimerDivide {
 }
 
 /// Local APIC timer modes.
-#[allow(non_snake_case)]
+
 #[derive(Debug, Copy, Clone)]
 #[repr(u8)]
 pub enum TimerMode {
@@ -261,23 +261,23 @@ pub enum TimerMode {
     TscDeadline = 0b10,
 }
 
-#[allow(non_snake_case)]
-pub fn InitializeApicTimer(
-    DivideValue: TimerDivide,
-    InitCount: u32,
-    PeriodicMode: TimerMode,
-    Vector: u8,
+
+pub fn initialize_apic_timer(
+    divide_value: TimerDivide,
+    init_count: u32,
+    periodic_mode: TimerMode,
+    vector: u8,
 ) {
     //
     // Ensure local APIC is in software-enabled state.
     //
-    InitializeLocalApicSoftwareEnable(true);
+    initialize_local_apic_software_enable(true);
 
     //
     // Program init-count register.
     //
     unsafe {
-        msr::wrmsr(msr::IA32_X2APIC_INIT_COUNT, InitCount as u64);
+        msr::wrmsr(msr::IA32_X2APIC_INIT_COUNT, init_count as u64);
     }
 
     //
@@ -285,20 +285,20 @@ pub fn InitializeApicTimer(
     //
     unsafe {
         let mut div_register = msr::rdmsr(msr::IA32_X2APIC_DIV_CONF);
-        msr::wrmsr(msr::IA32_X2APIC_DIV_CONF, DivideValue as u64);
+        msr::wrmsr(msr::IA32_X2APIC_DIV_CONF, divide_value as u64);
 
         let mut lvt_timer_register = msr::rdmsr(msr::IA32_X2APIC_LVT_TIMER);
 
-        lvt_timer_register.set_bit_range(18, 17, PeriodicMode as u8);
+        lvt_timer_register.set_bit_range(18, 17, periodic_mode as u8);
 
-        lvt_timer_register.set_bit_range(7, 0, Vector);
+        lvt_timer_register.set_bit_range(7, 0, vector);
 
         msr::wrmsr(msr::IA32_X2APIC_LVT_TIMER, lvt_timer_register);
     }
 }
 
-#[allow(non_snake_case)]
-pub fn DisableApicTimerInterrupt() {
+
+pub fn disable_apic_timer_interrupt() {
     unsafe {
         let mut lvt_timer_register = msr::rdmsr(msr::IA32_X2APIC_LVT_TIMER);
         lvt_timer_register.set_bit(16, true);
@@ -307,8 +307,8 @@ pub fn DisableApicTimerInterrupt() {
     }
 }
 
-#[allow(non_snake_case)]
-fn InitializeLocalApicSoftwareEnable(b: bool) {
+
+fn initialize_local_apic_software_enable(b: bool) {
     let mut srv = unsafe { msr::rdmsr(msr::IA32_X2APIC_SIVR) };
     if b {
         if srv.bit(8) == false {

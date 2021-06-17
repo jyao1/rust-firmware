@@ -29,19 +29,19 @@ use rust_firmware_layout::runtime::*;
 use rust_firmware_layout::RuntimeMemoryLayout;
 use rust_firmware_layout::build_time::*;
 
-#[allow(non_snake_case)]
+
 #[repr(C)]
 #[derive(Copy, Clone, Debug)]
 pub struct HobTemplate {
-    pub handoffInfoTable: hob::HandoffInfoTable,
-    pub firmwareVolume: hob::FirmwareVolume,
+    pub handoff_info_table: hob::HandoffInfoTable,
+    pub firmware_volume: hob::FirmwareVolume,
     pub cpu: hob::Cpu,
-    pub hypervisorFw: hob::MemoryAllocation,
-    pub pageTable: hob::MemoryAllocation,
+    pub hypervisor_fw: hob::MemoryAllocation,
+    pub page_table: hob::MemoryAllocation,
     pub stack: hob::MemoryAllocation,
-    pub memoryAbove1M: hob::ResourceDescription,
-    pub memoryBlow1M: hob::ResourceDescription,
-    pub endOffHob: hob::Header,
+    pub memory_above1_m: hob::ResourceDescription,
+    pub memory_blow1_m: hob::ResourceDescription,
+    pub end_off_hob: hob::Header,
 }
 
 // #[cfg(not(test))]
@@ -70,7 +70,7 @@ pub extern "win64" fn _start(boot_fv: *const c_void, top_of_stack: *const c_void
         top_of_stack
     );
 
-    let memory_top = sec::GetSystemMemorySizeBelow4Gb();
+    let memory_top = sec::get_system_memory_size_below4_gb();
 
     let runtime_memory_layout = RuntimeMemoryLayout::new(memory_top);
     log!("runtime memory layout: {:?}\n", runtime_memory_layout);
@@ -92,14 +92,14 @@ pub extern "win64" fn _start(boot_fv: *const c_void, top_of_stack: *const c_void
         FIRMWARE_IPL_SIZE,
     );
 
-    sec::SetApicMode(sec::LOCAL_APIC_MODE_X2APIC);
-    sec::InitializeApicTimer(
+    sec::set_apic_mode(sec::LOCAL_APIC_MODE_X2APIC);
+    sec::initialize_apic_timer(
         sec::TimerDivide::Div2,
         0xffffffffu32,
         sec::TimerMode::Periodic,
         5u8,
     );
-    sec::DisableApicTimerInterrupt();
+    sec::disable_apic_timer_interrupt();
     log!(" SetApicMode: Done\n");
 
     let mut hob_header = hob::Header {
@@ -109,8 +109,8 @@ pub extern "win64" fn _start(boot_fv: *const c_void, top_of_stack: *const c_void
     };
 
     let memory_bottom = memory_top - sec::SIZE_16MB;
-    #[allow(non_snake_case)]
-    let mut handoffInfoTable = hob::HandoffInfoTable {
+
+    let mut handoff_info_table = hob::HandoffInfoTable {
         header: hob::Header {
             r#type: hob::HOB_TYPE_HANDOFF,
             length: core::mem::size_of::<hob::HandoffInfoTable>() as u16,
@@ -122,26 +122,26 @@ pub extern "win64" fn _start(boot_fv: *const c_void, top_of_stack: *const c_void
         efi_memory_bottom: memory_bottom,
         efi_free_memory_top: memory_top,
         efi_free_memory_bottom: memory_bottom
-            + sec::EfiPageToSize(sec::EfiSizeToPage(
+            + sec::efi_page_to_size(sec::efi_size_to_page(
                 core::mem::size_of::<HobTemplate>() as u64
             )),
         efi_end_of_hob_list: runtime_memory_layout.runtime_hob_base + core::mem::size_of::<HobTemplate>() as u64,
     };
 
-    #[allow(non_snake_case)]
+
     let mut cpu = hob::Cpu {
         header: hob::Header {
             r#type: hob::HOB_TYPE_CPU,
             length: core::mem::size_of::<hob::Cpu>() as u16,
             reserved: 0,
         },
-        size_of_memory_space: sec::CpuGetMemorySpaceSize(), // TBD asmcpuid
+        size_of_memory_space: sec::cpu_get_memory_space_size(), // TBD asmcpuid
         size_of_io_space: 16u8,
         reserved: [0u8; 6],
     };
 
-    #[allow(non_snake_case)]
-    let mut firmwareVolume = hob::FirmwareVolume {
+
+    let mut firmware_volume = hob::FirmwareVolume {
         header: hob::Header {
             r#type: hob::HOB_TYPE_FV,
             length: core::mem::size_of::<hob::FirmwareVolume>() as u16,
@@ -190,8 +190,8 @@ pub extern "win64" fn _start(boot_fv: *const c_void, top_of_stack: *const c_void
         RUNTIME_PAGE_TABLE_SIZE as u64,
         memory_size,
     );
-    #[allow(non_snake_case)]
-    let mut pageTable = hob::MemoryAllocation {
+
+    let mut page_table = hob::MemoryAllocation {
         header: hob::Header {
             r#type: hob::HOB_TYPE_MEMORY_ALLOCATION,
             length: core::mem::size_of::<hob::MemoryAllocation>() as u16,
@@ -214,9 +214,9 @@ pub extern "win64" fn _start(boot_fv: *const c_void, top_of_stack: *const c_void
         0x7D,
         &[0x52, 0x7B, 0x1D, 0x00, 0xC9, 0xBD],
     );
-    let lowmemory = sec::GetSystemMemorySizeBelow4Gb();
-    #[allow(non_snake_case)]
-    let mut memoryAbove1M = hob::ResourceDescription {
+    let lowmemory = sec::get_system_memory_size_below4_gb();
+
+    let mut memory_above1_m = hob::ResourceDescription {
         header: hob::Header {
             r#type: hob::HOB_TYPE_RESOURCE_DESCRIPTOR,
             length: core::mem::size_of::<hob::ResourceDescription>() as u16,
@@ -242,8 +242,8 @@ pub extern "win64" fn _start(boot_fv: *const c_void, top_of_stack: *const c_void
         resource_length: lowmemory - 0x100000u64,
     };
 
-    #[allow(non_snake_case)]
-    let mut memoryBelow1M = hob::ResourceDescription {
+
+    let mut memory_below1_m = hob::ResourceDescription {
         header: hob::Header {
             r#type: hob::HOB_TYPE_RESOURCE_DESCRIPTOR,
             length: core::mem::size_of::<hob::ResourceDescription>() as u16,
@@ -274,7 +274,7 @@ pub extern "win64" fn _start(boot_fv: *const c_void, top_of_stack: *const c_void
 
     let payload_fv_buffer = memslice::get_mem_slice(memslice::SliceType::FirmwarePayloadSlice);
     log!("payload_fv_start: 0x{:X}\n", payload_fv_buffer as *const [u8] as *const u8 as usize);
-    let (entry, basefw, basefwsize) = sec::FindAndReportEntryPoint(
+    let (entry, basefw, basefwsize) = sec::find_and_report_entry_point(
         payload_fv_buffer,
         loaded_buffer,
     );
@@ -289,8 +289,8 @@ pub extern "win64" fn _start(boot_fv: *const c_void, top_of_stack: *const c_void
         &[0x52, 0x25, 0x48, 0x5a, 0x6a, 0x3a],
     );
 
-    #[allow(non_snake_case)]
-    let mut hypervisorFw = hob::MemoryAllocation {
+
+    let mut hypervisor_fw = hob::MemoryAllocation {
         header: hob::Header {
             r#type: hob::HOB_TYPE_MEMORY_ALLOCATION,
             length: core::mem::size_of::<hob::MemoryAllocation>() as u16,
@@ -299,22 +299,22 @@ pub extern "win64" fn _start(boot_fv: *const c_void, top_of_stack: *const c_void
         alloc_descriptor: hob::MemoryAllocationHeader {
             name: *HYPERVISORFW_NAME_GUID.as_bytes(),
             memory_base_address: basefw,
-            memory_length: sec::EfiPageToSize(sec::EfiSizeToPage(basefwsize)),
+            memory_length: sec::efi_page_to_size(sec::efi_size_to_page(basefwsize)),
             memory_type: efi::MemoryType::BootServicesCode as u32,
             reserved: [0u8; 4],
         },
     };
 
     let mut hob_template = HobTemplate {
-        handoffInfoTable,
-        firmwareVolume,
+        handoff_info_table,
+        firmware_volume,
         cpu,
-        hypervisorFw,
-        pageTable,
+        hypervisor_fw,
+        page_table,
         stack,
-        memoryAbove1M,
-        memoryBlow1M: memoryBelow1M,
-        endOffHob: hob::Header {
+        memory_above1_m,
+        memory_blow1_m: memory_below1_m,
+        end_off_hob: hob::Header {
             r#type: hob::HOB_TYPE_END_OF_HOB_LIST,
             length: core::mem::size_of::<hob::Header>() as u16,
             reserved: 0,
@@ -338,10 +338,10 @@ pub extern "win64" fn _start(boot_fv: *const c_void, top_of_stack: *const c_void
         x86::io::outb(0x92u16, res | 0b10 as u8);
     }
 
-    pci::InitializeAcpiPm();
-    sec::PciExBarInitialization();
-    sec::InitPci();
-    sec::VirtIoBlk();
+    pci::initialize_acpi_pm();
+    sec::pci_ex_bar_initialization();
+    sec::init_pci();
+    sec::virt_io_blk();
 
     let hob_base = runtime_memory_layout.runtime_hob_base as usize;
     let hob = memslice::get_dynamic_mem_slice_mut(memslice::SliceType::RuntimePayloadHobSlice, hob_base);
