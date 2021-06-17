@@ -5,6 +5,7 @@
 #![allow(unused)]
 #![feature(core_intrinsics)]
 #![feature(alloc_error_handler)]
+#![feature(global_asm)]
 #![cfg_attr(not(test), no_std)]
 #![cfg_attr(not(test), no_main)]
 #![cfg_attr(test, allow(unused_imports))]
@@ -12,6 +13,7 @@
 mod memslice;
 mod pci;
 mod sec;
+mod asm;
 
 use r_efi::efi;
 use r_uefi_pi::pi;
@@ -341,17 +343,18 @@ pub extern "win64" fn _start(boot_fv: *const c_void, top_of_stack: *const c_void
     sec::InitPci();
     sec::VirtIoBlk();
 
-    log!("payload entry is: 0x{:X}\n", entry);
-    let mut code: extern "win64" fn(*mut HobTemplate) = unsafe { core::mem::transmute(entry) };
-    let hob = memory_bottom;
+    let hob_base = runtime_memory_layout.runtime_hob_base as usize;
+    let hob = memslice::get_dynamic_mem_slice_mut(memslice::SliceType::RuntimePayloadHobSlice, hob_base);
+
     unsafe {
         core::ptr::copy_nonoverlapping(
             &hob_template as *const HobTemplate as *const c_void,
-            hob as *mut c_void,
+            hob as *mut [u8] as *mut u8 as *mut c_void,
             core::mem::size_of::<HobTemplate>(),
         );
     }
-    code(hob as *const HobTemplate as *mut HobTemplate);
 
+    log!("payload entry is: 0x{:X}\n", entry);
+    asm::switch_stack(entry, runtime_memory_layout.runtime_stack_top as usize, hob_base, 0);
     loop {}
 }
