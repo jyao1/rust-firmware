@@ -29,9 +29,9 @@ use rust_firmware_layout::runtime::*;
 use rust_firmware_layout::RuntimeMemoryLayout;
 use rust_firmware_layout::build_time::*;
 
+use scroll::{Pread, Pwrite};
 
-#[repr(C)]
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, Pread, Pwrite)]
 pub struct HobTemplate {
     pub handoff_info_table: hob::HandoffInfoTable,
     pub firmware_volume: hob::FirmwareVolume,
@@ -346,13 +346,7 @@ pub extern "win64" fn _start(boot_fv: *const c_void, top_of_stack: *const c_void
     let hob_base = runtime_memory_layout.runtime_hob_base as usize;
     let hob = memslice::get_dynamic_mem_slice_mut(memslice::SliceType::RuntimePayloadHobSlice, hob_base);
 
-    unsafe {
-        core::ptr::copy_nonoverlapping(
-            &hob_template as *const HobTemplate as *const c_void,
-            hob as *mut [u8] as *mut u8 as *mut c_void,
-            core::mem::size_of::<HobTemplate>(),
-        );
-    }
+    let _res = hob.pwrite(hob_template, 0).expect("write hob failed!");
 
     log!("payload entry is: 0x{:X}\n", entry);
     asm::switch_stack(entry, runtime_memory_layout.runtime_stack_top as usize, hob_base, 0);

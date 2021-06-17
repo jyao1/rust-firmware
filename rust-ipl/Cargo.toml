@@ -13,6 +13,7 @@ x86 = "0.34.0"
 plain = "0.2.3"
 bitfield = "0.13.2"
 linked_list_allocator = "0.8.11"
+scroll = { version = "0.10", default-features=false, features = ["derive"] }
 fw-logger = { path = "../fw-logger" }
 paging = { path = "../rust-paging" }
 r-uefi-pi =  { path = "../r-uefi-pi" }
