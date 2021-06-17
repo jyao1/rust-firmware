@@ -70,6 +70,9 @@ pub extern "win64" fn _start(boot_fv: *const c_void, top_of_stack: *const c_void
         top_of_stack
     );
 
+    fw_exception::setup_exception_handlers();
+    log!("setup_exception_handlers done\n");
+
     let memory_top = sec::get_system_memory_size_below4_gb();
 
     let runtime_memory_layout = RuntimeMemoryLayout::new(memory_top);
