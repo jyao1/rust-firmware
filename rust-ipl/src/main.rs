@@ -10,14 +10,14 @@
 #![cfg_attr(not(test), no_main)]
 #![cfg_attr(test, allow(unused_imports))]
 
+mod asm;
 mod memslice;
 mod pci;
 mod sec;
-mod asm;
 
 use r_efi::efi;
-use r_uefi_pi::pi;
 use r_uefi_pi::hob;
+use r_uefi_pi::pi;
 
 use core::ffi::c_void;
 use core::panic::PanicInfo;
@@ -25,9 +25,9 @@ use core::panic::PanicInfo;
 #[macro_use]
 use fw_logger::*;
 
+use rust_firmware_layout::build_time::*;
 use rust_firmware_layout::runtime::*;
 use rust_firmware_layout::RuntimeMemoryLayout;
-use rust_firmware_layout::build_time::*;
 
 use scroll::{Pread, Pwrite};
 
@@ -63,11 +63,28 @@ fn alloc_error(_info: core::alloc::Layout) -> ! {
 
 #[no_mangle]
 #[export_name = "efi_main"]
-pub extern "win64" fn _start(boot_fv: *const c_void, top_of_stack: *const c_void) -> ! {
+pub extern "win64" fn _start(
+    temp_ram_base: usize,
+    temp_ram_top: usize,
+    stack_top_or_temp_page_table_base: usize,
+    initial_eax_value: usize,
+) -> ! {
+    let boot_fv = LOADED_IPL_BASE as *const c_void;
     log!(
-        "Starting RUST Based IPL boot_fv - {:p}, Top of stack - {:p} \n",
+        "Starting RUST Based IPL:
+    boot_fv - {:p}
+    Top of stack - 0x{:X}
+    Temp ram base - 0x{:X}
+    Temp ram top - 0x{:X}
+    temp page table base - 0x{:X}
+    Initial eax value - 0x{:X}
+    ",
         boot_fv,
-        top_of_stack
+        stack_top_or_temp_page_table_base,
+        temp_ram_base,
+        temp_ram_top,
+        stack_top_or_temp_page_table_base,
+        initial_eax_value,
     );
 
     fw_exception::setup_exception_handlers();
@@ -78,22 +95,10 @@ pub extern "win64" fn _start(boot_fv: *const c_void, top_of_stack: *const c_void
     let runtime_memory_layout = RuntimeMemoryLayout::new(memory_top);
     log!("runtime memory layout: {:?}\n", runtime_memory_layout);
 
-    log!(
-        " PcdOvmfDxeMemFvBase: 0x{:X}\n",
-        LOADED_PAYLOAD_BASE,
-    );
-    log!(
-        " PcdOvmfDxeMemFvSize: 0x{:X}\n",
-        FIRMWARE_PAYLOAD_SIZE,
-    );
-    log!(
-        " PcdOvmfPeiMemFvBase: 0x{:X}\n",
-        LOADED_IPL_BASE,
-    );
-    log!(
-        " PcdOvmfPeiMemFvSize: 0x{:X}\n",
-        FIRMWARE_IPL_SIZE,
-    );
+    log!(" PcdOvmfDxeMemFvBase: 0x{:X}\n", LOADED_PAYLOAD_BASE,);
+    log!(" PcdOvmfDxeMemFvSize: 0x{:X}\n", FIRMWARE_PAYLOAD_SIZE,);
+    log!(" PcdOvmfPeiMemFvBase: 0x{:X}\n", LOADED_IPL_BASE,);
+    log!(" PcdOvmfPeiMemFvSize: 0x{:X}\n", FIRMWARE_IPL_SIZE,);
 
     sec::set_apic_mode(sec::LOCAL_APIC_MODE_X2APIC);
     sec::initialize_apic_timer(
@@ -128,9 +133,9 @@ pub extern "win64" fn _start(boot_fv: *const c_void, top_of_stack: *const c_void
             + sec::efi_page_to_size(sec::efi_size_to_page(
                 core::mem::size_of::<HobTemplate>() as u64
             )),
-        efi_end_of_hob_list: runtime_memory_layout.runtime_hob_base + core::mem::size_of::<HobTemplate>() as u64,
+        efi_end_of_hob_list: runtime_memory_layout.runtime_hob_base
+            + core::mem::size_of::<HobTemplate>() as u64,
     };
-
 
     let mut cpu = hob::Cpu {
         header: hob::Header {
@@ -142,7 +147,6 @@ pub extern "win64" fn _start(boot_fv: *const c_void, top_of_stack: *const c_void
         size_of_io_space: 16u8,
         reserved: [0u8; 6],
     };
-
 
     let mut firmware_volume = hob::FirmwareVolume {
         header: hob::Header {
@@ -232,7 +236,8 @@ pub extern "win64" fn _start(boot_fv: *const c_void, top_of_stack: *const c_void
             0x80,
             0x7D,
             &[0x52, 0x7B, 0x1D, 0x00, 0xC9, 0xBD],
-        ).as_bytes(),
+        )
+        .as_bytes(),
         resource_type: hob::RESOURCE_SYSTEM_MEMORY,
         resource_attribute: hob::RESOURCE_ATTRIBUTE_PRESENT
             | hob::RESOURCE_ATTRIBUTE_INITIALIZED
@@ -244,7 +249,6 @@ pub extern "win64" fn _start(boot_fv: *const c_void, top_of_stack: *const c_void
         physical_start: 0x100000u64,
         resource_length: lowmemory - 0x100000u64,
     };
-
 
     let mut memory_below1_m = hob::ResourceDescription {
         header: hob::Header {
@@ -259,7 +263,8 @@ pub extern "win64" fn _start(boot_fv: *const c_void, top_of_stack: *const c_void
             0x80,
             0x7D,
             &[0x52, 0x7B, 0x1D, 0x00, 0xC9, 0xBD],
-        ).as_bytes(),
+        )
+        .as_bytes(),
         resource_type: hob::RESOURCE_SYSTEM_MEMORY,
         resource_attribute: hob::RESOURCE_ATTRIBUTE_PRESENT
             | hob::RESOURCE_ATTRIBUTE_INITIALIZED
@@ -272,15 +277,18 @@ pub extern "win64" fn _start(boot_fv: *const c_void, top_of_stack: *const c_void
         resource_length: 0x80000u64 + 0x20000u64,
     };
 
-    let loaded_buffer =
-        memslice::get_dynamic_mem_slice_mut(memslice::SliceType::RuntimePayloadSlice, runtime_memory_layout.runtime_payload_base as usize);
+    let loaded_buffer = memslice::get_dynamic_mem_slice_mut(
+        memslice::SliceType::RuntimePayloadSlice,
+        runtime_memory_layout.runtime_payload_base as usize,
+    );
 
     let payload_fv_buffer = memslice::get_mem_slice(memslice::SliceType::FirmwarePayloadSlice);
-    log!("payload_fv_start: 0x{:X}\n", payload_fv_buffer as *const [u8] as *const u8 as usize);
-    let (entry, basefw, basefwsize) = sec::find_and_report_entry_point(
-        payload_fv_buffer,
-        loaded_buffer,
+    log!(
+        "payload_fv_start: 0x{:X}\n",
+        payload_fv_buffer as *const [u8] as *const u8 as usize
     );
+    let (entry, basefw, basefwsize) =
+        sec::find_and_report_entry_point(payload_fv_buffer, loaded_buffer);
     let entry = entry as usize;
 
     const HYPERVISORFW_NAME_GUID: efi::Guid = efi::Guid::from_fields(
@@ -291,7 +299,6 @@ pub extern "win64" fn _start(boot_fv: *const c_void, top_of_stack: *const c_void
         0xf6,
         &[0x52, 0x25, 0x48, 0x5a, 0x6a, 0x3a],
     );
-
 
     let mut hypervisor_fw = hob::MemoryAllocation {
         header: hob::Header {
@@ -347,11 +354,17 @@ pub extern "win64" fn _start(boot_fv: *const c_void, top_of_stack: *const c_void
     sec::virt_io_blk();
 
     let hob_base = runtime_memory_layout.runtime_hob_base as usize;
-    let hob = memslice::get_dynamic_mem_slice_mut(memslice::SliceType::RuntimePayloadHobSlice, hob_base);
+    let hob =
+        memslice::get_dynamic_mem_slice_mut(memslice::SliceType::RuntimePayloadHobSlice, hob_base);
 
     let _res = hob.pwrite(hob_template, 0).expect("write hob failed!");
 
     log!("payload entry is: 0x{:X}\n", entry);
-    asm::switch_stack(entry, runtime_memory_layout.runtime_stack_top as usize, hob_base, 0);
+    asm::switch_stack(
+        entry,
+        runtime_memory_layout.runtime_stack_top as usize,
+        hob_base,
+        0,
+    );
     loop {}
 }
