@@ -26,3 +26,6 @@ rust-firmware-layout = { path = "../rust-firmware-layout" }
 [dependencies.lazy_static]
 version = "1.0"
 features = ["spin_no_std"]
+
+[build-dependencies]
+rust-firmware-layout = { path = "../rust-firmware-layout" }

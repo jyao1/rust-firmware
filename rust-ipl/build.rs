@@ -7,6 +7,8 @@ use std::{
     process::Command,
 };
 
+use rust_firmware_layout::build_time::*;
+
 // const RESET_VECTOR_SRC: &[(&str, &str)] = &[
 //     ("x86_64", "ResetVector/Main.asm")
 // ];
@@ -90,15 +92,15 @@ fn main() {
     eprintln!("copy_to_file is {}", copy_to_file.to_str().unwrap());
 
     let _ = env::set_current_dir(new_current_dir.as_path());
+
     run_command(nasm(
         Path::new("ResetVector.nasm"),
         "bin",
         out_file.as_path(),
         &[
             "-DARCH_X64",
-            "-DPAGE_TABLE_SIZE=0x6000",
-            "-DPAGE_TABLE_BASE=0x800000",
-            "-DSEC_TOP_OF_STACK=0x830000",
+            format!("-DLOADED_RESET_VECTOR_BASE=0x{:X}", LOADED_RESET_VECTOR_BASE).as_str(),
+            format!("-DLOADED_FSP_T_BASE=0x{:X}", LOADED_FSP_T_BASE).as_str(),
         ],
     ));
     let _ = env::set_current_dir(old_current_dir.as_path());

@@ -21,22 +21,6 @@
   %fatal "Either ARCH_IA32 or ARCH_X64 must be defined."
 %endif
 
-%ifndef SEC_TOP_OF_STACK
-  %fatal "This implementation inherently depends on SEC_TOP_OF_STACK"
-%endif
-
-%ifdef ARCH_X64
-  %ifndef PAGE_TABLE_BASE
-    %fatal "This implementation inherently depends on PAGE_TABLE_BASE"
-  %endif
-  %ifndef PAGE_TABLE_SIZE
-    %fatal "This implementation inherently depends on PAGE_TABLE_SIZE"
-  %endif
-  %if (PAGE_TABLE_SIZE != 0x6000)
-    %fatal "This implementation inherently depends on PAGE_TABLE_SIZE=0x6000"
-  %endif
-%endif
-
 %include "CommonMacros.inc"
 
 %include "PostCodes.inc"
@@ -49,13 +33,11 @@
   %include "DebugDisabled.asm"
 %endif
 
-%include "Ia32/SearchForBfvBase.asm"
-%include "Ia32/SearchForSecEntry.asm"
+%include "FspWrapper.asm"
 
 %ifdef ARCH_X64
-  %define PT_ADDR(Offset) (PAGE_TABLE_BASE + (Offset))
+%include "PageTables.asm"
 %include "Ia32/Flat32ToFlat64.asm"
-%include "Ia32/PageTables64.asm"
 %endif
 
 %include "Ia16/Real16ToFlat32.asm"
