@@ -2,12 +2,9 @@
 //
 // SPDX-License-Identifier: BSD-2-Clause-Patent
 
-#![allow(unused)]
-
 use std::env;
 use std::fs;
 use std::fs::File;
-use std::io::Seek;
 use std::io::Write;
 
 use core::mem::size_of;
@@ -15,12 +12,15 @@ use r_efi::efi::Guid;
 use r_uefi_pi::fv::{
     CommonSectionHeader, FfsFileHeader, FirmwareVolumeExtHeader, FirmwareVolumeHeader, FvBlockMap,
     FIRMWARE_FILE_SYSTEM2_GUID, FVH_SIGNATURE, FV_FILETYPE_DXE_CORE, FV_FILETYPE_FFS_PAD,
-    FV_FILETYPE_RAW, FV_FILETYPE_SECURITY_CORE, SECTION_PE32, SECTION_PIC, SECTION_RAW,
+    FV_FILETYPE_RAW, FV_FILETYPE_SECURITY_CORE, SECTION_PE32, SECTION_RAW,
 };
 
 use scroll::{Pread, Pwrite};
 
 use rust_firmware_layout::build_time::*;
+#[allow(unused_imports)]
+use rust_firmware_layout::consts::*;
+use rust_fsp::fsp_t_upd::FsptUpd;
 
 const RUST_VAR_AND_PADDING_SIZE: usize = (FIRMWARE_VAR_SIZE + FIRMWARE_PADDING_SIZE) as usize;
 const RUST_PAYLOAD_MAX_SIZE: usize = FIRMWARE_PAYLOAD_SIZE as usize;
@@ -191,7 +191,6 @@ type IplFvHeaderByte = PayloadFvHeaderByte;
 fn build_ipl_fv_header(
     ipl_fv_header_buffer: &mut [u8],
     ipl_relocate_buffer: &[u8],
-    reset_vector_bin: &[u8],
 ) {
     let mut ipl_fv_header = IplFvHeader::default();
 
@@ -204,7 +203,7 @@ fn build_ipl_fv_header(
         .copy_from_slice(FIRMWARE_FILE_SYSTEM2_GUID.as_bytes());
 
     // ipl_fv contains SecMain File and Volume Top File.
-    ipl_fv_header.fv_header.fv_length = (RUST_IPL_MAX_SIZE + RUST_RESET_VECTOR_MAX_SIZE) as u64;
+    ipl_fv_header.fv_header.fv_length = RUST_IPL_MAX_SIZE as u64;
     ipl_fv_header.fv_header.signature = FVH_SIGNATURE;
     ipl_fv_header.fv_header.attributes = 0x0004feff;
     ipl_fv_header.fv_header.header_length = 0x0048;
@@ -214,7 +213,7 @@ fn build_ipl_fv_header(
     ipl_fv_header.fv_header.revision = 0x02;
 
     ipl_fv_header.fv_block_map[0].num_blocks =
-        ((RUST_IPL_MAX_SIZE + RUST_RESET_VECTOR_MAX_SIZE) / 0x1000) as u32;
+        (RUST_IPL_MAX_SIZE / 0x1000) as u32;
     ipl_fv_header.fv_block_map[0].length = 0x1000;
     ipl_fv_header.fv_block_map[1].num_blocks = 0x0000;
     ipl_fv_header.fv_block_map[1].length = 0x0000;
@@ -364,7 +363,10 @@ fn main() -> std::io::Result<()> {
         RUST_VAR_AND_PADDING_SIZE
             + RUST_PAYLOAD_MAX_SIZE
             + RUST_IPL_MAX_SIZE
-            + RUST_RESET_VECTOR_MAX_SIZE,
+            + RUST_RESET_VECTOR_MAX_SIZE
+            + FIRMWARE_FSP_T_SIZE as usize
+            + FIRMWARE_FSP_M_SIZE as usize
+            + FIRMWARE_FSP_S_SIZE as usize,
         FIRMWARE_SIZE as usize
     );
     assert!(RUST_PAYLOAD_MAX_SIZE > size_of::<PayloadFvHeader>());
@@ -375,6 +377,23 @@ fn main() -> std::io::Result<()> {
     let rust_ipl_name = &args[2];
     let rust_payload_name = &args[3];
     let rust_firmware_name = &args[4];
+
+    let rust_fsp_type = if args.len() == 6 { &args[5] } else { "Qemu" };
+    let (rust_fsp_t_bin, rust_fsp_m_bin, rust_fsp_s_bin) = match rust_fsp_type {
+        "Qemu" => (
+            include_bytes!("../../rust-fsp/fsp_bins/Qemu/Rebase/FspRel_T_FFFC5000.raw"),
+            include_bytes!("../../rust-fsp/fsp_bins/Qemu/Rebase/FspRel_M_FFFC8000.raw"),
+            include_bytes!("../../rust-fsp/fsp_bins/Qemu/Rebase/FspRel_S_FFFDD000.raw"),
+        ),
+        _ => {
+            panic!("Must set to Qemu")
+        }
+    };
+    let (fsp_t_bin, fsp_m_bin, fsp_s_bin) = (
+        &rust_fsp_t_bin[..],
+        &rust_fsp_m_bin[..],
+        &rust_fsp_s_bin[..],
+    );
 
     println!(
         "\nrust-firmware-tool {} {} {} {}\n",
@@ -405,17 +424,17 @@ fn main() -> std::io::Result<()> {
             - size_of::<PayloadFvHeaderByte>()
             - size_of::<PayloadFvFfsSectionHeader>()
     ];
-    pe_loader::pe::relocate(
+    let ipl_entry = pe_loader::pe::relocate(
         &rust_ipl_bin,
         &mut new_rust_ipl_buf,
         LOADED_IPL_ADDRESS + rust_ipl_header_buffer.len(),
     )
     .expect("fail to relocate PE image");
+    let ipl_entry = ipl_entry as u32;
 
     build_ipl_fv_header(
         rust_ipl_header_buffer,
         new_rust_ipl_buf.as_slice(),
-        reset_vector_bin.as_slice(),
     );
 
     let mut rust_reset_vector_header_buffer = [0u8; size_of::<ResetVectorByte>()];
@@ -452,18 +471,62 @@ fn main() -> std::io::Result<()> {
     rust_firmware_file
         .write_all(&rust_ipl_header_buffer[..])
         .expect("fail to write rust IPL header");
+    total_writen += &rust_ipl_header_buffer[..].len();
     rust_firmware_file
         .write_all(&new_rust_ipl_buf[..])
         .expect("fail to write rust IPL");
+    total_writen += &new_rust_ipl_buf[..].len();
 
-    let pad_size = RUST_IPL_MAX_SIZE + RUST_RESET_VECTOR_MAX_SIZE
-        - new_rust_ipl_buf.len()
-        - rust_ipl_header_buffer.len()
-        - rust_reset_vector_header_buffer.len()
-        - reset_vector_bin.len();
+    let pad_size = RUST_IPL_MAX_SIZE - new_rust_ipl_buf.len() - rust_ipl_header_buffer.len();
     rust_firmware_file
         .write_all(&zero_buf[..pad_size])
         .expect("fail to write rust IPL");
+    total_writen += &zero_buf[..pad_size].len();
+
+    assert_eq!(total_writen, FIRMWARE_FSP_T_OFFSET as usize);
+
+    rust_firmware_file
+        .write_all(fsp_t_bin)
+        .expect("fail to write rust fsp_t");
+    assert_eq!(fsp_t_bin.len(), FIRMWARE_FSP_T_SIZE as usize);
+    total_writen += fsp_t_bin.len();
+    rust_firmware_file
+        .write_all(fsp_m_bin)
+        .expect("fail to write rust fsp_m");
+    total_writen += fsp_m_bin.len();
+    rust_firmware_file
+        .write_all(fsp_s_bin)
+        .expect("fail to write rust fsp_s");
+    total_writen += fsp_s_bin.len();
+
+    assert_eq!(total_writen, FIRMWARE_RESET_VECTOR_OFFSET as usize);
+    // reset vector params
+    #[derive(Debug, Pread, Pwrite)]
+    struct ResetVectorParams {
+        ipl_entry: u32,                 // rust ipl entry
+        temp_ram_init_param: FsptUpd,   // FSP_T TempRamInit Params
+    };
+
+    let reset_vector_info = ResetVectorParams {
+        ipl_entry,
+        temp_ram_init_param: rust_firmware_qemu::fsp_data::TEMP_RAM_INIT_PARAM,
+    };
+
+    let reset_vector_info_buffer = &mut [0u8; 256];
+    let writen = reset_vector_info_buffer
+        .pwrite(reset_vector_info, 0)
+        .unwrap();
+    rust_firmware_file
+        .write_all(&reset_vector_info_buffer[..writen])
+        .expect("fail to write rust reset vector");
+
+    let pad_size = RUST_RESET_VECTOR_MAX_SIZE
+        - rust_reset_vector_header_buffer.len()
+        - reset_vector_bin.len()
+        - writen;
+    rust_firmware_file
+        .write_all(&zero_buf[..pad_size])
+        .expect("fail to write rust reset vector");
 
     rust_firmware_file
         .write_all(&rust_reset_vector_header_buffer[..])
