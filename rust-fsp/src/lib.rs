@@ -2,8 +2,9 @@
 //
 // SPDX-License-Identifier: BSD-2-Clause-Patent
 
-#![no_std]
+#![cfg_attr(not(test), no_std)]
 
+pub mod fsp_info_header;
 pub mod fsp_upd_header;
 pub mod fsp_t_upd;
 
