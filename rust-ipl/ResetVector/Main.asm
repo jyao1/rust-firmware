@@ -7,6 +7,10 @@
 ;
 ;------------------------------------------------------------------------------
 
+;
+; Minimal stack size requried by sec
+;
+%define SEC_MINIMAL_STACK_SIZE 0x1000
 
 BITS    16
 
@@ -36,55 +40,67 @@ Main16:
 
 BITS    32
 
+    ; TBD: call FSP-T to initialize Temp memory
+    ; return ecx, edx
     ;
-    ; Search for the Boot Firmware Volume (BFV)
-    ;
-    OneTimeCall Flat32SearchForBfvBase
+    OneTimeCall FspWrapperTempRamInit
 
     ;
-    ; EBP - Start of BFV
+    ; Initialize Temp Stack
     ;
+    mov     ebx, esp
+    mov     eax, edx
+    and     eax, 0xfffff000
+    ; reserved for paging and sec
+    ; at least 0x1000 for sec stack
+    sub     eax, PAGE_REGION_SIZE  + SEC_MINIMAL_STACK_SIZE
+    ;
+    ; Make Sure enough temp ram
+    ;
+    cmp     eax, ecx
+    jg      GetEnoughTempRamOk
+    debugShowPostCode POSTCODE_SEC_TMP_RAM_TOO_SMALL
+    jmp     $
+GetEnoughTempRamOk:
+
+    add     eax, SEC_MINIMAL_STACK_SIZE
+    mov     esp, eax
+    nop
+    push    ebx         ; save Initial value of the EAX register
+    push    eax         ; save TempPageTableBase/TempStackBase to stack
+    push    ecx         ; save Temp memory start
+    push    edx         ; save Temp memory end
 
     ;
-    ; Search for the SEC entry point
+    ; LOADED_RESET_VECTOR_BASE store params requried by reset vector
+    ; See: rust-firmware-tool/src/main.rs: ResetVectorParams
     ;
-    OneTimeCall Flat32SearchForSecEntryPoint
-
+    mov     eax, LOADED_RESET_VECTOR_BASE
+    mov     esi, dword [eax]
     ;
     ; ESI - SEC Core entry point
-    ; EBP - Start of BFV
     ;
 
 %ifdef ARCH_IA32
-
-    ;
-    ; Restore initial EAX value into the EAX register
-    ;
-    mov     eax, esp
-
-    ;
-    ; Jump to the 32-bit SEC entry point
-    ;
-    ; jmp     esi
-
-    ;
-    ; Load temporary RAM stack based on PCDs
-    ;
-    mov     eax, SEC_TOP_OF_STACK
-    mov     esp, eax
-    nop
-
-    ;
-    ; Setup parameters and call SecCoreStartupWithStack
-    ;   [esp]   return address for call
-    ;   [esp+4] BootFirmwareVolumePtr
-    ;   [esp+8] TopOfCurrentStack
-    ;
-    push    eax
-    push    ebp
-    call    esi
-
+    ; TBD: Impl IA32 arch
+    debugShowPostCode POSTCODE_SEC_NOT_FOUND
+    jmp $
 %else
+    ; Create page tables
+    ;   ECX: Page base
+    mov     eax, edx
+    and     eax, 0xfffff000
+    sub     eax, PAGE_REGION_SIZE
+    mov     ecx, eax
+
+    push    esi
+    push    ebp
+    push    eax
+    OneTimeCall  PreparePagingTable
+    pop     eax
+    pop     ebp
+    pop     esi
+    mov     cr3, eax
 
     ;
     ; Transition the processor from 32-bit flat mode to 64-bit flat mode
@@ -98,41 +114,31 @@ BITS    64
     ; 32-bits of 64-bit registers are zero for these values.
     ;
     mov     rax, 0x00000000ffffffff
+    and     rdx, rax
     and     rsi, rax
     and     rbp, rax
     and     rsp, rax
+    and     r8,  rax
+    and     r9,  rax
 
     ;
     ; RSI - SEC Core entry point
-    ; RBP - Start of BFV
     ;
-
-    ;
-    ; Restore initial EAX value into the RAX register
-    ;
-    mov     rax, rsp
-
-    ;
-    ; Jump to the 64-bit SEC entry point
-    ;
-    ; jmp     rsi
-
-    ;
-    ; Load temporary RAM stack based on PCDs
-    ;
-    mov     rsp, SEC_TOP_OF_STACK
-    nop
 
     ;
     ; Setup parameters and call SecCoreStartupWithStack
-    ;   rcx: BootFirmwareVolumePtr
-    ;   rdx: TopOfCurrentStack
+    ;   rcx: TempRamBase
+    ;   rdx: TempRamTop
+    ;   r8:  TempPageTableBase or stack base
+    ;   r9:  initial EAX value into the EAX register
+    ; Restore initial EAX value into the EAX register
     ;
-    mov     rcx, rbp
-    mov     rdx, rsp
+
+    mov     ecx, dword [rsp + 4]
+    mov     edx, dword [rsp]
+    mov     r8d, dword [rsp + 8]
+    mov     r9d, dword [rsp + 12]
     sub     rsp, 0x20
     call    rsi
 
 %endif
-
-

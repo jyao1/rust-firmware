@@ -11,10 +11,9 @@ BITS    32
 
 ;
 ; Modified:  EAX
+; Modified:  ECX
 ;
 Transition32FlatTo64Flat:
-
-    OneTimeCall SetCr3ForPageTables64
 
     mov     eax, cr4
     bts     eax, 5                      ; enable PAE
