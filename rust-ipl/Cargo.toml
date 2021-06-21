@@ -22,6 +22,7 @@ uefi-pi =  { path = "../uefi-pi" }
 elf-loader = { path = "../elf-loader" }
 pe-loader = { path = "../pe-loader" }
 rust-firmware-layout = { path = "../rust-firmware-layout" }
+rust-fsp = { path = "../rust-fsp" }
 
 [dependencies.lazy_static]
 version = "1.0"
