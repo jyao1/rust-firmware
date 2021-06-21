@@ -9,6 +9,9 @@ use rust_firmware_layout::runtime::*;
 pub enum SliceType {
     FirmwareIplSlice,
     FirmwarePayloadSlice,
+    FirmwareFspTSlice,
+    FirmwareFspMSlice,
+    FirmwareFspSSlice,
     RuntimePayloadSlice,
     RuntimePayloadHobSlice,
 }
@@ -23,6 +26,18 @@ pub fn get_mem_slice<'a>(t: SliceType) -> &'a [u8] {
             SliceType::FirmwarePayloadSlice => core::slice::from_raw_parts(
                 LOADED_PAYLOAD_BASE as *const u8,
                 FIRMWARE_PAYLOAD_SIZE as usize,
+            ),
+            SliceType::FirmwareFspTSlice => core::slice::from_raw_parts(
+                LOADED_FSP_T_BASE as * const u8,
+                FIRMWARE_FSP_T_SIZE as usize,
+            ),
+            SliceType::FirmwareFspMSlice => core::slice::from_raw_parts(
+                LOADED_FSP_M_BASE as *const u8,
+                FIRMWARE_FSP_M_SIZE as usize,
+            ),
+            SliceType::FirmwareFspSSlice => core::slice::from_raw_parts(
+                LOADED_FSP_S_BASE as *const u8,
+                FIRMWARE_FSP_S_SIZE as usize,
             ),
             _ => {
                 panic!("not support")

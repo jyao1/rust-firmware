@@ -29,6 +29,8 @@ use rust_firmware_layout::build_time::*;
 use rust_firmware_layout::runtime::*;
 use rust_firmware_layout::RuntimeMemoryLayout;
 
+use rust_fsp::fsp_info_header::{FSP_INFO_HEADER_OFF, FspInfoHeader};
+
 use scroll::{Pread, Pwrite};
 
 #[derive(Copy, Clone, Debug, Pread, Pwrite)]
@@ -77,8 +79,7 @@ pub extern "win64" fn _start(
     Temp ram base - 0x{:X}
     Temp ram top - 0x{:X}
     temp page table base - 0x{:X}
-    Initial eax value - 0x{:X}
-    ",
+    Initial eax value - 0x{:X}\n",
         boot_fv,
         stack_top_or_temp_page_table_base,
         temp_ram_base,
@@ -89,6 +90,11 @@ pub extern "win64" fn _start(
 
     fw_exception::setup_exception_handlers();
     log!("setup_exception_handlers done\n");
+
+    // dump rust fsp info
+    let fsp_t_fv_buffer = memslice::get_mem_slice(memslice::SliceType::FirmwareFspTSlice);
+    let fsp_t_info_header = fsp_t_fv_buffer.pread::<FspInfoHeader>(FSP_INFO_HEADER_OFF).unwrap();
+    log!("Fsp-T: {:?}\n", fsp_t_info_header);
 
     let memory_top = sec::get_system_memory_size_below4_gb();
 
