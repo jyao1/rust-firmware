@@ -2,6 +2,8 @@
 //
 // SPDX-License-Identifier: BSD-2-Clause-Patent
 
+// TBD: This is only for qemu fsp, need remove to platform/rust-firmware-qemu
+
 use core::default::Default;
 
 use scroll::{Pread, Pwrite};

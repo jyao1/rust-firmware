@@ -2,8 +2,8 @@
 //
 // SPDX-License-Identifier: BSD-2-Clause-Patent
 
-use rust_fsp::fsp_t_upd::{FsptUpd, FsptCommonUpd};
-use rust_fsp::fsp_upd_header::FspUpdHeader;
+use rust_fsp_wrapper::fsp_t_upd::{FsptUpd, FsptCommonUpd};
+use rust_fsp_wrapper::fsp_upd_header::FspUpdHeader;
 
 
 const FSPT_UPD_SIGNATURE : u64 = 0x545F4450554D4551;        /* 'QEMUPD_T' */
