@@ -17,10 +17,10 @@ macro_rules! BUILD_TIME_TEMPLATE {
 /*
     Image Layout:
                   Binary                       Address
-            {var_offset:#010X} -> +--------------+ <-  {var_base:#010X}
-            ({var_size:#010X})  |   VAR PAD    |
+            {reserved1_offset:#010X} -> +--------------+ <-  {reserved1_base:#010X}
+            ({reserved1_size:#010X})  |  RESERVED1   |
             {padding_offset:#010X} -> +--------------+ <-  {padding_base:#010X}
-            ({padding_size:#010X})  |   VAR PAD    |
+            ({padding_size:#010X})  |    PADDING   |
             {payload_offset:#010X} -> +--------------+ <-  {payload_base:#010X}
            ({payload_size:#010X})   | Rust Payload |
                           |     (pad)    |
@@ -34,13 +34,13 @@ macro_rules! BUILD_TIME_TEMPLATE {
            {fsp_s_offset:#010X} -> +--------------+ <-  {fsp_s_base:#010X}
            ({fsp_s_size:#010X})   |  Rust Fsp-S  |
             {reset_vector_offset:#010X} -> +--------------+ <-  {reset_vector_base:#010X}
-                          |   (VAR PAD)  |
+                          | (DATA PATCH) |
            ({reset_vector_size:#010X})   | Reset Vector |
             {image_size:#010X} -> +--------------+ <- 0x100000000 (4G)
 */
 
 // Image
-pub const FIRMWARE_VAR_OFFSET: u32 = {var_offset:#X};
+pub const FIRMWARE_RESERVED1_OFFSET: u32 = {reserved1_offset:#X};
 pub const FIRMWARE_PADDING_OFFSET: u32 = {padding_offset:#X};
 pub const FIRMWARE_PAYLOAD_OFFSET: u32 = {payload_offset:#X};
 pub const FIRMWARE_IPL_OFFSET: u32 = {ipl_offset:#X};
@@ -50,7 +50,7 @@ pub const FIRMWARE_FSP_S_OFFSET: u32 = {fsp_s_offset:#X};
 pub const FIRMWARE_RESET_VECTOR_OFFSET: u32 = {reset_vector_offset:#X};
 
 pub const FIRMWARE_SIZE: u32 = {image_size:#X};
-pub const FIRMWARE_VAR_SIZE: u32 = {var_size:#X};
+pub const FIRMWARE_VAR_SIZE: u32 = {reserved1_size:#X};
 pub const FIRMWARE_PADDING_SIZE: u32 = {padding_size:#X};
 pub const FIRMWARE_PAYLOAD_SIZE: u32 = {payload_size:#X};
 pub const FIRMWARE_IPL_SIZE: u32 = {ipl_size:#X};
@@ -60,7 +60,7 @@ pub const FIRMWARE_FSP_S_SIZE: u32 = {fsp_s_size:#X};
 pub const FIRMWARE_RESET_VECTOR_SIZE: u32 = {reset_vector_size:#X};
 
 // Image loaded
-pub const LOADED_VAR_BASE: u32 = {var_base:#X};
+pub const LOADED_RESERVED1_BASE: u32 = {reserved1_base:#X};
 pub const LOADED_PADDING_BASE: u32 = {padding_base:#X};
 pub const LOADED_PAYLOAD_BASE: u32 = {payload_base:#X};
 pub const LOADED_IPL_BASE: u32 = {ipl_base:#X};
@@ -118,7 +118,7 @@ struct FirmwareLayoutConfig {
 #[derive(Debug, PartialEq, Deserialize, Clone)]
 struct FirmwareImageLayoutConfig {
     image_size: u32,
-    var_size: u32,
+    reserved1_size: u32,
     padding_size: u32,
     payload_size: u32,
     ipl_size: u32,
@@ -163,7 +163,7 @@ impl FirmwareLayout {
         write!(
             &mut to_generate,
             BUILD_TIME_TEMPLATE!(),
-            var_size = self.config.image_layout.var_size,
+            reserved1_size = self.config.image_layout.reserved1_size,
             padding_size = self.config.image_layout.padding_size,
             payload_size = self.config.image_layout.payload_size,
             ipl_size = self.config.image_layout.ipl_size,
@@ -171,7 +171,7 @@ impl FirmwareLayout {
             fsp_m_size = self.config.image_layout.fsp_m_size,
             fsp_s_size = self.config.image_layout.fsp_s_size,
             reset_vector_size = self.config.image_layout.reset_vector_size,
-            var_offset = self.img.var_offset,
+            reserved1_offset = self.img.reserved1_offset,
             padding_offset = self.img.padding_offset,
             payload_offset = self.img.payload_offset,
             ipl_offset = self.img.ipl_offset,
@@ -179,7 +179,7 @@ impl FirmwareLayout {
             fsp_m_offset = self.img.fsp_m_offset,
             fsp_s_offset = self.img.fsp_s_offset,
             reset_vector_offset = self.img.reset_vector_offset,
-            var_base = self.img_loaded.var_base,
+            reserved1_base = self.img_loaded.reserved1_base,
             padding_base = self.img_loaded.padding_base,
             payload_base = self.img_loaded.payload_base,
             ipl_base = self.img_loaded.ipl_base,
@@ -222,7 +222,7 @@ impl FirmwareLayout {
 
 #[derive(Debug, Default, PartialEq)]
 struct FirmwareLayoutImage {
-    var_offset: u32,
+    reserved1_offset: u32,
     padding_offset: u32,
     payload_offset: u32,
     ipl_offset: u32,
@@ -235,9 +235,9 @@ struct FirmwareLayoutImage {
 impl FirmwareLayoutImage {
     fn new_from_config(config: &FirmwareLayoutConfig) -> Self {
         let current_size = 0x0;
-        let var_offset = current_size;
+        let reserved1_offset = current_size;
 
-        let current_size = current_size + config.image_layout.var_size;
+        let current_size = current_size + config.image_layout.reserved1_size;
         let padding_offset = current_size;
 
         let current_size = current_size + config.image_layout.padding_size;
@@ -259,7 +259,7 @@ impl FirmwareLayoutImage {
         let reset_vector_offset = current_size;
 
         FirmwareLayoutImage {
-            var_offset,
+            reserved1_offset,
             padding_offset,
             payload_offset,
             ipl_offset,
@@ -273,7 +273,7 @@ impl FirmwareLayoutImage {
 
 #[derive(Debug, Default, PartialEq)]
 struct FirmwareLayoutImageLoaded {
-    var_base: u32,
+    reserved1_base: u32,
     padding_base: u32,
     payload_base: u32,
     ipl_base: u32,
@@ -286,9 +286,9 @@ struct FirmwareLayoutImageLoaded {
 impl FirmwareLayoutImageLoaded {
     fn new_from_image(config: &FirmwareLayoutConfig) -> Self {
         let firmware_base = 0xFFFFFFFF - config.image_layout.image_size + 1;
-        let var_base = firmware_base;
+        let reserved1_base = firmware_base;
 
-        let current_base = var_base + config.image_layout.var_size;
+        let current_base = reserved1_base + config.image_layout.reserved1_size;
         let padding_base = current_base;
 
         let current_base = current_base + config.image_layout.padding_size;
@@ -310,7 +310,7 @@ impl FirmwareLayoutImageLoaded {
         let reset_vector_base = current_base;
 
         FirmwareLayoutImageLoaded {
-            var_base,
+            reserved1_base,
             padding_base,
             payload_base,
             ipl_base,

@@ -20,7 +20,7 @@ use scroll::{Pread, Pwrite};
 use rust_firmware_layout::build_time::*;
 #[allow(unused_imports)]
 use rust_firmware_layout::consts::*;
-use rust_fsp::fsp_t_upd::FsptUpd;
+use rust_fsp_wrapper::fsp_t_upd::FsptUpd;
 
 const RUST_VAR_AND_PADDING_SIZE: usize = (FIRMWARE_VAR_SIZE + FIRMWARE_PADDING_SIZE) as usize;
 const RUST_PAYLOAD_MAX_SIZE: usize = FIRMWARE_PAYLOAD_SIZE as usize;
@@ -378,21 +378,21 @@ fn main() -> std::io::Result<()> {
     let rust_payload_name = &args[3];
     let rust_firmware_name = &args[4];
 
-    let rust_fsp_type = if args.len() == 6 { &args[5] } else { "Qemu" };
-    let (rust_fsp_t_bin, rust_fsp_m_bin, rust_fsp_s_bin) = match rust_fsp_type {
+    let rust_fsp_wrapper_type = if args.len() == 6 { &args[5] } else { "Qemu" };
+    let (rust_fsp_wrapper_t_bin, rust_fsp_wrapper_m_bin, rust_fsp_wrapper_s_bin) = match rust_fsp_wrapper_type {
         "Qemu" => (
-            include_bytes!("../../rust-fsp/fsp_bins/Qemu/Rebase/FspRel_T_FFFC5000.raw"),
-            include_bytes!("../../rust-fsp/fsp_bins/Qemu/Rebase/FspRel_M_FFFC8000.raw"),
-            include_bytes!("../../rust-fsp/fsp_bins/Qemu/Rebase/FspRel_S_FFFDD000.raw"),
+            include_bytes!("../../rust-fsp-wrapper/fsp_bins/Qemu/Rebase/FspRel_T_FFFC5000.raw"),
+            include_bytes!("../../rust-fsp-wrapper/fsp_bins/Qemu/Rebase/FspRel_M_FFFC8000.raw"),
+            include_bytes!("../../rust-fsp-wrapper/fsp_bins/Qemu/Rebase/FspRel_S_FFFEA000.raw"),
         ),
         _ => {
             panic!("Must set to Qemu")
         }
     };
     let (fsp_t_bin, fsp_m_bin, fsp_s_bin) = (
-        &rust_fsp_t_bin[..],
-        &rust_fsp_m_bin[..],
-        &rust_fsp_s_bin[..],
+        &rust_fsp_wrapper_t_bin[..],
+        &rust_fsp_wrapper_m_bin[..],
+        &rust_fsp_wrapper_s_bin[..],
     );
 
     println!(
