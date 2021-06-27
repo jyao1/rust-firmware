@@ -107,7 +107,7 @@ pub fn relocate_pe_mem(image: &[u8], loaded_buffer: &mut [u8]) -> (u64, u64, u64
     )
 }
 
-#[derive(Debug, Default, Pread, Pwrite)]
+#[derive(Default, Pread, Pwrite)]
 pub struct Section {
     name: [u8; 8],                // 8
     virtual_size: u32,            //4
@@ -119,6 +119,28 @@ pub struct Section {
     number_of_relocations: u16,   //2
     number_of_line_numbers: u16,  //2
     characteristics: u32,         //4
+}
+
+impl core::fmt::Debug for Section {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        let name = self.name;
+        f.debug_struct("Section")
+        .field("name", &format_args!(
+            "{}{}{}{}{}{}{}{}",
+            name[0] as char, name[1] as char, name[2] as char, name[3] as char,
+            name[4] as char, name[5] as char, name[6] as char, name[7] as char
+        ))
+        .field("virtual_size", &format_args!("{:x}", self.virtual_size))
+        .field("virtual_address", &format_args!("{:x}", self.virtual_address))
+        .field("size_of_raw_data", &format_args!("{:x}", self.size_of_raw_data))
+        .field("pointer_to_raw_data", &format_args!("{:x}", self.pointer_to_raw_data))
+        .field("pointer_to_relocations", &format_args!("{:x}", self.pointer_to_relocations))
+        .field("pointer_to_line_numbers", &format_args!("{:x}", self.pointer_to_line_numbers))
+        .field("number_of_relocations", &format_args!("{:x}", self.number_of_relocations))
+        .field("number_of_line_numbers", &format_args!("{:x}", self.number_of_line_numbers))
+        .field("characteristics", &format_args!("{:x}", self.characteristics))
+        .finish()
+    }
 }
 
 pub struct Sections<'a> {
@@ -258,9 +280,66 @@ fn reloc_to_base(
                         value - image_base as u64 + new_image_base as u64,
                         location as usize,
                     );
+                    log::trace!("reloc {:08x}:  {:012x} -> {:012x}", location, value, value - image_base as u64 + new_image_base as u64);
                 }
                 _ => continue,
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use std::vec;
+
+    #[test]
+    fn test_is_pe() {
+        let image_bytes = include_bytes!("../../target/x86_64-unknown-uefi/release/rust-uefi-payload.efi");
+
+        assert_eq!(super::is_pe(image_bytes), true);
+
+
+    }
+    #[test]
+    fn test_sections() {
+        use scroll::Pread;
+        let pe_image = &include_bytes!("../../target/x86_64-unknown-uefi/release/rust-uefi-payload.efi")[..];
+
+        let pe_header_offset = pe_image.pread::<u32>(0x3c).unwrap() as usize;
+        let pe_region = &pe_image[pe_header_offset..];
+
+        let num_sections = pe_region.pread::<u16>(6).unwrap() as usize;
+        let optional_header_size = pe_region.pread::<u16>(20).unwrap() as usize;
+        let optional_region = &pe_image[24 + pe_header_offset..];
+
+        // check optional_hdr64_magic
+        assert_eq!(optional_region.pread::<u16>(0).unwrap(), super::OPTIONAL_HDR64_MAGIC);
+
+        let entry_point = optional_region.pread::<u32>(16).unwrap();
+        let image_base = optional_region.pread::<u64>(24).unwrap();
+
+        let sections_buffer = &pe_image[(24 + pe_header_offset + optional_header_size)..];
+
+        let _total_header_size =
+            (24 + pe_header_offset + optional_header_size + num_sections * 40) as usize;
+
+        let sections = super::Sections::parse(sections_buffer, num_sections as usize).unwrap();
+        println!("entry_point: {:x}", entry_point);
+        println!("image_base: {:x}", image_base);
+        for section in sections {
+            println!("{:?}", section)
+        }
+        println!("entry: {:x?}", &pe_image[0xf8e0..0xf9e0])
+    }
+
+    #[test]
+    fn test_relocate() {
+        use simple_logger::SimpleLogger;
+        SimpleLogger::new().with_level(log::LevelFilter::Trace).init().unwrap();
+        let pe_image = &include_bytes!("../../target/x86_64-unknown-uefi/release/rust-uefi-payload.efi")[..];
+
+        let mut loaded_buffer = vec![0u8; 0x800000];
+
+        super::relocate(pe_image, loaded_buffer.as_mut_slice(), 0x100000);
     }
 }

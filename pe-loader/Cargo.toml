@@ -9,3 +9,6 @@ edition = "2018"
 [dependencies]
 log = "0.4.13"
 scroll = { version = "0.10", default-features=false, features = ["derive"] }
+
+[dev-dependencies]
+simple_logger = "1.11.0"

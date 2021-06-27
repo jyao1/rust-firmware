@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: BSD-2-Clause-Patent
 
-#![no_std]
+#![cfg_attr(not(test),no_std)]
 #![forbid(unsafe_code)]
 #![feature(slice_fill)]
 
