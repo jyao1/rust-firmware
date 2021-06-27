@@ -5,4 +5,4 @@ authors = ["Xiaoyu Lu <xiaoyux.lu@intel.com>"]
 edition = "2018"
 
 [dependencies]
-rust-fsp = { path = "../../rust-fsp" }
+rust-fsp-wrapper = { path = "../../rust-fsp-wrapper" }
