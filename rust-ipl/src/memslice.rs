@@ -14,6 +14,8 @@ pub enum SliceType {
     FirmwareFspSSlice,
     RuntimePayloadSlice,
     RuntimePayloadHobSlice,
+    RuntimeStackSlice,
+    RuntimeHeapSlice,
 }
 
 pub fn get_mem_slice<'a>(t: SliceType) -> &'a [u8] {
@@ -56,6 +58,14 @@ pub fn get_dynamic_mem_slice_mut<'a>(t: SliceType, base_address: usize) -> &'a m
             SliceType::RuntimePayloadSlice => core::slice::from_raw_parts_mut(
                 base_address as *const u8 as *mut u8,
                 RUNTIME_PAYLOAD_SIZE as usize,
+            ),
+            SliceType::RuntimeStackSlice => core::slice::from_raw_parts_mut(
+                base_address as *const u8 as *mut u8,
+                RUNTIME_STACK_SIZE as usize,
+            ),
+            SliceType::RuntimeHeapSlice => core::slice::from_raw_parts_mut(
+                base_address as *const u8 as *mut u8,
+                RUNTIME_HEAP_SIZE as usize,
             ),
             _ => {
                 panic!("not support")

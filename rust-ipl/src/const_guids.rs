@@ -1,0 +1,31 @@
+// Copyright (c) 2021 Intel Corporation
+//
+// SPDX-License-Identifier: BSD-2-Clause-Patent
+use r_uefi_pi::hob::Guid;
+
+pub const PAGE_TABLE_NAME_GUID: Guid = Guid::from_fields(
+    0xF8E21975,
+    0x0899,
+    0x4F58,
+    0xA4,
+    0xBE,
+    &[0x55, 0x25, 0xA9, 0xC6, 0xD7, 0x7A],
+);
+
+pub const HYPERVISORFW_NAME_GUID: Guid = Guid::from_fields(
+    0x6948d4a,
+    0xd359,
+    0x4721,
+    0xad,
+    0xf6,
+    &[0x52, 0x25, 0x48, 0x5a, 0x6a, 0x3a],
+);
+
+pub const MEMORY_ALLOCATION_STACK_GUID: Guid = Guid::from_fields(
+    0x4ED4BF27,
+    0x4092,
+    0x42E9,
+    0x80,
+    0x7D,
+    &[0x52, 0x7B, 0x1D, 0x00, 0xC9, 0xBD],
+);
