@@ -12,8 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#![no_std]
+#![cfg_attr(not(test), no_std)]
 #![forbid(unsafe_code)]
+
+mod enum_builder;
+pub mod r_efi_wrapper;
 
 pub mod boot_mode;
 pub mod fv;
