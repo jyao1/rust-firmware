@@ -2,8 +2,8 @@
 //
 // SPDX-License-Identifier: BSD-2-Clause-Patent
 
-use rust_firmware_layout::consts::*;
 use r_uefi_pi::fv;
+use rust_firmware_layout::consts::*;
 use uefi_pi::hob_lib;
 
 pub fn efi_size_to_page(size: u64) -> u64 {
@@ -34,7 +34,10 @@ pub fn find_and_report_entry_point(
     )
     .unwrap();
     log::trace!("found image len is: {:x}\n", image.len());
-    log::trace!("loaded_buffer addr: {:x}\n", loaded_buffer as *const [u8] as *const u8 as usize);
+    log::trace!(
+        "loaded_buffer addr: {:x}\n",
+        loaded_buffer as *const [u8] as *const u8 as usize
+    );
     if elf_loader::elf::is_elf(image) {
         log::info!("Payload is elf image\n");
         elf_loader::elf::relocate_elf(image, loaded_buffer)

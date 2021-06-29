@@ -1,3 +1,7 @@
+// Copyright (c) 2021 Intel Corporation
+//
+// SPDX-License-Identifier: BSD-2-Clause-Patent
+
 ///
 /// REF:https://doc.rust-lang.org/cargo/reference/environment-variables.html#environment-variables-cargo-sets-for-build-scripts
 ///
@@ -99,7 +103,11 @@ fn main() {
         out_file.as_path(),
         &[
             "-DARCH_X64",
-            format!("-DLOADED_RESET_VECTOR_BASE=0x{:X}", LOADED_RESET_VECTOR_BASE).as_str(),
+            format!(
+                "-DLOADED_RESET_VECTOR_BASE=0x{:X}",
+                LOADED_RESET_VECTOR_BASE
+            )
+            .as_str(),
             format!("-DLOADED_FSP_T_BASE=0x{:X}", LOADED_FSP_T_BASE).as_str(),
         ],
     ));
