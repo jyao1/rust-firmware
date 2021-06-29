@@ -30,7 +30,7 @@ pub fn get_mem_slice<'a>(t: SliceType) -> &'a [u8] {
                 FIRMWARE_PAYLOAD_SIZE as usize,
             ),
             SliceType::FirmwareFspTSlice => core::slice::from_raw_parts(
-                LOADED_FSP_T_BASE as * const u8,
+                LOADED_FSP_T_BASE as *const u8,
                 FIRMWARE_FSP_T_SIZE as usize,
             ),
             SliceType::FirmwareFspMSlice => core::slice::from_raw_parts(
