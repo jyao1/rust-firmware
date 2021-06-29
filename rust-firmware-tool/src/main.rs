@@ -359,6 +359,8 @@ fn build_reset_vector_header(reset_vector_header_buffer: &mut [u8], reset_vector
 }
 
 fn main() -> std::io::Result<()> {
+    simple_logger::SimpleLogger::new().with_level(log::LevelFilter::Info).init().unwrap();
+
     assert_eq!(
         RUST_VAR_AND_PADDING_SIZE
             + RUST_PAYLOAD_MAX_SIZE
@@ -378,21 +380,27 @@ fn main() -> std::io::Result<()> {
     let rust_payload_name = &args[3];
     let rust_firmware_name = &args[4];
 
-    let rust_fsp_wrapper_type = if args.len() == 6 { &args[5] } else { "Qemu" };
-    let (rust_fsp_wrapper_t_bin, rust_fsp_wrapper_m_bin, rust_fsp_wrapper_s_bin) = match rust_fsp_wrapper_type {
-        "Qemu" => (
-            include_bytes!("../../rust-fsp-wrapper/fsp_bins/Qemu/Rebase/FspRel_T_FFFC5000.raw"),
-            include_bytes!("../../rust-fsp-wrapper/fsp_bins/Qemu/Rebase/FspRel_M_FFFC8000.raw"),
-            include_bytes!("../../rust-fsp-wrapper/fsp_bins/Qemu/Rebase/FspRel_S_FFFEA000.raw"),
-        ),
-        _ => {
-            panic!("Must set to Qemu")
-        }
-    };
+    let (rust_fsp_wrapper_t_bin, rust_fsp_wrapper_m_bin, rust_fsp_wrapper_s_bin) = (
+        fs::read(std::env::var("RUST_FIRMWARE_TOOL_FSP_T_FILE")
+        .unwrap_or_else(|_|{
+            log::info!("environment variable: RUST_FIRMWARE_TOOL_FSP_T_FILE not set");
+            "rust-fsp-wrapper/fsp_bins/Qemu/QEMU_FSP_RELEASE_T_FFFC5000.raw".to_string()
+        })).expect("fail to read fsp-t"),
+        fs::read(std::env::var("RUST_FIRMWARE_TOOL_FSP_M_FILE")
+        .unwrap_or_else(|_|{
+            log::info!("environment variable: RUST_FIRMWARE_TOOL_FSP_M_FILE not set");
+            "rust-fsp-wrapper/fsp_bins/Qemu/QEMU_FSP_RELEASE_M_FFFC8000.raw".to_string()
+        })).expect("fail to read fsp-m"),
+        fs::read(std::env::var("RUST_FIRMWARE_TOOL_FSP_S_FILE")
+        .unwrap_or_else(|_|{
+            log::info!("environment variable: RUST_FIRMWARE_TOOL_FSP_S_FILE not set");
+            "rust-fsp-wrapper/fsp_bins/Qemu/QEMU_FSP_RELEASE_S_FFFEA000.raw".to_string()
+        })).expect("fail to read fsp-s"),
+    );
     let (fsp_t_bin, fsp_m_bin, fsp_s_bin) = (
-        &rust_fsp_wrapper_t_bin[..],
-        &rust_fsp_wrapper_m_bin[..],
-        &rust_fsp_wrapper_s_bin[..],
+        rust_fsp_wrapper_t_bin.as_slice(),
+        rust_fsp_wrapper_m_bin.as_slice(),
+        rust_fsp_wrapper_s_bin.as_slice(),
     );
 
     println!(
@@ -546,4 +554,9 @@ fn write_u24(data: u32, buf: &mut [u8]) {
     buf[0] = (data & 0xFF) as u8;
     buf[1] = ((data >> 8) & 0xFF) as u8;
     buf[2] = ((data >> 16) & 0xFF) as u8;
+}
+
+#[test]
+fn test_var() {
+    os::env
 }
