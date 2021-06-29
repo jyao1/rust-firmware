@@ -5,6 +5,7 @@ authors = ["Jiewen Yao <jiewen.yao@intel.com>"]
 edition = "2018"
 
 [dependencies]
+log = "0.4.13"
 r-efi = "3.2.0"
 r-uefi-pi =  { path = "../r-uefi-pi" }
 simple_logger = "1.11.0"
