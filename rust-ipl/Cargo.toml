@@ -23,7 +23,7 @@ elf-loader = { path = "../elf-loader" }
 pe-loader = { path = "../pe-loader" }
 rust-firmware-layout = { path = "../rust-firmware-layout" }
 rust-fsp-wrapper = { path = "../rust-fsp-wrapper" }
-
+rust-firmware-platform = { path = "../rust-firmware-platform", default-features=false }
 
 [dependencies.lazy_static]
 version = "1.0"
@@ -31,3 +31,8 @@ features = ["spin_no_std"]
 
 [build-dependencies]
 rust-firmware-layout = { path = "../rust-firmware-layout" }
+
+[features]
+default = ["qemu"]
+
+qemu = ["rust-firmware-platform/qemu"]

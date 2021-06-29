@@ -20,7 +20,8 @@ use scroll::{Pread, Pwrite};
 use rust_firmware_layout::build_time::*;
 #[allow(unused_imports)]
 use rust_firmware_layout::consts::*;
-use rust_fsp_wrapper::fsp_t_upd::FsptUpd;
+
+use rust_firmware_platform::{FsptUpd, TEMP_RAM_INIT_PARAM};
 
 const RUST_VAR_AND_PADDING_SIZE: usize = (FIRMWARE_VAR_SIZE + FIRMWARE_PADDING_SIZE) as usize;
 const RUST_PAYLOAD_MAX_SIZE: usize = FIRMWARE_PAYLOAD_SIZE as usize;
@@ -517,7 +518,9 @@ fn main() -> std::io::Result<()> {
 
     let reset_vector_info = ResetVectorParams {
         ipl_entry,
-        temp_ram_init_param: rust_firmware_qemu::fsp_data::TEMP_RAM_INIT_PARAM,
+        temp_ram_init_param: {
+            TEMP_RAM_INIT_PARAM
+        },
     };
 
     let reset_vector_info_buffer = &mut [0u8; 256];
@@ -554,9 +557,4 @@ fn write_u24(data: u32, buf: &mut [u8]) {
     buf[0] = (data & 0xFF) as u8;
     buf[1] = ((data >> 8) & 0xFF) as u8;
     buf[2] = ((data >> 16) & 0xFF) as u8;
-}
-
-#[test]
-fn test_var() {
-    os::env
 }

@@ -25,8 +25,8 @@ use rust_firmware_layout::runtime::*;
 use rust_firmware_layout::RuntimeMemoryLayout;
 
 use rust_fsp_wrapper::fsp_info_header::{FSP_INFO_HEADER_OFF, FspInfoHeader};
-use rust_fsp_wrapper::fsp_m_udp::FspmUpd;
-use rust_fsp_wrapper::fsp_s_udp::FspsUpd;
+use rust_firmware_platform::FspmUpd;
+use rust_firmware_platform::FspsUpd;
 
 use scroll::{Pread, Pwrite};
 

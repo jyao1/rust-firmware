@@ -1,8 +1,0 @@
-[package]
-name = "rust-firmware-qemu"
-version = "0.1.0"
-authors = ["Xiaoyu Lu <xiaoyux.lu@intel.com>"]
-edition = "2018"
-
-[dependencies]
-rust-fsp-wrapper = { path = "../../rust-fsp-wrapper" }

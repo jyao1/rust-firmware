@@ -2,9 +2,9 @@
 //
 // SPDX-License-Identifier: BSD-2-Clause-Patent
 
-// TBD: This is only for qemu fsp, need remove to platform/rust-firmware-qemu
+// QemuFspPkg FSP-S UPD
 
-use crate::fsp_upd_header::{FspUpdHeader, FspmArchUpd};
+use rust_fsp_wrapper::fsp_upd_header::{FspUpdHeader, FspmArchUpd};
 use scroll::{Pread, Pwrite};
 
 ///
@@ -93,10 +93,10 @@ mod tests {
     #[test]
     fn fsp_info_header_default_memory_udp() {
         use super::FspmUpd;
-        use crate::fsp_info_header::{FspInfoHeader, FSP_INFO_HEADER_OFF};
+        use rust_fsp_wrapper::fsp_info_header::{FspInfoHeader, FSP_INFO_HEADER_OFF};
         use scroll::Pread;
         let fsp_info_header_bytes =
-            &include_bytes!("../fsp_bins/Qemu/Rebase/FspRel_M_FFFC8000.raw")[..];
+            &include_bytes!("../../../rust-fsp-wrapper/fsp_bins/Qemu/QEMU_FSP_RELEASE_M_FFFC8000.fd")[..];
         let fsp_info_header = fsp_info_header_bytes
             .pread::<FspInfoHeader>(FSP_INFO_HEADER_OFF)
             .unwrap();
