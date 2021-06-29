@@ -179,7 +179,7 @@ mod tests {
         use super::{FspInfoHeader, FSP_INFO_HEADER_OFF};
         use scroll::Pread;
         let fsp_info_header_bytes =
-            &include_bytes!("../fsp_bins/Qemu/Rebase/FspRel_T_FFFC5000.raw")[..];
+            &include_bytes!("../fsp_bins/Qemu/QEMU_FSP_RELEASE_T_FFFC5000.fd")[..];
         let fsp_info_header = fsp_info_header_bytes
             .pread::<FspInfoHeader>(FSP_INFO_HEADER_OFF)
             .unwrap();

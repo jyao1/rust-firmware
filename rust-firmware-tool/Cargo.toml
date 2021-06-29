@@ -13,4 +13,11 @@ scroll = { version = "0.10", default-features=false }
 pe-loader = { path = "../pe-loader" }
 rust-firmware-layout = { path = "../rust-firmware-layout" }
 rust-fsp-wrapper = { path= "../rust-fsp-wrapper" }
-rust-firmware-qemu = { path = "../platform/rust-firmware-qemu" }
+
+# platform things.
+rust-firmware-platform = { path = "../rust-firmware-platform", default-features = false}
+
+[features]
+default = ["qemu"]
+
+qemu = ["rust-firmware-platform/qemu"]

@@ -2,9 +2,9 @@
 //
 // SPDX-License-Identifier: BSD-2-Clause-Patent
 
-// TBD: This is only for qemu fsp, need remove to platform/rust-firmware-qemu
+// QemuFspPkg FSP-S UPD
 
-use crate::fsp_upd_header::FspUpdHeader;
+use rust_fsp_wrapper::fsp_upd_header::FspUpdHeader;
 use scroll::{Pread, Pwrite};
 
 /// Fsp S Configuration

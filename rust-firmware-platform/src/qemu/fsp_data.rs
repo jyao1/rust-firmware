@@ -2,13 +2,13 @@
 //
 // SPDX-License-Identifier: BSD-2-Clause-Patent
 
-use rust_fsp_wrapper::fsp_t_upd::{FsptUpd, FsptCommonUpd};
+use super::fsp_t_upd::{FsptUpd, FsptCommonUpd};
 use rust_fsp_wrapper::fsp_upd_header::FspUpdHeader;
 
 
-const FSPT_UPD_SIGNATURE : u64 = 0x545F4450554D4551;        /* 'QEMUPD_T' */
-// const FSPM_UPD_SIGNATURE : u64 = 0x4D5F4450554D4551;        /* 'QEMUPD_M' */
-// const FSPS_UPD_SIGNATURE : u64 = 0x535F4450554D4551;        /* 'QEMUPD_S' */
+pub const FSPT_UPD_SIGNATURE : u64 = 0x545F4450554D4551;        /* 'QEMUPD_T' */
+pub const FSPM_UPD_SIGNATURE : u64 = 0x4D5F4450554D4551;        /* 'QEMUPD_M' */
+pub const FSPS_UPD_SIGNATURE : u64 = 0x535F4450554D4551;        /* 'QEMUPD_S' */
 
 
 pub const TEMP_RAM_INIT_PARAM: FsptUpd = FsptUpd {
