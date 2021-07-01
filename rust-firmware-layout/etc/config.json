@@ -5,9 +5,7 @@
         "padding_size": 0x40000,
         "payload_size": 0x280000,
         "ipl_size": 0xC5000,
-        "fsp_t_size": 0x3000,
-        "fsp_m_size": 0x22000,
-        "fsp_s_size": 0x15000,
+        "fsp_max_size": 0x3A000,
         "reset_vector_size": 0x1000
     },
     "runtime_layout": {

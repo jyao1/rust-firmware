@@ -20,19 +20,16 @@ macro_rules! BUILD_TIME_TEMPLATE {
             {reserved1_offset:#010X} -> +--------------+ <-  {reserved1_base:#010X}
             ({reserved1_size:#010X})  |  RESERVED1   |
             {padding_offset:#010X} -> +--------------+ <-  {padding_base:#010X}
-            ({padding_size:#010X})  |    PADDING   |
+            ({padding_size:#010X})  |   PADDING    |
             {payload_offset:#010X} -> +--------------+ <-  {payload_base:#010X}
            ({payload_size:#010X})   | Rust Payload |
                           |     (pad)    |
             {ipl_offset:#010X} -> +--------------+ <-  {ipl_base:#010X}
            ({ipl_size:#010X})   |   Rust IPL   |
                           |     (pad)    |
-            {fsp_t_offset:#010X} -> +--------------+ <-  {fsp_t_base:#010X}
-           ({fsp_t_size:#010X})   |  Rust Fsp-T  |
-           {fsp_m_offset:#010X} -> +--------------+ <-  {fsp_m_base:#010X}
-           ({fsp_m_size:#010X})   |  Rust Fsp-M  |
-           {fsp_s_offset:#010X} -> +--------------+ <-  {fsp_s_base:#010X}
-           ({fsp_s_size:#010X})   |  Rust Fsp-S  |
+            {fsp_offset:#010X} -> +--------------+ <-  {fsp_base:#010X}
+           ({fsp_max_size:#010X})   |   Rust Fsp   |
+                          |     pad      |
             {reset_vector_offset:#010X} -> +--------------+ <-  {reset_vector_base:#010X}
                           | (DATA PATCH) |
            ({reset_vector_size:#010X})   | Reset Vector |
@@ -44,9 +41,7 @@ pub const FIRMWARE_RESERVED1_OFFSET: u32 = {reserved1_offset:#X};
 pub const FIRMWARE_PADDING_OFFSET: u32 = {padding_offset:#X};
 pub const FIRMWARE_PAYLOAD_OFFSET: u32 = {payload_offset:#X};
 pub const FIRMWARE_IPL_OFFSET: u32 = {ipl_offset:#X};
-pub const FIRMWARE_FSP_T_OFFSET: u32 = {fsp_t_offset:#X};
-pub const FIRMWARE_FSP_M_OFFSET: u32 = {fsp_m_offset:#X};
-pub const FIRMWARE_FSP_S_OFFSET: u32 = {fsp_s_offset:#X};
+pub const FIRMWARE_FSP_OFFSET: u32 = {fsp_offset:#X};
 pub const FIRMWARE_RESET_VECTOR_OFFSET: u32 = {reset_vector_offset:#X};
 
 pub const FIRMWARE_SIZE: u32 = {image_size:#X};
@@ -54,9 +49,7 @@ pub const FIRMWARE_VAR_SIZE: u32 = {reserved1_size:#X};
 pub const FIRMWARE_PADDING_SIZE: u32 = {padding_size:#X};
 pub const FIRMWARE_PAYLOAD_SIZE: u32 = {payload_size:#X};
 pub const FIRMWARE_IPL_SIZE: u32 = {ipl_size:#X};
-pub const FIRMWARE_FSP_T_SIZE: u32 = {fsp_t_size:#X};
-pub const FIRMWARE_FSP_M_SIZE: u32 = {fsp_m_size:#X};
-pub const FIRMWARE_FSP_S_SIZE: u32 = {fsp_s_size:#X};
+pub const FIRMWARE_FSP_MAX_SIZE: u32 = {fsp_max_size:#X};
 pub const FIRMWARE_RESET_VECTOR_SIZE: u32 = {reset_vector_size:#X};
 
 // Image loaded
@@ -64,9 +57,7 @@ pub const LOADED_RESERVED1_BASE: u32 = {reserved1_base:#X};
 pub const LOADED_PADDING_BASE: u32 = {padding_base:#X};
 pub const LOADED_PAYLOAD_BASE: u32 = {payload_base:#X};
 pub const LOADED_IPL_BASE: u32 = {ipl_base:#X};
-pub const LOADED_FSP_T_BASE: u32 = {fsp_t_base:#X};
-pub const LOADED_FSP_M_BASE: u32 = {fsp_m_base:#X};
-pub const LOADED_FSP_S_BASE: u32 = {fsp_s_base:#X};
+pub const LOADED_FSP_BASE: u32 = {fsp_base:#X};
 pub const LOADED_RESET_VECTOR_BASE: u32 = {reset_vector_base:#X};
 "
     };
@@ -122,9 +113,7 @@ struct FirmwareImageLayoutConfig {
     padding_size: u32,
     payload_size: u32,
     ipl_size: u32,
-    fsp_t_size: u32,
-    fsp_m_size: u32,
-    fsp_s_size: u32,
+    fsp_max_size: u32,
     reset_vector_size: u32,
 }
 
@@ -167,25 +156,19 @@ impl FirmwareLayout {
             padding_size = self.config.image_layout.padding_size,
             payload_size = self.config.image_layout.payload_size,
             ipl_size = self.config.image_layout.ipl_size,
-            fsp_t_size = self.config.image_layout.fsp_t_size,
-            fsp_m_size = self.config.image_layout.fsp_m_size,
-            fsp_s_size = self.config.image_layout.fsp_s_size,
+            fsp_max_size = self.config.image_layout.fsp_max_size,
             reset_vector_size = self.config.image_layout.reset_vector_size,
             reserved1_offset = self.img.reserved1_offset,
             padding_offset = self.img.padding_offset,
             payload_offset = self.img.payload_offset,
             ipl_offset = self.img.ipl_offset,
-            fsp_t_offset = self.img.fsp_t_offset,
-            fsp_m_offset = self.img.fsp_m_offset,
-            fsp_s_offset = self.img.fsp_s_offset,
+            fsp_offset = self.img.fsp_offset,
             reset_vector_offset = self.img.reset_vector_offset,
             reserved1_base = self.img_loaded.reserved1_base,
             padding_base = self.img_loaded.padding_base,
             payload_base = self.img_loaded.payload_base,
             ipl_base = self.img_loaded.ipl_base,
-            fsp_t_base = self.img_loaded.fsp_t_base,
-            fsp_m_base = self.img_loaded.fsp_m_base,
-            fsp_s_base = self.img_loaded.fsp_s_base,
+            fsp_base = self.img_loaded.fsp_base,
             reset_vector_base = self.img_loaded.reset_vector_base,
             image_size = self.config.image_layout.image_size,
         )
@@ -218,6 +201,15 @@ impl FirmwareLayout {
             Path::new(FIRMWARE_LAYOUT_CONFIG_RS_OUT_DIR).join(FIRMWARE_LAYOUT_RUNTIME_RS_OUT);
         fs::write(&dest_path, to_generate).unwrap();
     }
+
+    pub fn generate_fsps(&self) {
+        let fsp_generate_params = build_fsp::FspGenerateParams {
+            loaded_fsp_base: self.img_loaded.fsp_base,
+            firmware_fsp_offset: self.img.fsp_offset,
+            firmware_fsp_max_size: self.config.image_layout.fsp_max_size,
+        };
+        build_fsp::generate_fsps(&fsp_generate_params);
+    }
 }
 
 #[derive(Debug, Default, PartialEq)]
@@ -227,9 +219,7 @@ struct FirmwareLayoutImage {
     payload_offset: u32,
     ipl_offset: u32,
     reset_vector_offset: u32,
-    fsp_t_offset: u32,
-    fsp_m_offset: u32,
-    fsp_s_offset: u32,
+    fsp_offset: u32,
 }
 
 impl FirmwareLayoutImage {
@@ -247,15 +237,9 @@ impl FirmwareLayoutImage {
         let ipl_offset = current_size;
 
         let current_size = current_size + config.image_layout.ipl_size;
-        let fsp_t_offset = current_size;
+        let fsp_offset = current_size;
 
-        let current_size = current_size + config.image_layout.fsp_t_size;
-        let fsp_m_offset = current_size;
-
-        let current_size = current_size + config.image_layout.fsp_m_size;
-        let fsp_s_offset = current_size;
-
-        let current_size = current_size + config.image_layout.fsp_s_size;
+        let current_size = current_size + config.image_layout.fsp_max_size;
         let reset_vector_offset = current_size;
 
         FirmwareLayoutImage {
@@ -264,9 +248,7 @@ impl FirmwareLayoutImage {
             payload_offset,
             ipl_offset,
             reset_vector_offset,
-            fsp_t_offset,
-            fsp_m_offset,
-            fsp_s_offset,
+            fsp_offset,
         }
     }
 }
@@ -277,9 +259,7 @@ struct FirmwareLayoutImageLoaded {
     padding_base: u32,
     payload_base: u32,
     ipl_base: u32,
-    fsp_t_base: u32,
-    fsp_m_base: u32,
-    fsp_s_base: u32,
+    fsp_base: u32,
     reset_vector_base: u32,
 }
 
@@ -298,15 +278,9 @@ impl FirmwareLayoutImageLoaded {
         let ipl_base = current_base;
 
         let current_base = current_base + config.image_layout.ipl_size;
-        let fsp_t_base = current_base;
+        let fsp_base = current_base;
 
-        let current_base = current_base + config.image_layout.fsp_t_size;
-        let fsp_m_base = current_base;
-
-        let current_base = current_base + config.image_layout.fsp_m_size;
-        let fsp_s_base = current_base;
-
-        let current_base = current_base + config.image_layout.fsp_s_size;
+        let current_base = current_base + config.image_layout.fsp_max_size;
         let reset_vector_base = current_base;
 
         FirmwareLayoutImageLoaded {
@@ -315,9 +289,7 @@ impl FirmwareLayoutImageLoaded {
             payload_base,
             ipl_base,
             reset_vector_base,
-            fsp_t_base,
-            fsp_m_base,
-            fsp_s_base,
+            fsp_base,
         }
     }
 }
@@ -385,6 +357,7 @@ fn main() {
     // Generate config .rs file from the template and JSON inputs, then write to fs.
     layout.generate_build_time_rs();
     layout.generate_runtime_rs();
+    layout.generate_fsps();
 
     // Re-run the build script if the files at the given paths or envs have changed.
     println!("cargo:rerun-if-changed=build.rs");
