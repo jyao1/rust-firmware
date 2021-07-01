@@ -20,6 +20,7 @@ use scroll::{Pread, Pwrite};
 use rust_firmware_layout::build_time::*;
 #[allow(unused_imports)]
 use rust_firmware_layout::consts::*;
+use rust_firmware_layout::fsp_build_time::*;
 
 use rust_firmware_platform::{FsptUpd, TEMP_RAM_INIT_PARAM};
 
@@ -367,9 +368,7 @@ fn main() -> std::io::Result<()> {
             + RUST_PAYLOAD_MAX_SIZE
             + RUST_IPL_MAX_SIZE
             + RUST_RESET_VECTOR_MAX_SIZE
-            + FIRMWARE_FSP_T_SIZE as usize
-            + FIRMWARE_FSP_M_SIZE as usize
-            + FIRMWARE_FSP_S_SIZE as usize,
+            + FIRMWARE_FSP_MAX_SIZE as usize,
         FIRMWARE_SIZE as usize
     );
     assert!(RUST_PAYLOAD_MAX_SIZE > size_of::<PayloadFvHeader>());
@@ -384,18 +383,18 @@ fn main() -> std::io::Result<()> {
     let (rust_fsp_wrapper_t_bin, rust_fsp_wrapper_m_bin, rust_fsp_wrapper_s_bin) = (
         fs::read(std::env::var("RUST_FIRMWARE_TOOL_FSP_T_FILE")
         .unwrap_or_else(|_|{
-            log::info!("environment variable: RUST_FIRMWARE_TOOL_FSP_T_FILE not set");
-            "rust-fsp-wrapper/fsp_bins/Qemu/QEMU_FSP_RELEASE_T_FFFC5000.raw".to_string()
+            log::info!("environment variable: RUST_FIRMWARE_TOOL_FSP_T_FILE not set, use default");
+            FIRMWARE_FSP_T_PATH.to_string()
         })).expect("fail to read fsp-t"),
         fs::read(std::env::var("RUST_FIRMWARE_TOOL_FSP_M_FILE")
         .unwrap_or_else(|_|{
-            log::info!("environment variable: RUST_FIRMWARE_TOOL_FSP_M_FILE not set");
-            "rust-fsp-wrapper/fsp_bins/Qemu/QEMU_FSP_RELEASE_M_FFFC8000.raw".to_string()
+            log::info!("environment variable: RUST_FIRMWARE_TOOL_FSP_M_FILE not set, use default");
+            FIRMWARE_FSP_M_PATH.to_string()
         })).expect("fail to read fsp-m"),
         fs::read(std::env::var("RUST_FIRMWARE_TOOL_FSP_S_FILE")
         .unwrap_or_else(|_|{
-            log::info!("environment variable: RUST_FIRMWARE_TOOL_FSP_S_FILE not set");
-            "rust-fsp-wrapper/fsp_bins/Qemu/QEMU_FSP_RELEASE_S_FFFEA000.raw".to_string()
+            log::info!("environment variable: RUST_FIRMWARE_TOOL_FSP_S_FILE not set, use default");
+            FIRMWARE_FSP_S_PATH.to_string()
         })).expect("fail to read fsp-s"),
     );
     let (fsp_t_bin, fsp_m_bin, fsp_s_bin) = (
@@ -493,20 +492,34 @@ fn main() -> std::io::Result<()> {
     total_writen += &zero_buf[..pad_size].len();
 
     assert_eq!(total_writen, FIRMWARE_FSP_T_OFFSET as usize);
+    assert_eq!(total_writen, FIRMWARE_FSP_OFFSET as usize);
 
     rust_firmware_file
         .write_all(fsp_t_bin)
         .expect("fail to write rust fsp_t");
     assert_eq!(fsp_t_bin.len(), FIRMWARE_FSP_T_SIZE as usize);
     total_writen += fsp_t_bin.len();
+    assert_eq!(FIRMWARE_FSP_M_OFFSET as usize, total_writen);
     rust_firmware_file
         .write_all(fsp_m_bin)
         .expect("fail to write rust fsp_m");
     total_writen += fsp_m_bin.len();
+    assert_eq!(FIRMWARE_FSP_S_OFFSET as usize, total_writen);
     rust_firmware_file
         .write_all(fsp_s_bin)
         .expect("fail to write rust fsp_s");
     total_writen += fsp_s_bin.len();
+
+    assert_eq!(total_writen, FIRMWARE_RESET_VECTOR_OFFSET as usize);
+
+    let pad_size = (FIRMWARE_FSP_MAX_SIZE
+        - FIRMWARE_FSP_T_SIZE - FIRMWARE_FSP_M_SIZE - FIRMWARE_FSP_S_SIZE) as usize;
+    if pad_size > 0 {
+        rust_firmware_file
+            .write_all(&zero_buf[..pad_size])
+            .expect("fail to write rust reset vector");
+        total_writen += pad_size;
+    }
 
     assert_eq!(total_writen, FIRMWARE_RESET_VECTOR_OFFSET as usize);
     // reset vector params
