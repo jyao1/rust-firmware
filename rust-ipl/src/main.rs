@@ -21,6 +21,7 @@ use uefi_pi::hob_lib;
 
 use rust_firmware_layout::build_time::*;
 use rust_firmware_layout::runtime::*;
+use rust_firmware_layout::fsp_build_time::*;
 
 use rust_firmware_layout::RuntimeMemoryLayout;
 
