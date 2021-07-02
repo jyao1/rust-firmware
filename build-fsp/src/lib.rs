@@ -10,6 +10,8 @@ mod build_time_fsp_template;
 
 use build_time_fsp_template::FspBuildTimeLayout;
 
+const QEMU_FSP_RELEASE: &str = "../QemuFsp/BuildFsp/QEMU_FSP_RELEASE.fd";
+
 pub struct FspGenerateParams {
     pub loaded_fsp_base: u32,
     pub firmware_fsp_offset: u32,
@@ -34,7 +36,11 @@ struct FspSplitNames {
 }
 
 fn get_fsp_rebase_dir() -> PathBuf {
-    let fsp_rebase_dir = PathBuf::from(std::env::var("OUT_DIR").unwrap_or_else(|_| "Outputs".to_string()).as_str());
+    let fsp_rebase_dir = PathBuf::from(
+        std::env::var("OUT_DIR")
+            .unwrap_or_else(|_| "Outputs".to_string())
+            .as_str(),
+    );
     if !fsp_rebase_dir.exists() {
         std::fs::create_dir_all(fsp_rebase_dir.clone()).expect("create dir failed");
     }
@@ -42,8 +48,15 @@ fn get_fsp_rebase_dir() -> PathBuf {
 }
 
 fn get_split_fsp_bin_py() -> PathBuf {
-    let edk2_path_string = std::env::var("EDK2_PATH").expect("EDK2_PATH should be set!");
-    let edk2_path = PathBuf::from(edk2_path_string);
+    let res = std::env::var("EDK2_PATH");
+    let edk2_path = match res {
+        Ok(edk2_path) => { PathBuf::from(edk2_path)}
+        Err(_) => {
+            let edk2_path = PathBuf::from("../QemuFsp");
+            if !edk2_path.exists() { panic!("EDK2_PATH should be set!");}
+            edk2_path
+        }
+    };
 
     if !edk2_path.exists() {
         panic!(format!(
@@ -66,8 +79,15 @@ fn get_split_fsp_bin_py() -> PathBuf {
 }
 
 fn split_fsp_binary() -> Option<FspSplitNames> {
-    let fsp_binary_file_string = std::env::var("RUST_FIRMWARE_FSP_FD_FILE")
-        .expect("RUST_FIRMWARE_FSP_FD_FILE should be set!");
+    let fsp_binary_file_string =
+        std::env::var("RUST_FIRMWARE_FSP_FD_FILE").unwrap_or_else(|_| -> String {
+            println!(
+                "RUST_FIRMWARE_FSP_FD_FILE should be set, use default {}",
+                QEMU_FSP_RELEASE
+            );
+            QEMU_FSP_RELEASE.to_string()
+        });
+
     let fsp_binary_filename = PathBuf::from(fsp_binary_file_string);
 
     if !fsp_binary_filename.exists() {

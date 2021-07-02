@@ -8,3 +8,9 @@ edition = "2018"
 
 [dependencies]
 
+[[bin]]
+name = "build_qemu_fsp_release"
+path = "tools/build_qemu_fsp_release.rs"
+test = false
+bench = false
+
