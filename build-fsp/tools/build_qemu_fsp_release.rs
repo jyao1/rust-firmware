@@ -17,7 +17,7 @@ use std::path::PathBuf;
 use std::process::{Command, Stdio};
 
 const EDK2_PATH: &str = "QemuFsp";
-const EDK2_GIT_PATH: &str = "C:\\Users\\xlu2x\\work\\edk2";
+const EDK2_GIT_PATH: &str = "https://github.com/tianocore/edk2.git";
 const EDK2_VERSION: &str = "edk2-stable202011";
 const QEMU_FSP_PATCH_URL: &str = "https://github.com/slimbootloader/slimbootloader/raw/master/Silicon/QemuSocPkg/FspBin/Patches/0001-Build-QEMU-FSP-2.0-binaries.patch";
 const QEMU_FSP_PATCH: &str = "0001-Build-QEMU-FSP-2.0-binaries.patch";
