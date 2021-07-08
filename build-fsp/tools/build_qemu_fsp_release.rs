@@ -19,7 +19,7 @@ use std::process::{Command, Stdio};
 const EDK2_PATH: &str = "QemuFsp";
 const EDK2_GIT_PATH: &str = "https://github.com/tianocore/edk2.git";
 const EDK2_VERSION: &str = "edk2-stable202011";
-const QEMU_FSP_PATCH_URL: &str = "https://github.com/slimbootloader/slimbootloader/raw/master/Silicon/QemuSocPkg/FspBin/Patches/0001-Build-QEMU-FSP-2.0-binaries.patch";
+const QEMU_FSP_PATCH_URL: &str = "https://raw.githubusercontent.com/slimbootloader/slimbootloader/master/Silicon/QemuSocPkg/FspBin/Patches/0001-Build-QEMU-FSP-2.0-binaries.patch";
 const QEMU_FSP_PATCH: &str = "0001-Build-QEMU-FSP-2.0-binaries.patch";
 const QEMU_FSP_RELEASE_NAME: &str = "QEMU_FSP_RELEASE.fd";
 const QEMU_FSP_RELEASE_DIR: &str = "BuildFsp";
@@ -35,11 +35,15 @@ fn main() {
 ///
 fn get_edk2_source_code_path() -> PathBuf {
     // if environment is set
-    if std::env::var("EDK2_PATH").is_ok() {
+    let path = if std::env::var("EDK2_PATH").is_ok() {
         PathBuf::from(std::env::var("EDK2_PATH").unwrap())
     } else {
         download_edk2_source_code()
+    };
+    if !path.exists() {
+        panic!("edk2 path not exist")
     }
+    path
 }
 
 ///
@@ -50,8 +54,8 @@ fn init_qemu_fsp_source_code(edk2_path: &PathBuf) {
     // pushd edk2
     std::env::set_current_dir(&edk2_path).expect("current dir set failed");
 
-    let mut command = Command::new("wget");
-    command.arg(QEMU_FSP_PATCH_URL);
+    let mut command = Command::new("curl");
+    command.arg(QEMU_FSP_PATCH_URL).arg("-o").arg(QEMU_FSP_PATCH);
     run_command(&mut command);
 
     let mut command = Command::new("git");
