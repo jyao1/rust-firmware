@@ -11,7 +11,10 @@ rust-uefi-payload is derived from [rust-hypervisor-firmware](https://github.com/
 
 **Note:** If your build host is behind company’s firewall, it is important to set up proxy correctly.
 
+**Note:** Build QemuFsp need VS2015 toolchain and make sure `nasm` `curl` can be found in your environment.
+
 ### 1. Build QemuFsp
+
 
 ```
 cargo run -p build-fsp --bin build_qemu_fsp_release
