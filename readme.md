@@ -32,7 +32,7 @@ cargo run -p rust-firmware-tool -- target/x86_64-unknown-uefi/release/ResetVecto
 ### 4. Run final.bin in Qemu
 
 ```
-qemu-system-x86_64 -m 4G -machine q35 -drive if=pflash,format=raw,unit=0,file=target/x86_64-unknown-uefi/release/final.bin -serial mon:stdio -nographic
+qemu-system-x86_64 -m 4G -machine q35 -drive if=pflash,format=raw,unit=0,file=target/x86_64-unknown-uefi/release/final.bin -serial mon:stdio -nographic -vga none -nic none
 ```
 
 ## Known limitation
