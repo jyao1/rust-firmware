@@ -10,7 +10,6 @@
 #![cfg_attr(test, allow(unused_imports))]
 
 mod asm;
-mod const_guids;
 mod memslice;
 mod utils;
 
@@ -18,6 +17,7 @@ use r_efi::efi;
 use r_uefi_pi::hob;
 use rust_firmware_layout::consts::SIZE_4K;
 use uefi_pi::hob_lib;
+use uefi_pi::const_guids;
 
 use rust_firmware_layout::build_time::*;
 use rust_firmware_layout::runtime::*;
@@ -330,6 +330,21 @@ fn migrate_hobs(runtime_memory_layout: &RuntimeMemoryLayout, fsp_hobs: &[u8]) {
         },
     };
     add_memory_allocation_to_ipl_hobs(&runtime_memory_layout, stack_hob);
+
+    let heap_hob = hob::MemoryAllocation {
+        header: hob::GenericHeader::new(
+            hob::HobType::MEMORY_ALLOCATION,
+            core::mem::size_of::<hob::MemoryAllocation>(),
+        ),
+        alloc_descriptor: hob::MemoryAllocationHeader {
+            name: const_guids::MEMORY_ALLOCATION_HEAP_GUID,
+            memory_base_address: runtime_memory_layout.runtime_heap_base as u64,
+            memory_length: RUNTIME_HEAP_SIZE as u64,
+            memory_type: efi::MemoryType::BootServicesData as u32,
+            reserved: [0u8; 4],
+        },
+    };
+    add_memory_allocation_to_ipl_hobs(&runtime_memory_layout, heap_hob);
 
     let firmware_volume = hob::FirmwareVolume {
         header: hob::GenericHeader::new(

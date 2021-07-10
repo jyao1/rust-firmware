@@ -1,7 +1,7 @@
 // Copyright (c) 2021 Intel Corporation
 //
 // SPDX-License-Identifier: BSD-2-Clause-Patent
-use r_uefi_pi::hob::Guid;
+use r_uefi_pi::pi::Guid;
 
 pub const PAGE_TABLE_NAME_GUID: Guid = Guid::from_fields(
     0xF8E21975,
@@ -28,4 +28,13 @@ pub const MEMORY_ALLOCATION_STACK_GUID: Guid = Guid::from_fields(
     0x80,
     0x7D,
     &[0x52, 0x7B, 0x1D, 0x00, 0xC9, 0xBD],
+);
+
+pub const MEMORY_ALLOCATION_HEAP_GUID: Guid = Guid::from_fields(
+    0x886f630b,
+    0xe14b,
+    0x11eb,
+    0x81,
+    0x51,
+    &[0xd8, 0xf2, 0xca, 0x34, 0x53, 0xe0],
 );

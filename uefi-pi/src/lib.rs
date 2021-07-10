@@ -7,7 +7,7 @@
 
 pub mod fv_lib;
 pub mod hob_lib;
-
+pub mod const_guids;
 pub mod pi {
     pub use crate::fv_lib;
     pub use crate::hob_lib;

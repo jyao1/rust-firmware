@@ -26,4 +26,5 @@ pub mod pi {
     pub use crate::boot_mode;
     pub use crate::fv;
     pub use crate::hob;
+    pub use crate::r_efi_wrapper::Guid;
 }

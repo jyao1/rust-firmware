@@ -259,7 +259,12 @@ impl<'a> HobListMut<'a> {
 }
 
 pub fn dump_hob(hob_list: &[u8]) {
-    for h in HobList::new(hob_list) {
+    for h in HobList::new(hob_list).filter(|h| -> bool {
+        match h {
+            HobEnums::MemoryPool(_) => {false}
+            _ => true
+        }
+    }) {
         log::info!("{:?}", h);
     }
 }
@@ -391,5 +396,33 @@ mod test {
 
         log::info!("\nAfter add stack hob: \n");
         super::dump_hob(new_hob_list.as_slice());
+    }
+
+    #[test]
+    fn test_hob_func() {
+        use std::io::Write;
+        let _res = env_logger::builder()
+            .filter_level(log::LevelFilter::Trace)
+            .format(|buf, record| write!(buf, "{}", record.args()))
+            .try_init();
+
+        #[path = "../../../test_data/fsp_hob_data.rs"]
+        mod fsp_hob_data;
+        let hob_list = &fsp_hob_data::FSP_S_INIT_8G_HOB_EXAMPLE[..];
+        test_filter(hob_list);
+    }
+
+    fn test_filter(hob_list: &[u8]) {
+        let hob_list = super::HobList::new(hob_list);
+        let hob_list = hob_list.into_iter().filter(|hob| -> bool {
+            match hob {
+                super::HobEnums::MemoryPool(_) => {false}
+                super::HobEnums::Unknown(_) => {false}
+                _=>true
+            }
+        });
+        for h in hob_list {
+            log::info!("{:?}", h);
+        }
     }
 }
