@@ -8,3 +8,5 @@ edition = "2018"
 
 [dependencies]
 cpuio = "0.3.0"
+rust_log = { version = "0.4.13", package = "log" }
+

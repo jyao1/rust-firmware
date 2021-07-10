@@ -107,3 +107,61 @@ macro_rules! trace {
         log::write_log(log::LOG_LEVEL_VERBOSE, log::LOG_MASK_COMMON, format_args!($($arg)*))
     );
 }
+
+pub fn write_rust_log(level: rust_log::Level, args: &fmt::Arguments) {
+
+    unsafe {
+        LOGGER.write_fmt(format_args!("[{:05}]  ", level)).unwrap();
+        LOGGER.write_fmt(*args).unwrap();
+    };
+}
+
+impl rust_log::Log for Logger {
+    fn enabled(&self, metadata: &rust_log::Metadata) -> bool {
+        let level = metadata.level();
+        let level = match level {
+            rust_log::Level::Error => {LOG_LEVEL_ERROR}
+            rust_log::Level::Warn => {LOG_LEVEL_WARN}
+            rust_log::Level::Info => {LOG_LEVEL_INFO}
+            rust_log::Level::Debug => {LOG_LEVEL_VERBOSE}
+            rust_log::Level::Trace => {LOG_LEVEL_VERBOSE}
+        };
+        level <= self.level
+    }
+
+    fn log(&self, record: &rust_log::Record) {
+        if self.enabled(record.metadata()) {
+            write_rust_log(record.level(), record.args());
+        }
+    }
+
+    fn flush(&self) {
+    }
+}
+
+pub fn init() {
+    init_with_level(rust_log::Level::Info);
+}
+
+static mut LOGGER: Logger = Logger {
+    port: unsafe {Port::new(0x3f8)},
+    level: DEFAULT_LOG_LEVEL,
+    mask: LOG_MASK_ALL,
+};
+
+/// Set log level
+pub fn init_with_level(level: rust_log::Level) {
+    let level = match level {
+        rust_log::Level::Error => {LOG_LEVEL_ERROR}
+        rust_log::Level::Warn => {LOG_LEVEL_WARN}
+        rust_log::Level::Info => {LOG_LEVEL_INFO}
+        rust_log::Level::Debug => {LOG_LEVEL_VERBOSE}
+        rust_log::Level::Trace => {LOG_LEVEL_VERBOSE}
+    };
+
+    unsafe {
+        LOGGER.set_level(level);
+        let _res = rust_log::set_logger(&LOGGER).unwrap();
+        rust_log::set_max_level(rust_log::LevelFilter::Trace);
+    }
+}
