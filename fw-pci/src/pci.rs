@@ -143,3 +143,33 @@ pub fn virt_io_blk() {
         volatile_store((base + 0x14usize) as *mut u32, 2u32);
     }
 }
+
+fn pci_cf8_read16(bus: u8, device: u8, func: u8, offset: u8) -> u16 {
+    assert_eq!(offset % 2, 0);
+    (pci_cf8_read32(bus, device, func, offset & !3) >> ((offset % 4) * 8)) as u16
+}
+
+fn get_device_details(bus: u8, device: u8, func: u8) -> (u16, u16) {
+    (
+        pci_cf8_read16(bus, device, func, 0),
+        pci_cf8_read16(bus, device, func, 2),
+    )
+}
+
+pub fn print_bus() {
+    const MAX_DEVICES:u8 = 32;
+    const INVALID_VENDOR_ID: u16 = 0xffff;
+
+    for device in 0..MAX_DEVICES {
+        let (vendor_id, device_id) = get_device_details(0, device, 0);
+        if vendor_id == INVALID_VENDOR_ID {
+            continue;
+        }
+        log::info!(
+            "Found PCI device vendor={:x} device={:x} in slot={}\n",
+            vendor_id,
+            device_id,
+            device
+        );
+    }
+}

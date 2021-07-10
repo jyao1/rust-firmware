@@ -9,4 +9,4 @@ edition = "2018"
 [dependencies]
 bitfield = "0.13.2"
 x86 = "0.34.0"
-log = { path = "../fw-logger", package="fw-logger"}
+log = "0.4.13"
