@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: BSD-2-Clause-Patent
 
-#![cfg_attr(not(test),no_std)]
+#![cfg_attr(not(test), no_std)]
 
 use core::fmt::{self, Write};
 use cpuio::Port;
@@ -94,6 +94,15 @@ pub fn write_log(level: usize, mask: u64, args: fmt::Arguments) {
     logger.write_fmt(args).unwrap();
 }
 
+pub fn write_args(args: fmt::Arguments) {
+    let mut logger = Logger {
+        port: unsafe { Port::new(0x3f8) },
+        level: DEFAULT_LOG_LEVEL,
+        mask: LOG_MASK_ALL,
+    };
+    logger.write_fmt(args).unwrap();
+}
+
 #[macro_export]
 macro_rules! info {
     ($($arg:tt)*) => (
@@ -109,7 +118,6 @@ macro_rules! trace {
 }
 
 pub fn write_rust_log(level: rust_log::Level, args: &fmt::Arguments) {
-
     unsafe {
         LOGGER.write_fmt(format_args!("[{:05}]  ", level)).unwrap();
         LOGGER.write_fmt(*args).unwrap();
@@ -120,11 +128,11 @@ impl rust_log::Log for Logger {
     fn enabled(&self, metadata: &rust_log::Metadata) -> bool {
         let level = metadata.level();
         let level = match level {
-            rust_log::Level::Error => {LOG_LEVEL_ERROR}
-            rust_log::Level::Warn => {LOG_LEVEL_WARN}
-            rust_log::Level::Info => {LOG_LEVEL_INFO}
-            rust_log::Level::Debug => {LOG_LEVEL_VERBOSE}
-            rust_log::Level::Trace => {LOG_LEVEL_VERBOSE}
+            rust_log::Level::Error => LOG_LEVEL_ERROR,
+            rust_log::Level::Warn => LOG_LEVEL_WARN,
+            rust_log::Level::Info => LOG_LEVEL_INFO,
+            rust_log::Level::Debug => LOG_LEVEL_VERBOSE,
+            rust_log::Level::Trace => LOG_LEVEL_VERBOSE,
         };
         level <= self.level
     }
@@ -135,8 +143,7 @@ impl rust_log::Log for Logger {
         }
     }
 
-    fn flush(&self) {
-    }
+    fn flush(&self) {}
 }
 
 pub fn init() {
@@ -144,7 +151,7 @@ pub fn init() {
 }
 
 static mut LOGGER: Logger = Logger {
-    port: unsafe {Port::new(0x3f8)},
+    port: unsafe { Port::new(0x3f8) },
     level: DEFAULT_LOG_LEVEL,
     mask: LOG_MASK_ALL,
 };
@@ -152,11 +159,11 @@ static mut LOGGER: Logger = Logger {
 /// Set log level
 pub fn init_with_level(level: rust_log::Level) {
     let level = match level {
-        rust_log::Level::Error => {LOG_LEVEL_ERROR}
-        rust_log::Level::Warn => {LOG_LEVEL_WARN}
-        rust_log::Level::Info => {LOG_LEVEL_INFO}
-        rust_log::Level::Debug => {LOG_LEVEL_VERBOSE}
-        rust_log::Level::Trace => {LOG_LEVEL_VERBOSE}
+        rust_log::Level::Error => LOG_LEVEL_ERROR,
+        rust_log::Level::Warn => LOG_LEVEL_WARN,
+        rust_log::Level::Info => LOG_LEVEL_INFO,
+        rust_log::Level::Debug => LOG_LEVEL_VERBOSE,
+        rust_log::Level::Trace => LOG_LEVEL_VERBOSE,
     };
 
     unsafe {
