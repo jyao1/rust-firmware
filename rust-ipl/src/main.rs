@@ -16,12 +16,12 @@ mod utils;
 use r_efi::efi;
 use r_uefi_pi::hob;
 use rust_firmware_layout::consts::SIZE_4K;
-use uefi_pi::hob_lib;
 use uefi_pi::const_guids;
+use uefi_pi::hob_lib;
 
 use rust_firmware_layout::build_time::*;
-use rust_firmware_layout::runtime::*;
 use rust_firmware_layout::fsp_build_time::*;
+use rust_firmware_layout::runtime::*;
 
 use rust_firmware_layout::RuntimeMemoryLayout;
 
@@ -126,12 +126,21 @@ pub extern "win64" fn continue_function(hob_address: usize, _tmp_stack_top: usiz
     let runtime_memory_layout = RuntimeMemoryLayout::new(memory_tolum);
 
     // Set host Paging
-    let memory_size = 0x1000000000; // TODO: hardcoding to 64GiB for now
-    paging::setup_paging(
-        runtime_memory_layout.runtime_page_table_base as u64,
-        RUNTIME_PAGE_TABLE_SIZE as u64,
-        memory_size,
-    );
+    let old_paging_base = paging::paging::cr3_read();
+    let new_paging_base = runtime_memory_layout.runtime_page_table_base as u64;
+    unsafe {
+        let old_mem = core::slice::from_raw_parts_mut(old_paging_base as *mut u8, 0x6000usize);
+        let new_mem = core::slice::from_raw_parts_mut(new_paging_base as *mut u8, 0x6000usize);
+        new_mem.copy_from_slice(old_mem);
+    }
+    paging::paging::cr3_write(new_paging_base);
+    // TBD: not work in kvm environment
+    // let memory_size = 0x1000000000; // TODO: hardcoding to 64GiB for now
+    // paging::setup_paging(
+    //     runtime_memory_layout.runtime_page_table_base as u64,
+    //     RUNTIME_PAGE_TABLE_SIZE as u64,
+    //     memory_size,
+    // );
     log::info!(
         "Migrate pagetable @ {:#X}\n",
         runtime_memory_layout.runtime_page_table_base
@@ -254,8 +263,8 @@ fn transfer_to_payload(runtime_memory_layout: &RuntimeMemoryLayout, fsp_hob_list
 
     let (payload_entry, basefw, basefwsize) =
         utils::find_and_report_entry_point(payload_fv_buffer, loaded_buffer);
-    log::trace!(
-        "payload basefw, size: {:#X}, {:#X}",
+    log::info!(
+        "Payload basefw, size: {:#X}, {:#X}\n",
         utils::align_value(basefw, SIZE_4K, true),
         basefwsize
     );
