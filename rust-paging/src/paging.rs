@@ -9,8 +9,7 @@ use x86_64::{
     structures::paging::{
         Mapper, OffsetPageTable, Page, PageSize, PhysFrame, Size1GiB, Size2MiB, Size4KiB,
     },
-    PhysAddr,
-    VirtAddr,
+    PhysAddr, VirtAddr,
 };
 
 use super::frame::BMFrameAllocator;
@@ -100,4 +99,8 @@ pub fn cr3_write(page_table_base: u64) {
         x86::controlregs::cr3_write(page_table_base);
     }
     log::info!("Cr3 - {:x}\n", unsafe { x86::controlregs::cr3() });
+}
+
+pub fn cr3_read() -> u64 {
+    unsafe { x86::controlregs::cr3() }
 }
