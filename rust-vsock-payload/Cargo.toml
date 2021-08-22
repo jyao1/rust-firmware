@@ -8,7 +8,10 @@ edition = "2018"
 
 [dependencies]
 log = "0.4.13"
+linked_list_allocator = "0.8.11"
+
 rust-ipl-log = { path = "../rust-ipl-log" }
 r-uefi-pi = { path = "../r-uefi-pi" }
 uefi-pi = { path = "../uefi-pi" }
 fw-pci = { path = "../fw-pci" }
+fw-exception = { path = "../fw-exception" }

@@ -6,6 +6,11 @@
 #![cfg_attr(not(test), no_main)]
 #![feature(alloc_error_handler)]
 
+extern crate alloc;
+
+#[cfg(not(test))]
+mod heap;
+
 #[no_mangle]
 #[cfg_attr(target_os = "uefi", export_name = "efi_main")]
 pub extern "win64" fn _start(hob_list: *const u8, _reserved_param: usize) -> ! {
@@ -16,9 +21,15 @@ pub extern "win64" fn _start(hob_list: *const u8, _reserved_param: usize) -> ! {
     );
     rust_ipl_log::init_with_level(log::Level::Trace);
     log::debug!("Logger init\n");
+    fw_exception::setup_exception_handlers();
 
     let hob_list = unsafe_get_hob_from_ipl(hob_list);
     uefi_pi::hob_lib::dump_hob(hob_list);
+
+    #[cfg(not(test))]
+    if !heap::init_heap(hob_list) {
+        panic!("heap init failed\n");
+    }
 
     log::debug!("Example done\n");
     loop {}
