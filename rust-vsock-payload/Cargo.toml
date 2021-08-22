@@ -15,3 +15,4 @@ r-uefi-pi = { path = "../r-uefi-pi" }
 uefi-pi = { path = "../uefi-pi" }
 fw-pci = { path = "../fw-pci" }
 fw-exception = { path = "../fw-exception" }
+fw-virtio = { path = "../fw-virtio" }

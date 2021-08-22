@@ -7,9 +7,13 @@
 #![feature(alloc_error_handler)]
 
 extern crate alloc;
+use alloc::vec::Vec;
 
 #[cfg(not(test))]
 mod heap;
+
+mod platform;
+mod virtio_impl;
 
 #[no_mangle]
 #[cfg_attr(target_os = "uefi", export_name = "efi_main")]
@@ -25,11 +29,15 @@ pub extern "win64" fn _start(hob_list: *const u8, _reserved_param: usize) -> ! {
 
     let hob_list = unsafe_get_hob_from_ipl(hob_list);
     uefi_pi::hob_lib::dump_hob(hob_list);
-
     #[cfg(not(test))]
     if !heap::init_heap(hob_list) {
         panic!("heap init failed\n");
     }
+    fw_pci::print_bus();
+
+    platform::init();
+    let dma = Vec::<u8>::with_capacity(1024 * 1024);
+    virtio_impl::init(dma.as_ptr() as usize, dma.capacity());
 
     log::debug!("Example done\n");
     loop {}
