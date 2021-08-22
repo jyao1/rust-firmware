@@ -1,0 +1,14 @@
+[package]
+name = "rust-vsock-payload"
+version = "0.1.0"
+authors = ["Xiaoyu Lu <xiaoyux.lu@intel.com>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+log = "0.4.13"
+rust-ipl-log = { path = "../rust-ipl-log" }
+r-uefi-pi = { path = "../r-uefi-pi" }
+uefi-pi = { path = "../uefi-pi" }
+fw-pci = { path = "../fw-pci" }
