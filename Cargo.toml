@@ -6,6 +6,8 @@ members = [
     "rust-firmware-tool",
     "build-fsp",
     "rust-vsock-payload",
+    "fw-virtio",
+    "fw-vsock",
     ]
 
 default-members = ["rust-ipl", "rust-uefi-payload"]
