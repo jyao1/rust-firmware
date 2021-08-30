@@ -4,6 +4,7 @@
 
 use fw_vsock::vsock::{VsockAddr, VsockStream};
 
+#[allow(dead_code)]
 pub fn test_server() {
     let mut server_socket = VsockStream::new();
     let listen_addrss = VsockAddr::new(33, 1234);
