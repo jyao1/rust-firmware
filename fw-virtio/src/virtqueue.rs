@@ -22,15 +22,15 @@ const MAX_QUEUE_SIZE: usize = 32;
 ///
 /// Each device can have zero or more virtqueues.
 #[repr(C)]
-pub struct VirtQueue<'a> {
+pub struct VirtQueue {
     /// DMA guard
     dma: DMA,
     /// Descriptor table
-    desc: &'a mut [Descriptor],
+    desc: &'static mut [Descriptor],
     /// Available ring
-    avail: &'a mut AvailRing,
+    avail: &'static mut AvailRing,
     /// Used ring
-    used: &'a mut UsedRing,
+    used: &'static mut UsedRing,
 
     /// The index of queue
     queue_idx: u32,
@@ -44,7 +44,7 @@ pub struct VirtQueue<'a> {
     last_used_idx: u16,
 }
 
-impl<'a> VirtQueue<'a> {
+impl VirtQueue {
     /// Create a new VirtQueue.
     pub fn new(header: &dyn VirtioTransport, idx: usize, size: u16) -> Result<Self> {
         // TBD: add get_descriptors_address for VirtioTransport
@@ -66,10 +66,12 @@ impl<'a> VirtQueue<'a> {
         header.set_avail_ring(dma.paddr() as u64 + layout.avail_offset as u64);
         header.set_used_ring(dma.paddr() as u64 + layout.used_offset as u64);
 
-        let desc =
+        let desc: &'static mut [Descriptor] =
             unsafe { slice::from_raw_parts_mut(dma.vaddr() as *mut Descriptor, size as usize) };
-        let avail = unsafe { &mut *((dma.vaddr() + layout.avail_offset) as *mut AvailRing) };
-        let used = unsafe { &mut *((dma.vaddr() + layout.used_offset) as *mut UsedRing) };
+        let avail: &'static mut AvailRing =
+            unsafe { &mut *((dma.vaddr() + layout.avail_offset) as *mut AvailRing) };
+        let used: &'static mut UsedRing =
+            unsafe { &mut *((dma.vaddr() + layout.used_offset) as *mut UsedRing) };
 
         // link descriptors together
         for i in 0..(size - 1) {

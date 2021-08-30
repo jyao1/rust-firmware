@@ -336,7 +336,7 @@ extern "C" {
 }
 
 #[allow(unused)]
-fn get_vsock_device<'a>() -> &'a VirtioVsockDevice<'a, VirtioPciTransport> {
+fn get_vsock_device() -> &'static VirtioVsockDevice<VirtioPciTransport> {
     unsafe {
         let res = get_vsock_device_call() as *const core::ffi::c_void
             as *const VirtioVsockDevice<VirtioPciTransport>;
@@ -345,7 +345,7 @@ fn get_vsock_device<'a>() -> &'a VirtioVsockDevice<'a, VirtioPciTransport> {
 }
 
 #[allow(unused)]
-fn get_vsock_device_mut<'a>() -> &'a mut VirtioVsockDevice<'a, VirtioPciTransport> {
+fn get_vsock_device_mut() -> &'static mut VirtioVsockDevice<VirtioPciTransport> {
     unsafe {
         let res = get_vsock_device_call() as *const core::ffi::c_void
             as *mut VirtioVsockDevice<VirtioPciTransport>;

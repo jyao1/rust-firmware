@@ -18,21 +18,21 @@ pub const MAX_VSOCK_MTU: usize = 1024;
 #[repr(C)]
 #[repr(align(64))]
 /// Device driver for virtio block over any transport
-pub struct VirtioVsockDevice<'a, T>
+pub struct VirtioVsockDevice<T>
 where
     T: VirtioTransport,
 {
     transport: T,
-    rx: RefCell<VirtQueue<'a>>,
-    tx: RefCell<VirtQueue<'a>>,
-    event: RefCell<VirtQueue<'a>>,
+    rx: RefCell<VirtQueue>,
+    tx: RefCell<VirtQueue>,
+    event: RefCell<VirtQueue>,
 }
 
-impl<'a, T> VirtioVsockDevice<'a, T>
+impl<T> VirtioVsockDevice<T>
 where
     T: VirtioTransport,
 {
-    pub fn new(transport: T) -> Result<VirtioVsockDevice<'a, T>> {
+    pub fn new(transport: T) -> Result<VirtioVsockDevice<T>> {
         // Initialise the transport
         let mut transport = transport;
         transport.init(VIRTIO_SUBSYSTEM_VSOCK)?;
@@ -149,7 +149,7 @@ where
         transport: &dyn VirtioTransport,
         idx: u16,
         queue_size: u16,
-    ) -> Result<VirtQueue<'a>> {
+    ) -> Result<VirtQueue> {
         transport.set_queue(idx);
         transport.set_queue_size(queue_size);
         let queue = VirtQueue::new(transport, idx as usize, queue_size)?;
@@ -200,7 +200,7 @@ impl device::RxToken for RxToken {
 }
 
 pub struct TxToken<'a, T: VirtioTransport> {
-    lower: &'a mut VirtioVsockDevice<'a, T>,
+    lower: &'a mut VirtioVsockDevice<T>,
 }
 
 impl<'a, T> device::TxToken for TxToken<'a, T>
@@ -221,7 +221,7 @@ where
     }
 }
 
-impl<'a, T: 'a> device::Device<'a> for VirtioVsockDevice<'a, T>
+impl<'a, T: 'a> device::Device<'a> for VirtioVsockDevice<T>
 where
     T: VirtioTransport,
 {
