@@ -77,11 +77,17 @@ impl VsockStream {
 
             // loop until new packet recieved
             // TBD: need support more
-            let vsock_device = get_vsock_device();
-            let _nrecv = vsock_device
-                .recv(&[&mut self.rx_buffer[..]])
-                .map_err(|_| VsockError::DeviceError)?;
-            Ok(())
+            loop {
+                let vsock_device = get_vsock_device();
+                let nrecv = vsock_device
+                    .recv(&[&mut self.rx_buffer[..]])
+                    .map_err(|_| VsockError::DeviceError)?;
+                let packet = Packet::new_checked(&self.rx_buffer[..nrecv])?;
+                if packet.op() == field::OP_REQUEST {
+                    return Ok(());
+                }
+                // drop
+            }
         } else {
             Err(VsockError::Illegal)
         }
