@@ -24,11 +24,16 @@ Qemu version is *QEMU emulator version 5.2.0*
 Linux kernel version is *5.12.16*
 
 ```
+## enable vsock-vhost module
+sudo insmod vhost-vsock
+# set vhost-vsock permission
+sudo setfacl -m u:${USER}:rw /dev/vhost-vsock
+
 ## RUST_FIRMWARE_BIN is final_vsock.bin
 ## VMN is GUEST_CID
 export VMN=33
 /home/luxy/local/bin/qemu-system-x86_64 \
- -m 4G -machine q35 \
+ -m 2G -machine q35 \
  -drive if=pflash,format=raw,unit=0,file=$RUST_FIRMWARE_BIN \
  -device vhost-vsock-pci,id=vhost-vsock-pci1,guest-cid=${VMN} \
  -nic none -vnc 0.0.0.0:1 -serial mon:stdio \
