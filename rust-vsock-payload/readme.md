@@ -11,11 +11,26 @@ export RESET_VECTOR_BIN=$BASE_DIR/target/x86_64-unknown-uefi/release/ResetVector
 export RUST_IPL_BIN=$BASE_DIR/target/x86_64-unknown-uefi/release/rust_ipl.efi
 export RUST_PAYLOAD_BIN=$BASE_DIR/target/x86_64-unknown-uefi/release/rust-vsock-payload.efi
 export RUST_FIRMWARE_BIN=$BASE_DIR/target/x86_64-unknown-uefi/release/final_vsock.bin
-
-cargo mbuild -p rust-vsock-payload --release
-cargo run -p rust-firmware-tool -- $RESET_VECTOR_BIN $RUST_IPL_BIN $RUST_PAYLOAD_BIN $RUST_FIRMWARE_BIN
-
 ```
+
+To build default PE format OBJ and link with a static C library:
+
+```bash
+cargo mbuild -p rust-vsock-payload --release
+```
+
+To build ELF format OBJ and link with a static C library:
+
+```bash
+cargo elfbuild -p rust-vsock-payload --release
+```
+
+Then:
+
+```bash
+cargo run -p rust-firmware-tool -- $RESET_VECTOR_BIN $RUST_IPL_BIN $RUST_PAYLOAD_BIN $RUST_FIRMWARE_BIN
+```
+
 
 ## How to Run
 
