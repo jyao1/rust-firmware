@@ -1,3 +1,4 @@
 
 [alias]
 mbuild = "build --target x86_64-unknown-uefi -Zbuild-std=core,alloc -Zbuild-std-features=compiler-builtins-mem"
+elfbuild = "xbuild --target rust-vsock-payload/target.json"
