@@ -18,6 +18,13 @@ mod vsock_impl;
 
 mod client;
 mod server;
+mod vsock_lib;
+
+#[link(name = "main")]
+extern "C" {
+    fn server_entry() -> i32;
+    fn client_entry() -> i32;
+}
 
 #[no_mangle]
 #[cfg_attr(target_os = "uefi", export_name = "efi_main")]
@@ -45,17 +52,24 @@ pub extern "win64" fn _start(hob_list: *const u8, _reserved_param: usize) -> ! {
 
     vsock_impl::init_vsock_device();
 
-    client::test_client();
-    server::test_server();
+    // client::test_client();
+    let mut result;
+    unsafe {
+        result = client_entry();
+    }
+    log::debug!("Client example done: {}\n", result);
 
-    log::debug!("Example done\n");
+    // server::test_server();
+    unsafe {
+        result = server_entry();
+    }
+
+    log::debug!("Server Example done: {}\n", result);
     loop {}
 }
 
-#[cfg(target_os = "uefi")]
 use core::panic::PanicInfo;
 
-#[cfg(target_os = "uefi")]
 #[panic_handler]
 fn panic(_info: &PanicInfo) -> ! {
     rust_ipl_log::write_log(
