@@ -12,6 +12,12 @@ export RUST_IPL_BIN=$BASE_DIR/target/x86_64-unknown-uefi/release/rust_ipl.efi
 export RUST_PAYLOAD_BIN=$BASE_DIR/target/x86_64-unknown-uefi/release/rust-vsock-payload.efi
 export RUST_FIRMWARE_BIN=$BASE_DIR/target/x86_64-unknown-uefi/release/final_vsock.bin
 ```
+To link a static C library, set the folder and name of lib to the environment variable:
+
+```bash
+export RUST_LINK_C_LIB_DIR=$BASE_DIR/rust-vsock-payload/
+export RUST_LINK_C_LIB_NAME=main.a
+```
 
 To build default PE format OBJ and link with a static C library:
 
