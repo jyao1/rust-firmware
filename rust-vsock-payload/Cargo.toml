@@ -11,6 +11,7 @@ atomic_refcell = "0.1.7"
 log = "0.4.13"
 linked_list_allocator = "0.8.11"
 conquer-once = { version = "0.3.2", default-features = false }
+spin = "0.7"
 
 rust-ipl-log = { path = "../rust-ipl-log" }
 r-uefi-pi = { path = "../r-uefi-pi" }
@@ -19,3 +20,7 @@ fw-pci = { path = "../fw-pci" }
 fw-exception = { path = "../fw-exception" }
 fw-virtio = { path = "../fw-virtio" }
 fw-vsock = { path = "../fw-vsock" }
+
+[dependencies.lazy_static]
+version = "1.0"
+features = ["spin_no_std"]
