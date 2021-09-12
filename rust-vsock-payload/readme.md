@@ -16,7 +16,7 @@ To link a static C library, set the folder and name of lib to the environment va
 
 ```bash
 export RUST_LINK_C_LIB_DIR=$BASE_DIR/rust-vsock-payload/
-export RUST_LINK_C_LIB_NAME=main.a
+export RUST_LINK_C_LIB_NAME=main
 ```
 
 To build default PE format OBJ and link with a static C library:
