@@ -158,7 +158,7 @@ pub extern "C" fn connect (sockfd: i32, socket_addr: *mut SockAddr, _addrlen: u3
 }
 
 #[no_mangle]
-pub extern "C" fn recv (sockfd: i32, buf: *mut u8,  len: i32, flags: i32) -> i32 {
+pub extern "C" fn recv (sockfd: i32, buf: *mut u8,  len: u64, flags: i32) -> i64 {
     match SOCKET_COLLECT.lock().get_mut(&sockfd) {
         Some(socket) => {
             match &mut socket.remote {
@@ -169,11 +169,10 @@ pub extern "C" fn recv (sockfd: i32, buf: *mut u8,  len: i32, flags: i32) -> i32
                             .recv(&mut recv_buf[..], flags as u32)
                             .expect("recv error\n");
                         if recvn == 0 {
-                            // socket.remote = None;
                             return 0;
                         }
                         log::info!("recv: {:?}\n", &recv_buf[..recvn]);
-                        recvn as i32
+                        recvn as i64
                     }
                 }
                 None => {
@@ -191,19 +190,11 @@ pub extern "C" fn recv (sockfd: i32, buf: *mut u8,  len: i32, flags: i32) -> i32
 
 #[no_mangle]
 pub extern "C" fn shutdown (sockfd: i32, _how: i32) -> i32 {
-    let mut tree = SOCKET_COLLECT.lock();
-    match tree.get_mut(&sockfd) {
+    let mut map = SOCKET_COLLECT.lock();
+    match map.remove(&sockfd) {
         Some(socket) => {
-            match socket.vsock_stream.shutdown() {
-                Ok(()) => {
-                    tree.remove(&sockfd).expect("remove socketfd error\n");
-                    0
-                },
-                Err(_e) => {
-                    log::info!("shutdown error\n");
-                    0
-                }
-            }
+            let _sock_stream = socket;
+            0
         },
         None => {
             log::info!("sockfd: {} not found\n", sockfd);
@@ -213,7 +204,7 @@ pub extern "C" fn shutdown (sockfd: i32, _how: i32) -> i32 {
 }
 
 #[no_mangle]
-pub extern "C" fn send (sockfd: i32, buf: *mut u8,  len: i32, flags: i32) -> i32 {
+pub extern "C" fn send (sockfd: i32, buf: *mut u8,  len: u64, flags: i32) -> i64 {
     match SOCKET_COLLECT.lock().get_mut(&sockfd) {
         Some(socket) => {
             unsafe {
@@ -223,11 +214,11 @@ pub extern "C" fn send (sockfd: i32, buf: *mut u8,  len: i32, flags: i32) -> i32
                     .send(&send_buf[..], flags as u32)
                     .expect("send error\n");
                 if sendn == 0 {
-                    return -1;
+                    return 0;
                 }
                 log::info!("send: {:?}\n", &send_buf[..len as usize]);
+                sendn as i64
             }
-            0
         },
         None => {
             log::info!("sockfd: {} not found\n", sockfd);

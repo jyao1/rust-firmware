@@ -6,7 +6,9 @@
 // This example does the same work as rust-vsock-payload/src/server.rs
 //
 
-#include <sys/types.h>
+#include <stddef.h>
+
+typedef long int ssize_t;
 
 typedef unsigned int socklen_t;
 
@@ -85,7 +87,7 @@ int client_entry () {
       return -1;
   }
 
-  if (send (sockfd, "hello", 5, 0)) {
+  if (!send (sockfd, "hello", 5, 0)) {
     return -1;
   }
 
