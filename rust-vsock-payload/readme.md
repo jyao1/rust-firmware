@@ -7,28 +7,39 @@ POC rust vsock over virtio vsock
 Note: Assume you can build `rust-firmware` with `rust-uefi-payload` and run it in qemu.
 
 ```bash
+cargo xbuild --target x86_64-unknown-uefi --release
 export RESET_VECTOR_BIN=$BASE_DIR/target/x86_64-unknown-uefi/release/ResetVector.bin
 export RUST_IPL_BIN=$BASE_DIR/target/x86_64-unknown-uefi/release/rust_ipl.efi
-export RUST_PAYLOAD_BIN=$BASE_DIR/target/x86_64-unknown-uefi/release/rust-vsock-payload.efi
 export RUST_FIRMWARE_BIN=$BASE_DIR/target/x86_64-unknown-uefi/release/final_vsock.bin
 ```
-To link a static C library, set the folder and name of lib to the environment variable:
+
+To link a static C library in Rust, set the folder and name of static lib file to the environment variable:
 
 ```bash
 export RUST_LINK_C_LIB_DIR=$BASE_DIR/rust-vsock-payload/
 export RUST_LINK_C_LIB_NAME=main
 ```
 
-To build default PE format OBJ and link with a static C library:
+To build as default PE format OBJ and MS x64 calling convention using clang and cargo mbuild:
 
 ```bash
+## build static C library
+clang rust-vsock-payload/vsock_c_lib/main.c -c --target=x86_64-unknown-windows -o rust-vsock-payload/vsock_c_lib/main.o
+llvm-ar r rust-vsock-payload/main.lib rust-vsock-payload/vsock_c_lib/main.o
+## build rust-vsock-payload
 cargo mbuild -p rust-vsock-payload --release
+export RUST_PAYLOAD_BIN=$BASE_DIR/target/x86_64-unknown-uefi/release/rust-vsock-payload.efi
 ```
 
-To build ELF format OBJ and link with a static C library:
+To build as ELF format and Linux GCC x86-64 calling convention using GCC and cargo elfbuild:
 
 ```bash
+## build static C library
+gcc rust-vsock-payload/vsock_c_lib/main.c -c -fno-stack-protector -o rust-vsock-payload/vsock_c_lib/main.o
+ar r rust-vsock-payload/libmain.a rust-vsock-payload/vsock_c_lib/main.o
+## build rust-vsock-payload
 cargo elfbuild -p rust-vsock-payload --release
+export RUST_PAYLOAD_BIN=$BASE_DIR/target/target/release/rust-vsock-payload
 ```
 
 Then:
