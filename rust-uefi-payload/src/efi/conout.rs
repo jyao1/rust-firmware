@@ -17,9 +17,9 @@
 
 use core::ffi::c_void;
 use core::fmt;
-use cpuio::Port;
 use lazy_static::lazy_static;
 use spin::Mutex;
+use x86_64::instructions::port::Port;
 
 use r_efi::efi::Status;
 use r_efi::protocols::simple_text_output::Mode as SimpleTextOutputMode;
@@ -76,7 +76,9 @@ pub struct ConOut {
 
 impl ConOut {
     pub fn write_byte(&mut self, byte: u8) {
-        self.port.write(byte);
+        unsafe {
+            self.port.write(byte);
+        }
     }
 
     pub fn write_string(&mut self, s: &str) {

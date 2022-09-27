@@ -32,9 +32,10 @@ mod variable;
 
 use core::fmt;
 use core::mem::transmute;
-use cpuio::Port;
 use lazy_static::lazy_static;
 use spin::Mutex;
+#[macro_use]
+use core::arch::asm;
 
 use r_efi::efi;
 use r_efi::efi::{

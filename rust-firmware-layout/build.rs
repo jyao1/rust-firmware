@@ -357,7 +357,7 @@ fn main() {
     // Generate config .rs file from the template and JSON inputs, then write to fs.
     layout.generate_build_time_rs();
     layout.generate_runtime_rs();
-    layout.generate_fsps();
+    // layout.generate_fsps();
 
     // Re-run the build script if the files at the given paths or envs have changed.
     println!("cargo:rerun-if-changed=build.rs");

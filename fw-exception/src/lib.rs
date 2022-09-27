@@ -5,7 +5,6 @@
 #![no_std]
 #![feature(llvm_asm)]
 #![feature(naked_functions)]
-#![feature(global_asm)]
 
 mod asm;
 mod idt;

@@ -1,6 +1,7 @@
 // Copyright (c) 2021 Intel Corporation
 //
 // SPDX-License-Identifier: BSD-2-Clause-Patent
+use core::arch::global_asm;
 use x86::dtables;
 
 global_asm!(include_str!("thunk64to32.s"));

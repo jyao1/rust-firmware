@@ -13,13 +13,14 @@
 // limitations under the License.
 
 #![allow(unused)]
-#![feature(asm)]
 #![cfg_attr(not(test), no_std)]
 #![cfg_attr(not(test), no_main)]
 #![cfg_attr(test, allow(unused_imports))]
 
 #[macro_use]
 use fw_logger::*;
+#[macro_use]
+use core::arch::asm;
 
 #[macro_use]
 mod common;
@@ -28,7 +29,7 @@ use core::panic::PanicInfo;
 
 use core::ffi::c_void;
 
-use cpuio::Port;
+use x86_64::instructions::port::Port;
 
 mod block;
 mod bzimage;
@@ -54,7 +55,7 @@ fn panic(_info: &PanicInfo) -> ! {
 
 // #[cfg(not(test))]
 /// Reset the VM via the keyboard controller
-fn i8042_reset() -> ! {
+unsafe fn i8042_reset() -> ! {
     log!("i8042_reset...\n");
     loop {
         let mut good: u8 = 0x02;

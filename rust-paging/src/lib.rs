@@ -20,7 +20,8 @@ use x86_64::{
 /// system_memory_size
 pub fn setup_paging(page_table_memory_base: u64, page_table_size: u64, system_memory_size: u64) {
     // Global variable not writable in rust-firmware environment, using a local allocator
-    let mut allocator = BMFrameAllocator::new(page_table_memory_base as usize, page_table_size as usize);
+    let mut allocator =
+        BMFrameAllocator::new(page_table_memory_base as usize, page_table_size as usize);
 
     // The first frame should've already been allocated to level 4 PT
     unsafe { allocator.alloc() };

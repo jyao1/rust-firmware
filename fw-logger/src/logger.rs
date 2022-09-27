@@ -5,8 +5,8 @@
 #![allow(dead_code)]
 
 use core::fmt;
-use cpuio::Port;
 use spin::Mutex;
+use x86_64::instructions::port::Port;
 
 pub const LOG_LEVEL_VERBOSE: usize = 1000;
 pub const LOG_LEVEL_INFO: usize = 100;

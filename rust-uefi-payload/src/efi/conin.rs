@@ -17,9 +17,9 @@
 
 use core::ffi::c_void;
 use core::fmt;
-use cpuio::Port;
 use lazy_static::lazy_static;
 use spin::Mutex;
+use x86_64::instructions::port::Port;
 
 const LSR_TXRDY: u8 = 0x20;
 const LSR_RXDA: u8 = 0x01;
