@@ -32,12 +32,14 @@ pub struct ConIn {
 
 impl ConIn {
     pub fn read_byte(&mut self) -> u8 {
-        let data = self.lsr_port.read();
-        if (data & LSR_RXDA) == 0 {
-            return 0;
+        unsafe {
+            let data = self.lsr_port.read();
+            if (data & LSR_RXDA) == 0 {
+                return 0;
+            }
+            let byte = self.port.read();
+            byte
         }
-        let byte = self.port.read();
-        byte
     }
 
     pub fn new() -> ConIn {

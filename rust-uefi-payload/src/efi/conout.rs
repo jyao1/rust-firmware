@@ -163,7 +163,9 @@ impl ConOut {
         }
 
         if column == 0 {
-            self.port.write('\r' as u8);
+            unsafe {
+                self.port.write('\r' as u8);
+            }
         }
     }
 

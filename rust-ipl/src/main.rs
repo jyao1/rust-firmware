@@ -13,7 +13,6 @@ mod const_guids;
 mod memslice;
 mod utils;
 
-use core::arch::global_asm;
 use r_efi::efi;
 use r_uefi_pi::hob;
 use rust_firmware_layout::consts::SIZE_4K;

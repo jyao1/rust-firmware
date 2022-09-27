@@ -8,6 +8,7 @@ use rust_firmware_layout::build_time::*;
 use rust_firmware_layout::runtime::*;
 // use rust_firmware_layout::fsp_build_time::*;
 
+// FIXME: just dummy values
 const FIRMWARE_FSP_M_SIZE: u32 = 0;
 const LOADED_FSP_M_BASE: u32 = 0;
 const FIRMWARE_FSP_S_SIZE: u32 = 0;

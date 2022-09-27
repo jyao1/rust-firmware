@@ -670,7 +670,9 @@ pub extern "win64" fn get_next_high_mono_count(_: *mut u32) -> Status {
 // #[cfg(not(test))]
 pub extern "win64" fn reset_system(_: ResetType, _: Status, _: usize, _: *mut c_void) {
     crate::log!("EFI_STUB: reset_system.\n");
-    crate::i8042_reset();
+    unsafe {
+        crate::i8042_reset();
+    }
 }
 
 // #[cfg(not(test))]
