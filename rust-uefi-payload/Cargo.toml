@@ -9,7 +9,7 @@ edition = "2018"
 
 [dependencies]
 fw-logger = { path = "../fw-logger" }
-spin = "0.4.9"
+spin = "0.9.4"
 r-efi = "3.2.0"
 x86_64 = "0.14.10"
 

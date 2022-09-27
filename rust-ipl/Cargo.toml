@@ -12,7 +12,7 @@ r-efi = "3.2.0"
 x86 = "0.34.0"
 plain = "0.2.3"
 bitfield = "0.13.2"
-linked_list_allocator = "0.8.11"
+linked_list_allocator = "0.10.3"
 scroll = { version = "0.10", default-features=false, features = ["derive"] }
 fw-exception = { path = "../fw-exception" }
 log = { path = "../rust-ipl-log", package="rust-ipl-log" }

@@ -4,9 +4,9 @@
 use core::arch::global_asm;
 use x86::dtables;
 
-global_asm!(include_str!("thunk64to32.s"));
-global_asm!(include_str!("read_write_gdtr.s"));
-global_asm!(include_str!("read_write_idtr.s"));
+// global_asm!(include_str!("thunk64to32.s"));
+// global_asm!(include_str!("read_write_gdtr.s"));
+// global_asm!(include_str!("read_write_idtr.s"));
 
 extern "win64" {
     fn AsmExecute32BitCode(

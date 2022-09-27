@@ -12,7 +12,9 @@ use std::{
 };
 
 use rust_firmware_layout::build_time::*;
-use rust_firmware_layout::fsp_build_time::*;
+// use rust_firmware_layout::fsp_build_time::*;
+
+const LOADED_FSP_T_BASE: u32 = 0;
 
 // const RESET_VECTOR_SRC: &[(&str, &str)] = &[
 //     ("x86_64", "ResetVector/Main.asm")

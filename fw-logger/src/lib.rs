@@ -4,6 +4,4 @@
 
 #![no_std]
 
-#[macro_use]
-use core::arch::asm;
 pub mod logger;
