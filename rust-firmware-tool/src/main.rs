@@ -20,7 +20,20 @@ use scroll::{Pread, Pwrite};
 use rust_firmware_layout::build_time::*;
 #[allow(unused_imports)]
 use rust_firmware_layout::consts::*;
-use rust_firmware_layout::fsp_build_time::*;
+// use rust_firmware_layout::fsp_build_time::*;
+
+// FIXME: just dummy values
+const FIRMWARE_FSP_M_PATH: &str = "";
+const FIRMWARE_FSP_M_SIZE: u32 = 0;
+const FIRMWARE_FSP_M_OFFSET: u32 = 0;
+
+const FIRMWARE_FSP_S_PATH: &str = "";
+const FIRMWARE_FSP_S_SIZE: u32 = 0;
+const FIRMWARE_FSP_S_OFFSET: u32 = 0;
+
+const FIRMWARE_FSP_T_PATH: &str = "";
+const FIRMWARE_FSP_T_SIZE: u32 = 0;
+const FIRMWARE_FSP_T_OFFSET: u32 = 0;
 
 use rust_firmware_platform::{FsptUpd, TEMP_RAM_INIT_PARAM};
 
@@ -190,10 +203,7 @@ type IplFvFfsHeader = PayloadFvFfsHeader;
 type IplFvFfsSectionHeader = PayloadFvFfsSectionHeader;
 type IplFvHeaderByte = PayloadFvHeaderByte;
 
-fn build_ipl_fv_header(
-    ipl_fv_header_buffer: &mut [u8],
-    ipl_relocate_buffer: &[u8],
-) {
+fn build_ipl_fv_header(ipl_fv_header_buffer: &mut [u8], ipl_relocate_buffer: &[u8]) {
     let mut ipl_fv_header = IplFvHeader::default();
 
     let fv_header_size = (size_of::<IplFvHeader>()) as usize;
@@ -214,8 +224,7 @@ fn build_ipl_fv_header(
     ipl_fv_header.fv_header.reserved = 0x00;
     ipl_fv_header.fv_header.revision = 0x02;
 
-    ipl_fv_header.fv_block_map[0].num_blocks =
-        (RUST_IPL_MAX_SIZE / 0x1000) as u32;
+    ipl_fv_header.fv_block_map[0].num_blocks = (RUST_IPL_MAX_SIZE / 0x1000) as u32;
     ipl_fv_header.fv_block_map[0].length = 0x1000;
     ipl_fv_header.fv_block_map[1].num_blocks = 0x0000;
     ipl_fv_header.fv_block_map[1].length = 0x0000;
@@ -361,7 +370,10 @@ fn build_reset_vector_header(reset_vector_header_buffer: &mut [u8], reset_vector
 }
 
 fn main() -> std::io::Result<()> {
-    simple_logger::SimpleLogger::new().with_level(log::LevelFilter::Info).init().unwrap();
+    simple_logger::SimpleLogger::new()
+        .with_level(log::LevelFilter::Info)
+        .init()
+        .unwrap();
 
     assert_eq!(
         RUST_VAR_AND_PADDING_SIZE
@@ -381,21 +393,33 @@ fn main() -> std::io::Result<()> {
     let rust_firmware_name = &args[4];
 
     let (rust_fsp_wrapper_t_bin, rust_fsp_wrapper_m_bin, rust_fsp_wrapper_s_bin) = (
-        fs::read(std::env::var("RUST_FIRMWARE_TOOL_FSP_T_FILE")
-        .unwrap_or_else(|_|{
-            log::info!("environment variable: RUST_FIRMWARE_TOOL_FSP_T_FILE not set, use default");
-            FIRMWARE_FSP_T_PATH.to_string()
-        })).expect("fail to read fsp-t"),
-        fs::read(std::env::var("RUST_FIRMWARE_TOOL_FSP_M_FILE")
-        .unwrap_or_else(|_|{
-            log::info!("environment variable: RUST_FIRMWARE_TOOL_FSP_M_FILE not set, use default");
-            FIRMWARE_FSP_M_PATH.to_string()
-        })).expect("fail to read fsp-m"),
-        fs::read(std::env::var("RUST_FIRMWARE_TOOL_FSP_S_FILE")
-        .unwrap_or_else(|_|{
-            log::info!("environment variable: RUST_FIRMWARE_TOOL_FSP_S_FILE not set, use default");
-            FIRMWARE_FSP_S_PATH.to_string()
-        })).expect("fail to read fsp-s"),
+        fs::read(
+            std::env::var("RUST_FIRMWARE_TOOL_FSP_T_FILE").unwrap_or_else(|_| {
+                log::info!(
+                    "environment variable: RUST_FIRMWARE_TOOL_FSP_T_FILE not set, use default"
+                );
+                FIRMWARE_FSP_T_PATH.to_string()
+            }),
+        )
+        .expect("fail to read fsp-t"),
+        fs::read(
+            std::env::var("RUST_FIRMWARE_TOOL_FSP_M_FILE").unwrap_or_else(|_| {
+                log::info!(
+                    "environment variable: RUST_FIRMWARE_TOOL_FSP_M_FILE not set, use default"
+                );
+                FIRMWARE_FSP_M_PATH.to_string()
+            }),
+        )
+        .expect("fail to read fsp-m"),
+        fs::read(
+            std::env::var("RUST_FIRMWARE_TOOL_FSP_S_FILE").unwrap_or_else(|_| {
+                log::info!(
+                    "environment variable: RUST_FIRMWARE_TOOL_FSP_S_FILE not set, use default"
+                );
+                FIRMWARE_FSP_S_PATH.to_string()
+            }),
+        )
+        .expect("fail to read fsp-s"),
     );
     let (fsp_t_bin, fsp_m_bin, fsp_s_bin) = (
         rust_fsp_wrapper_t_bin.as_slice(),
@@ -440,10 +464,7 @@ fn main() -> std::io::Result<()> {
     .expect("fail to relocate PE image");
     let ipl_entry = ipl_entry as u32;
 
-    build_ipl_fv_header(
-        rust_ipl_header_buffer,
-        new_rust_ipl_buf.as_slice(),
-    );
+    build_ipl_fv_header(rust_ipl_header_buffer, new_rust_ipl_buf.as_slice());
 
     let mut rust_reset_vector_header_buffer = [0u8; size_of::<ResetVectorByte>()];
     build_reset_vector_header(
@@ -512,8 +533,9 @@ fn main() -> std::io::Result<()> {
 
     assert_eq!(total_writen, FIRMWARE_RESET_VECTOR_OFFSET as usize);
 
-    let pad_size = (FIRMWARE_FSP_MAX_SIZE
-        - FIRMWARE_FSP_T_SIZE - FIRMWARE_FSP_M_SIZE - FIRMWARE_FSP_S_SIZE) as usize;
+    let pad_size =
+        (FIRMWARE_FSP_MAX_SIZE - FIRMWARE_FSP_T_SIZE - FIRMWARE_FSP_M_SIZE - FIRMWARE_FSP_S_SIZE)
+            as usize;
     if pad_size > 0 {
         rust_firmware_file
             .write_all(&zero_buf[..pad_size])
@@ -525,15 +547,13 @@ fn main() -> std::io::Result<()> {
     // reset vector params
     #[derive(Debug, Pread, Pwrite)]
     struct ResetVectorParams {
-        ipl_entry: u32,                 // rust ipl entry
-        temp_ram_init_param: FsptUpd,   // FSP_T TempRamInit Params
+        ipl_entry: u32,               // rust ipl entry
+        temp_ram_init_param: FsptUpd, // FSP_T TempRamInit Params
     };
 
     let reset_vector_info = ResetVectorParams {
         ipl_entry,
-        temp_ram_init_param: {
-            TEMP_RAM_INIT_PARAM
-        },
+        temp_ram_init_param: { TEMP_RAM_INIT_PARAM },
     };
 
     let reset_vector_info_buffer = &mut [0u8; 256];
