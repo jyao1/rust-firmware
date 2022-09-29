@@ -102,6 +102,8 @@ fn download_edk2_source_code() -> PathBuf {
         let mut command = Command::new("git");
         command
             .arg("clone")
+            .arg("--depth")
+            .arg("1")
             .arg("-b")
             .arg(EDK2_VERSION)
             .arg(EDK2_GIT_PATH)

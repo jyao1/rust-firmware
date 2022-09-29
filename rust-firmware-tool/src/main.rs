@@ -20,20 +20,7 @@ use scroll::{Pread, Pwrite};
 use rust_firmware_layout::build_time::*;
 #[allow(unused_imports)]
 use rust_firmware_layout::consts::*;
-// use rust_firmware_layout::fsp_build_time::*;
-
-// FIXME: just dummy values
-const FIRMWARE_FSP_M_PATH: &str = "";
-const FIRMWARE_FSP_M_SIZE: u32 = 0;
-const FIRMWARE_FSP_M_OFFSET: u32 = 0;
-
-const FIRMWARE_FSP_S_PATH: &str = "";
-const FIRMWARE_FSP_S_SIZE: u32 = 0;
-const FIRMWARE_FSP_S_OFFSET: u32 = 0;
-
-const FIRMWARE_FSP_T_PATH: &str = "";
-const FIRMWARE_FSP_T_SIZE: u32 = 0;
-const FIRMWARE_FSP_T_OFFSET: u32 = 0;
+use rust_firmware_layout::fsp_build_time::*;
 
 use rust_firmware_platform::{FsptUpd, TEMP_RAM_INIT_PARAM};
 

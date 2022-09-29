@@ -2,15 +2,13 @@
 //
 // SPDX-License-Identifier: BSD-2-Clause-Patent
 
-// use rust_firmware_layout::build_time::*;
-// use rust_firmware_layout::runtime::*;
 use crate::asm;
 use crate::fsp_info_header::{FspInfoHeader, FSP_INFO_HEADER_OFF};
 use crate::memslice;
-// use rust_firmware_layout::fsp_build_time::*;
+use rust_firmware_layout::build_time::*;
+use rust_firmware_layout::fsp_build_time::*;
+use rust_firmware_layout::runtime::*;
 use scroll::Pread;
-
-const LOADED_FSP_M_BASE: u32 = 0;
 
 ///
 /// Call FspMemoryInit then return hob

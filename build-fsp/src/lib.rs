@@ -10,6 +10,7 @@ mod build_time_fsp_template;
 
 use build_time_fsp_template::FspBuildTimeLayout;
 
+// FIXME: needs later reference again
 const QEMU_FSP_RELEASE: &str = "./QemuFsp/BuildFsp/QEMU_FSP_RELEASE.fd";
 
 pub struct FspGenerateParams {

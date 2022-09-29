@@ -1,19 +1,17 @@
 _BUILD_MODE ?= release
 _OUT_DIR := target/x86_64-unknown-uefi/$(_BUILD_MODE)
+_FSP := QemuFsp/BuildFsp/QEMU_FSP_RELEASE.fd
 
 build:
-	RUST_FIRMWARE_FSP_FD_FILE=$(PWD)/FAKE_OVMF.fd \
-	EDK2_PATH=$(PWD)/EDK2 \
+	RUST_FIRMWARE_FSP_FD_FILE=$(PWD)/$(_FSP) \
+	EDK2_PATH=$(PWD)/QemuFsp \
 	cargo xbuild --target x86_64-unknown-uefi --release
 
 .PHONY: fsp
 fsp:
-	cargo build -p build-fsp --bin build_qemu_fsp_release
+	cargo run -p build-fsp --bin build_qemu_fsp_release
 
 assemble:
-	RUST_FIRMWARE_TOOL_FSP_M_FILE=$(PWD)/FAKE_OVMF.fd \
-	RUST_FIRMWARE_TOOL_FSP_S_FILE=$(PWD)/FAKE_OVMF.fd \
-	RUST_FIRMWARE_TOOL_FSP_T_FILE=$(PWD)/FAKE_OVMF.fd \
 	cargo run -p rust-firmware-tool -- \
 		$(_OUT_DIR)/ResetVector.bin \
 		$(_OUT_DIR)/rust_ipl.efi \
