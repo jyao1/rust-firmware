@@ -2,14 +2,18 @@ _BUILD_MODE ?= release
 _OUT_DIR := target/x86_64-unknown-uefi/$(_BUILD_MODE)
 _FSP := QemuFsp/BuildFsp/QEMU_FSP_RELEASE.fd
 
-build:
-	RUST_FIRMWARE_FSP_FD_FILE=$(PWD)/$(_FSP) \
-	EDK2_PATH=$(PWD)/QemuFsp \
-	cargo xbuild --target x86_64-unknown-uefi --release
+all: fsp build assemble qemu
+
+run: all qemu
 
 .PHONY: fsp
 fsp:
 	cargo run -p build-fsp --bin build_qemu_fsp_release
+
+build:
+	RUST_FIRMWARE_FSP_FD_FILE=$(PWD)/$(_FSP) \
+	EDK2_PATH=$(PWD)/QemuFsp \
+	cargo xbuild --target x86_64-unknown-uefi --release
 
 assemble:
 	cargo run -p rust-firmware-tool -- \
