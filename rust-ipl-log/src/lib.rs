@@ -82,7 +82,7 @@ impl fmt::Write for Logger {
 
 pub fn write_log(level: usize, mask: u64, args: fmt::Arguments) {
     let mut logger = Logger {
-        port: unsafe { Port::new(0x3f8) },
+        port: Port::new(0x3f8),
         level: DEFAULT_LOG_LEVEL,
         mask: LOG_MASK_ALL,
     };
