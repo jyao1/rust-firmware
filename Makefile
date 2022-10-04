@@ -16,6 +16,7 @@ build:
 	cargo xbuild --target x86_64-unknown-uefi --release
 
 assemble:
+	RUST_FIRMWARE_FSP_FD_FILE=$(PWD)/$(_FSP) \
 	cargo run -p rust-firmware-tool -- \
 		$(_OUT_DIR)/ResetVector.bin \
 		$(_OUT_DIR)/rust_ipl.efi \
