@@ -234,17 +234,30 @@ impl<'a> Directory<'a> {
                     let lfn_seq = ((lfns[i].seq & 0x1f) as usize) - 1;
                     let lfn_block = &mut long_entry[lfn_seq * 13..(lfn_seq + 1) * 13];
 
+                    /*
+                     *  name: [u16; 5],
+                     *  _attr: u8,
+                     *  r#_type: u8,
+                     *  _checksum: u8,
+                     *  name2: [u16; 6],
+                     *  _cluster: u16,
+                     *  name3: [u16; 2],
+                     */
+
+                    let n1 = lfns[i].name;
+                    let n2 = lfns[i].name2;
+                    let n3 = lfns[i].name3;
                     let s = &mut lfn_block[0..5];
-                    s.copy_from_slice(unsafe { &lfns[i].name[..] });
+                    s.copy_from_slice(unsafe { &n1[..] });
                     let s = &mut lfn_block[5..11];
-                    s.copy_from_slice(unsafe { &lfns[i].name2[..] });
+                    s.copy_from_slice(unsafe { &n2[..] });
                     let s = &mut lfn_block[11..13];
-                    s.copy_from_slice(unsafe { &lfns[i].name3[..] });
+                    s.copy_from_slice(unsafe { &n3[..] });
 
                     continue;
                 }
                 let shortname = get_short_name(&d.name);
-                //log!("EFI_STUB - fat.rs d.name is {:?}\n", shortname);
+                log!("EFI_STUB - fat.rs d.name is {:?}\n", shortname);
                 let entry = DirectoryEntry {
                     name: shortname,
                     file_type: if d.flags & 0x10 == 0x10 {

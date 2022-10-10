@@ -26,4 +26,20 @@ assemble:
 qemu:
 	qemu-system-x86_64 -m 4G -machine q35 \
 		-drive if=pflash,format=raw,unit=0,file=$(_OUT_DIR)/final.bin \
-		-serial mon:stdio -nographic -vga none -nic none
+		-serial mon:stdio -nographic -vga none -nic none \
+		-kernel ~/Projects/Fiedka/minilb
+
+_APP_DIR := ../uefi-rs/
+
+qemu-payload:
+	qemu-system-x86_64 -nodefaults -machine q35 -smp 4 -m 256M --enable-kvm \
+		-serial mon:stdio -vga std -nic none \
+		-device virtio-rng-pci \
+		-device isa-debug-exit,iobase=0xf4,iosize=0x04 \
+		-drive if=pflash,format=raw,unit=0,file=$(_OUT_DIR)/final.bin \
+		-drive format=raw,file=fat:rw:$(_APP_DIR)/target/x86_64-unknown-uefi/debug/esp
+##	-nic user,model=e1000,net=192.168.17.0/24,tftp=$(_APP_DIR)/uefi-test-runner/tftp/,bootfile=fake-boot-file
+##	-drive if=pflash,format=raw,readonly=off,file=/tmp/.tmpnjEpw1/ovmf_vars \
+##	-drive format=raw,file=/tmp/.tmpnjEpw1/test_disk.fat.img \
+##	-serial stdio -serial pipe:/tmp/.tmpnjEpw1/serial \
+##	-qmp pipe:/tmp/.tmpnjEpw1/qemu-monitor \

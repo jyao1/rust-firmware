@@ -42,18 +42,21 @@ macro_rules! scratch_push {
 }
 
 macro_rules! scratch_pop {
-    () => (llvm_asm!(
-        "pop r11
-        pop r10
-        pop r9
-        pop r8
-        pop rsi
-        pop rdi
-        pop rdx
-        pop rcx
-        pop rax"
-        : : : : "intel", "volatile"
-    ));
+    () => {
+        asm!(
+            "
+               pop r11
+               pop r10
+               pop r9
+               pop r8
+               pop rsi
+               pop rdi
+               pop rdx
+               pop rcx
+               pop rax
+            "
+        )
+    };
 }
 
 #[allow(dead_code)]
@@ -162,8 +165,7 @@ macro_rules! interrupt_no_error {
 
             // Get reference to stack variables
             let rsp: usize;
-            llvm_asm!("" : "={rsp}"(rsp) : : : "intel", "volatile");
-            // asm!("", out("rsp") rsp);
+            asm!("mov rax, rsp", out("rax") rsp);
             asm!("cld");
 
             // Call inner rust function
@@ -195,16 +197,16 @@ macro_rules! interrupt_error {
 
             // Get reference to stack variables
             let rsp: usize;
-            llvm_asm!("" : "={rsp}"(rsp) : : : "intel", "volatile");
+            asm!("mov rax, rsp", out("rax") rsp);
 
             // Call inner rust function
-            llvm_asm!("sub rsp, 40" : : : : "intel", "volatile");
+            asm!("sub rsp, 40");
             inner(&mut *(rsp as *mut InterruptErrorStack));
-            llvm_asm!("add rsp, 40" : : : : "intel", "volatile");
+            asm!("add rsp, 40");
             // Pop scratch registers, error code, and return
             preserved_pop!();
             scratch_pop!();
-            llvm_asm!("add rsp, 8" : : : : "intel", "volatile");
+            asm!("add rsp, 8");
             iret!();
         }
     };

@@ -7,7 +7,7 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-x86 = "0.34.0"
+x86 = "0.51.0"
 x86_64 = "0.14.10"
 log = "0.4.13"
 bitflags = "1.2.1"
