@@ -458,10 +458,11 @@ pub fn peloader_load_image(
         }
     }
 
+    let entry_point_addr = nt_header.optional_header.address_of_entry_point;
     log!(
         "dest_buffer: {:?} nt_header->address_of_entry_point: {}\n",
         dest_buffer,
-        nt_header.optional_header.address_of_entry_point
+        entry_point_addr,
     );
     (dest_buffer as usize + nt_header.optional_header.address_of_entry_point as usize)
 }
@@ -473,11 +474,10 @@ pub fn pe_dumper(buffer: *mut c_void, size: usize) {
 pub fn pe_dumper_header(start_address: *mut c_void) {
     let source_dos_header = unsafe { transmute::<*mut c_void, &mut ImageDosHeader>(start_address) };
     log!("DOS Header\n");
-    log!("\t Magic Number:\t\t\t\t{:x}", source_dos_header.e_magic);
-    log!(
-        "\t PE header offset:\t\t\t\t{:x}",
-        source_dos_header.e_lfanew
-    );
+    let v = source_dos_header.e_magic;
+    log!("\t Magic Number:\t\t\t\t{v:x}");
+    let v = source_dos_header.e_lfanew;
+    log!("\t PE header offset:\t\t\t\t{v:x}",);
 
     let pecoff_header_offset = source_dos_header.e_lfanew;
     let nt_header: *mut ImageNtHeader64 = unsafe {
@@ -486,71 +486,42 @@ pub fn pe_dumper_header(start_address: *mut c_void) {
         )
     };
     let nt_header_ref: ImageNtHeader64 = unsafe { *nt_header };
-    log!("\nPE Signature:\n \t\t\t\t {:x}", nt_header_ref.signature);
+    let v = nt_header_ref.signature;
+    log!("\nPE Signature:\n \t\t\t\t {v:x}");
     log!("\nFile Type: ");
     log!("\nFILE HEADER VALUES");
-    log!(
-        "\n\t\t\t\t{:x} \t Machine ",
-        nt_header_ref.file_header.machine
-    );
-    log!(
-        "\n\t\t\t\t{:x} \t NumberOfSections ",
-        nt_header_ref.file_header.number_of_sections
-    );
-    log!(
-        "\n\t\t\t\t{:x} \t TimeDateStamp ",
-        nt_header_ref.file_header.time_date_stamp
-    );
-    log!(
-        "\n\t\t\t\t{:x} \t PointerToSymbolTable ",
-        nt_header_ref.file_header.pointer_to_symbol_table
-    );
-    log!(
-        "\n\t\t\t\t{:x} \t NumberOfSymbols ",
-        nt_header_ref.file_header.number_of_symbols
-    );
-    log!(
-        "\n\t\t\t\t{:x} \t SizeOfOptionalHeader ",
-        nt_header_ref.file_header.size_of_optional_header
-    );
-    log!(
-        "\n\t\t\t\t{:x} \t Characteristics ",
-        nt_header_ref.file_header.characteristics
-    );
+    let v = nt_header_ref.file_header.machine;
+    log!("\n\t\t\t\t{v:x} \t Machine ");
+    let v = nt_header_ref.file_header.number_of_sections;
+    log!("\n\t\t\t\t{v:x} \t NumberOfSections ",);
+    let v = nt_header_ref.file_header.time_date_stamp;
+    log!("\n\t\t\t\t{v:x} \t TimeDateStamp ",);
+    let v = nt_header_ref.file_header.pointer_to_symbol_table;
+    log!("\n\t\t\t\t{v:x} \t PointerToSymbolTable ",);
+    let v = nt_header_ref.file_header.number_of_symbols;
+    log!("\n\t\t\t\t{v:x} \t NumberOfSymbols ",);
+    let v = nt_header_ref.file_header.size_of_optional_header;
+    log!("\n\t\t\t\t{v:x} \t SizeOfOptionalHeader ",);
+    let v = nt_header_ref.file_header.characteristics;
+    log!("\n\t\t\t\t{v:x} \t Characteristics ",);
 
     log!("\nOPTIONAL HEADER VALUES");
-    log!(
-        "\n\t\t\t\t{:x} \t Magic  ",
-        nt_header_ref.optional_header.magic
-    );
-    log!(
-        "\n\t\t\t\t{:x} \t MajorLinkerVersion   ",
-        nt_header_ref.optional_header.major_linker_version
-    );
-    log!(
-        "\n\t\t\t\t{:x} \t MinorLinkerVersion   ",
-        nt_header_ref.optional_header.minor_linker_version
-    );
-    log!(
-        "\n\t\t\t\t{:x} \t SizeOfCode   ",
-        nt_header_ref.optional_header.size_of_code
-    );
-    log!(
-        "\n\t\t\t\t{:x} \t SizeOfInitializedData   ",
-        nt_header_ref.optional_header.size_of_initialized_data
-    );
-    log!(
-        "\n\t\t\t\t{:x} \t SizeOfUninitializedData   ",
-        nt_header_ref.optional_header.size_of_uninitialized_data
-    );
-    log!(
-        "\n\t\t\t\t{:x} \t AddressOfEntryPoint   ",
-        nt_header_ref.optional_header.address_of_entry_point
-    );
-    log!(
-        "\n\t\t\t\t{:x} \t BaseOfCode    ",
-        nt_header_ref.optional_header.base_of_code
-    );
+    let v = nt_header_ref.optional_header.magic;
+    log!("\n\t\t\t\t{v:x} \t Magic  ",);
+    let v = nt_header_ref.optional_header.major_linker_version;
+    log!("\n\t\t\t\t{v:x} \t MajorLinkerVersion   ",);
+    let v = nt_header_ref.optional_header.minor_linker_version;
+    log!("\n\t\t\t\t{v:x} \t MinorLinkerVersion   ",);
+    let v = nt_header_ref.optional_header.size_of_code;
+    log!("\n\t\t\t\t{v:x} \t SizeOfCode   ",);
+    let v = nt_header_ref.optional_header.size_of_initialized_data;
+    log!("\n\t\t\t\t{v:x} \t SizeOfInitializedData   ",);
+    let v = nt_header_ref.optional_header.size_of_uninitialized_data;
+    log!("\n\t\t\t\t{v:x} \t SizeOfUninitializedData   ",);
+    let v = nt_header_ref.optional_header.address_of_entry_point;
+    log!("\n\t\t\t\t{v:x} \t AddressOfEntryPoint   ",);
+    let v = nt_header_ref.optional_header.base_of_code;
+    log!("\n\t\t\t\t{v:x} \t BaseOfCode    ",);
 
     log!("\n");
 }
