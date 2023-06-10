@@ -73,8 +73,21 @@ use crate::fat;
 use crate::part;
 use crate::pci;
 
+// https://www.qemu.org/docs/master/about/deprecated.html?highlight=virtio%20scsi%20blk#device-virtio-blk-scsi-on-off-since-5-0
+// The virtio-blk SCSI passthrough feature is a legacy VIRTIO feature.
+// VIRTIO 1.0 and later do not support it because the virtio-scsi device
+// was introduced for full SCSI support. Use virtio-scsi instead when SCSI
+// passthrough is required.
+//
+// Note this also applies to -device virtio-blk-pci,scsi=on|off, which is an
+// alias.
+
 // #[cfg(not(test))]
 const VIRTIO_PCI_VENDOR_ID: u16 = 0x1af4;
+// https://devicehunt.com/view/type/pci/vendor/1AF4/device/1004
+// #[cfg(not(test))]
+const VIRTIO_PCI_SCSI_DEVICE_ID: u16 = 0x1004;
+// https://devicehunt.com/view/type/pci/vendor/1AF4/device/1042
 // #[cfg(not(test))]
 const VIRTIO_PCI_BLOCK_DEVICE_ID: u16 = 0x1042;
 
@@ -1857,7 +1870,8 @@ pub fn enter_uefi(hob: *const c_void) -> ! {
 
     crate::efi::init::initialize_variable();
 
-    //crate::efi::init::initialize_fs ();
+    // NOTE: This was commented out; why? No we see PCI discovery logs twice...
+    crate::efi::init::initialize_fs();
 
     pci::print_bus();
 
@@ -1865,7 +1879,8 @@ pub fn enter_uefi(hob: *const c_void) -> ! {
     let mut device;
     let mut device_function;
     let mut device_device;
-    match pci::search_bus(VIRTIO_PCI_VENDOR_ID, VIRTIO_PCI_BLOCK_DEVICE_ID) {
+    // match pci::search_bus(VIRTIO_PCI_VENDOR_ID, VIRTIO_PCI_BLOCK_DEVICE_ID) {
+    match pci::search_bus(VIRTIO_PCI_VENDOR_ID, VIRTIO_PCI_SCSI_DEVICE_ID) {
         Some(pci_device) => {
             device_function = pci_device.func;
             device_device = pci_device.device;
@@ -2004,7 +2019,14 @@ pub fn enter_uefi(hob: *const c_void) -> ! {
                 }
             }
         }
-        _ => {}
+        _ => {
+            log!(
+                "No PCI device found for Virtio block device ({:x}:{:x})\n",
+                VIRTIO_PCI_VENDOR_ID,
+                // VIRTIO_PCI_BLOCK_DEVICE_ID
+                VIRTIO_PCI_SCSI_DEVICE_ID
+            );
+        }
     }
 
     log!("Core Init Done\n");
