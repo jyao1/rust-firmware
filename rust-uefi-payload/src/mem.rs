@@ -15,6 +15,8 @@
 #![allow(unused)]
 #![allow(dead_code)]
 
+use fw_logger::log;
+
 #[derive(Default)]
 /// Provides a checked way to access memory offsets from a range of raw memory
 pub struct MemoryRegion {
@@ -134,6 +136,11 @@ impl MemoryRegion {
 
     /// Write a value at given offset using a mechanism suitable for MMIO
     fn io_write<T>(&self, offset: u64, value: T) {
+        log!(
+            "io_write {:x} {} {offset}\n",
+            core::mem::size_of::<T>() - 1,
+            self.length
+        );
         assert!((offset + (core::mem::size_of::<T>() - 1) as u64) < self.length);
         unsafe {
             core::ptr::write_volatile((self.base + offset) as *mut T, value);
