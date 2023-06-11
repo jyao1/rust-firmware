@@ -17,7 +17,7 @@
 #[macro_use]
 use fw_logger::*;
 
-use cpuio::Port;
+use x86_64::instructions::port::Port;
 
 // #[cfg(not(test))]
 use crate::virtio::Error as VirtioError;
@@ -51,12 +51,14 @@ fn pci_config_read_u32(bus: u8, device: u8, func: u8, offset: u8) -> u32 {
     let addr = addr | u32::from(offset & 0xfc); // register 7-0
     let addr = addr | 1u32 << 31; // enable bit 31
 
-    let mut config_address_port: Port<u32> = unsafe { Port::new(CONFIG_ADDRESS) };
-    config_address_port.write(addr);
+    unsafe {
+        let mut config_address_port: Port<u32> = unsafe { Port::new(CONFIG_ADDRESS) };
+        config_address_port.write(addr);
 
-    let mut config_data_port: Port<u32> = unsafe { Port::new(CONFIG_DATA) };
+        let mut config_data_port: Port<u32> = unsafe { Port::new(CONFIG_DATA) };
 
-    config_data_port.read()
+        config_data_port.read()
+    }
 }
 
 // #[cfg(not(test))]
@@ -82,12 +84,14 @@ fn pci_config_write_u32(bus: u8, device: u8, func: u8, offset: u8, value: u32) -
     let addr = addr | u32::from(offset & 0xfc); // register 7-0
     let addr = addr | 1u32 << 31; // enable bit 31
 
-    let mut config_address_port: Port<u32> = unsafe { Port::new(CONFIG_ADDRESS) };
-    config_address_port.write(addr);
+    unsafe {
+        let mut config_address_port: Port<u32> = unsafe { Port::new(CONFIG_ADDRESS) };
+        config_address_port.write(addr);
 
-    let mut config_data_port: Port<u32> = unsafe { Port::new(CONFIG_DATA) };
+        let mut config_data_port: Port<u32> = unsafe { Port::new(CONFIG_DATA) };
 
-    config_data_port.write(value)
+        config_data_port.write(value)
+    }
 }
 
 // #[cfg(not(test))]
@@ -102,12 +106,14 @@ fn pci_config_write_u16(bus: u8, device: u8, func: u8, offset: u8, value: u16) -
     let addr = addr | u32::from(offset & 0xfe); // register 7-0
     let addr = addr | 1u32 << 31; // enable bit 31
 
-    let mut config_address_port: Port<u32> = unsafe { Port::new(CONFIG_ADDRESS) };
-    config_address_port.write(addr);
+    unsafe {
+        let mut config_address_port: Port<u32> = unsafe { Port::new(CONFIG_ADDRESS) };
+        config_address_port.write(addr);
 
-    let mut config_data_port: Port<u16> = unsafe { Port::new(CONFIG_DATA) };
+        let mut config_data_port: Port<u16> = unsafe { Port::new(CONFIG_DATA) };
 
-    config_data_port.write(value)
+        config_data_port.write(value)
+    }
 }
 
 // #[cfg(not(test))]
@@ -121,12 +127,14 @@ fn pci_config_write_u8(bus: u8, device: u8, func: u8, offset: u8, value: u8) -> 
     let addr = addr | u32::from(offset); // register 7-0
     let addr = addr | 1u32 << 31; // enable bit 31
 
-    let mut config_address_port: Port<u32> = unsafe { Port::new(CONFIG_ADDRESS) };
-    config_address_port.write(addr);
+    unsafe {
+        let mut config_address_port: Port<u32> = unsafe { Port::new(CONFIG_ADDRESS) };
+        config_address_port.write(addr);
 
-    let mut config_data_port: Port<u8> = unsafe { Port::new(CONFIG_DATA) };
+        let mut config_data_port: Port<u8> = unsafe { Port::new(CONFIG_DATA) };
 
-    config_data_port.write(value)
+        config_data_port.write(value)
+    }
 }
 
 // #[cfg(not(test))]

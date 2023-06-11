@@ -240,8 +240,9 @@ pub extern "win64" fn read(file: *mut FileProtocol, size: *mut usize, buf: *mut 
                             }
                         }
                         let mut fname = unsafe { core::str::from_utf8_unchecked(&long_name) };
-                        let filename = &fname as &str;
-                        crate::common::ascii_to_ucs2(filename, &mut (*info).file_name);
+                        let mut fname_ucs2: [u16; 256] = [0; 256];
+                        crate::common::ascii_to_ucs2(&fname, &mut fname_ucs2);
+                        (*info).file_name = fname_ucs2 as [Char16; 256];
                         match de.file_type {
                             crate::fat::FileType::File => {
                                 (*info).size = core::mem::size_of::<FileInfo>() as u64;
@@ -321,9 +322,14 @@ pub extern "win64" fn get_info(
                     }
                 }
                 let filename = unsafe { core::str::from_utf8_unchecked(&long_name) };
-                //log!("EFI-STUB: get_info: dir_entry.name: {:?}, dir_entry.long_name: {:?}\n", (*wrapper).dir_entry.name, filename);
-                let filename = &filename[0..255] as &str;
-                crate::common::ascii_to_ucs2(filename, &mut (*info).file_name);
+                log!(
+                    "EFI-STUB: get_info: dir_entry.name: {:?}, dir_entry.long_name: {:?}\n",
+                    (*wrapper).dir_entry.name,
+                    filename
+                );
+                let mut fname_ucs2: [u16; 256] = [0; 256];
+                crate::common::ascii_to_ucs2(&filename, &mut fname_ucs2);
+                (*info).file_name = fname_ucs2 as [Char16; 256];
                 match (*wrapper).dir_entry.file_type {
                     crate::fat::FileType::File => {
                         (*info).size = core::mem::size_of::<FileInfo>() as u64;

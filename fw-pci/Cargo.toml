@@ -8,5 +8,5 @@ edition = "2018"
 
 [dependencies]
 bitfield = "0.13.2"
-x86 = "0.34.0"
+x86 = "0.51.0"
 log = { path = "../fw-logger", package="fw-logger"}

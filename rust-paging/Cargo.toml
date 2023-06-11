@@ -8,7 +8,7 @@ edition = "2018"
 
 [dependencies]
 bitfield = "0.13.2"
-x86 = "0.34.0"
-x86_64 = "0.13.1"
+x86 = "0.51.0"
+x86_64 = "0.14.10"
 log = "0.4.13"
 bitmap-allocator = { git = "https://github.com/rcore-os/bitmap-allocator", rev = "03bd9909" }

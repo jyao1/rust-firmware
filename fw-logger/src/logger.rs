@@ -5,8 +5,8 @@
 #![allow(dead_code)]
 
 use core::fmt;
-use cpuio::Port;
 use spin::Mutex;
+use x86_64::instructions::port::Port;
 
 pub const LOG_LEVEL_VERBOSE: usize = 1000;
 pub const LOG_LEVEL_INFO: usize = 100;
@@ -32,7 +32,7 @@ pub const LOG_MASK_FILE_SYSTEM: u64 = 0x200000000;
 pub const LOG_MASK_ALL: u64 = 0xFFFFFFFFFFFFFFFF;
 
 pub static LOGGER: Mutex<Logger> = Mutex::new(Logger {
-    port: unsafe { Port::new(0x3f8) },
+    port: Port::new(0x3f8),
     level: LOG_LEVEL_VERBOSE,
     mask: LOG_MASK_ALL,
 });
@@ -45,7 +45,9 @@ pub struct Logger {
 
 impl Logger {
     fn port_write(&mut self, byte: u8) {
-        self.port.write(byte);
+        unsafe {
+            self.port.write(byte);
+        }
     }
 
     pub fn write_byte(&mut self, byte: u8) {

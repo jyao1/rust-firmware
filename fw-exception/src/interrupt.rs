@@ -2,6 +2,8 @@
 //
 // SPDX-License-Identifier: BSD-2-Clause-Patent
 
+use core::arch::asm;
+
 #[allow(dead_code)]
 #[repr(packed)]
 pub struct ScratchRegisters {
@@ -31,33 +33,30 @@ impl ScratchRegisters {
 }
 
 macro_rules! scratch_push {
-    () => (llvm_asm!(
-        "push rax
-        push rcx
-        push rdx
-        push rdi
-        push rsi
-        push r8
-        push r9
-        push r10
-        push r11"
-        : : : : "intel", "volatile"
-    ));
+    () => {
+        asm!(
+            "push rax", "push rcx", "push rdx", "push rdi", "push rsi", "push r8", "push r9",
+            "push r10", "push r11",
+        )
+    };
 }
 
 macro_rules! scratch_pop {
-    () => (llvm_asm!(
-        "pop r11
-        pop r10
-        pop r9
-        pop r8
-        pop rsi
-        pop rdi
-        pop rdx
-        pop rcx
-        pop rax"
-        : : : : "intel", "volatile"
-    ));
+    () => {
+        asm!(
+            "
+               pop r11
+               pop r10
+               pop r9
+               pop r8
+               pop rsi
+               pop rdi
+               pop rdx
+               pop rcx
+               pop rax
+            "
+        )
+    };
 }
 
 #[allow(dead_code)]
@@ -83,27 +82,15 @@ impl PreservedRegisters {
 }
 
 macro_rules! preserved_push {
-    () => (llvm_asm!(
-        "push rbx
-        push rbp
-        push r12
-        push r13
-        push r14
-        push r15"
-        : : : : "intel", "volatile"
-    ));
+    () => {
+        asm!("push rbx", "push rbp", "push r12", "push r13", "push r14", "push r15")
+    };
 }
 
 macro_rules! preserved_pop {
-    () => (llvm_asm!(
-        "pop r15
-        pop r14
-        pop r13
-        pop r12
-        pop rbp
-        pop rbx"
-        : : : : "intel", "volatile"
-    ));
+    () => {
+        asm!("pop r15", "pop r14", "pop r13", "pop r12", "pop rbp", "pop rbx")
+    };
 }
 
 #[allow(dead_code)]
@@ -123,10 +110,9 @@ impl IretRegisters {
 }
 
 macro_rules! iret {
-    () => (llvm_asm!(
-        "iretq"
-        : : : : "intel", "volatile"
-    ));
+    () => {
+        asm!("iretq")
+    };
 }
 
 #[allow(dead_code)]
@@ -166,7 +152,6 @@ impl InterruptErrorStack {
 #[macro_export]
 macro_rules! interrupt_no_error {
     ($name:ident, $stack: ident, $func:block) => {
-        #[naked]
         #[no_mangle]
         pub unsafe extern fn $name () {
             #[inline(never)]
@@ -180,13 +165,13 @@ macro_rules! interrupt_no_error {
 
             // Get reference to stack variables
             let rsp: usize;
-            llvm_asm!("" : "={rsp}"(rsp) : : : "intel", "volatile");
-            llvm_asm!("cld" : : : : "intel", "volatile");
+            asm!("mov rax, rsp", out("rax") rsp);
+            asm!("cld");
 
             // Call inner rust function
-            llvm_asm!("sub rsp, 32" : : : : "intel", "volatile");
+            asm!("sub rsp, 32");
             inner(&mut *(rsp as *mut InterruptNoErrorStack));
-            llvm_asm!("add rsp, 32" : : : : "intel", "volatile");
+            asm!("add rsp, 32");
 
             // Pop scratch registers and return
             preserved_pop!();
@@ -199,7 +184,6 @@ macro_rules! interrupt_no_error {
 #[macro_export]
 macro_rules! interrupt_error {
     ($name:ident, $stack:ident, $func:block) => {
-        #[naked]
         #[no_mangle]
         pub unsafe extern fn $name () {
             #[inline(never)]
@@ -213,16 +197,16 @@ macro_rules! interrupt_error {
 
             // Get reference to stack variables
             let rsp: usize;
-            llvm_asm!("" : "={rsp}"(rsp) : : : "intel", "volatile");
+            asm!("mov rax, rsp", out("rax") rsp);
 
             // Call inner rust function
-            llvm_asm!("sub rsp, 40" : : : : "intel", "volatile");
+            asm!("sub rsp, 40");
             inner(&mut *(rsp as *mut InterruptErrorStack));
-            llvm_asm!("add rsp, 40" : : : : "intel", "volatile");
+            asm!("add rsp, 40");
             // Pop scratch registers, error code, and return
             preserved_pop!();
             scratch_pop!();
-            llvm_asm!("add rsp, 8" : : : : "intel", "volatile");
+            asm!("add rsp, 8");
             iret!();
         }
     };
@@ -295,8 +279,7 @@ interrupt_error!(protection, stack, {
 });
 
 interrupt_error!(page, stack, {
-    let cr2: usize;
-    llvm_asm!("mov rax, cr2" : "={rax}"(cr2) : : : "intel", "volatile");
+    let cr2 = x86_64::registers::control::Cr2::read();
     log::info!("Page fault: {:>016X}\n", cr2);
     stack.dump();
     loop {}

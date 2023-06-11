@@ -10,4 +10,4 @@ edition = "2018"
 scroll = { version = "0.10", default-features=false, features = ["derive"] }
 rust-firmware-layout = { path = "../rust-firmware-layout" }
 log = { path = "../rust-ipl-log", package="rust-ipl-log" }
-x86 = "0.34.0"
+x86 = "0.51.0"

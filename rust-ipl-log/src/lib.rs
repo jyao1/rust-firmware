@@ -2,10 +2,10 @@
 //
 // SPDX-License-Identifier: BSD-2-Clause-Patent
 
-#![cfg_attr(not(test),no_std)]
+#![cfg_attr(not(test), no_std)]
 
 use core::fmt::{self, Write};
-use cpuio::Port;
+use x86_64::instructions::port::Port;
 
 const DEFAULT_LOG_LEVEL: usize = LOG_LEVEL_INFO;
 
@@ -40,7 +40,9 @@ pub struct Logger {
 
 impl Logger {
     fn port_write(&mut self, byte: u8) {
-        self.port.write(byte);
+        unsafe {
+            self.port.write(byte);
+        }
     }
 
     pub fn write_byte(&mut self, byte: u8) {
@@ -80,7 +82,7 @@ impl fmt::Write for Logger {
 
 pub fn write_log(level: usize, mask: u64, args: fmt::Arguments) {
     let mut logger = Logger {
-        port: unsafe { Port::new(0x3f8) },
+        port: Port::new(0x3f8),
         level: DEFAULT_LOG_LEVEL,
         mask: LOG_MASK_ALL,
     };

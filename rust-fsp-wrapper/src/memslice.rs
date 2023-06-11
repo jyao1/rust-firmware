@@ -5,8 +5,8 @@
 // TBD: Duplicated file. need be removed.
 
 use rust_firmware_layout::build_time::*;
-use rust_firmware_layout::runtime::*;
 use rust_firmware_layout::fsp_build_time::*;
+use rust_firmware_layout::runtime::*;
 
 #[allow(dead_code)]
 pub enum SliceType {

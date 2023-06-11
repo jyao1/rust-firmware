@@ -20,9 +20,9 @@ use rust_firmware_layout::fsp_build_time::*;
 
 fn nasm(file: &Path, arch: &str, out_file: &Path, args: &[&str]) -> Command {
     let oformat = match arch {
-        "x86_64" => ("win64"),
-        "x86" => ("win32"),
-        "bin" => ("bin"),
+        "x86_64" => "win64",
+        "x86" => "win32",
+        "bin" => "bin",
         _ => panic!("unsupported arch: {}", arch),
     };
     let mut c = Command::new("nasm");

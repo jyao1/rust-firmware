@@ -10,8 +10,6 @@
 //! Also required EDK2 build environment. Goto
 //! [Getting Started with EDK II](https://github.com/tianocore/tianocore.github.io/wiki/Getting-Started-with-EDK-II) to see more information.
 //!
-#![feature(command_access)]
-
 use std::io::{BufRead, BufReader};
 use std::path::PathBuf;
 use std::process::{Command, Stdio};
@@ -55,7 +53,10 @@ fn init_qemu_fsp_source_code(edk2_path: &PathBuf) {
     std::env::set_current_dir(&edk2_path).expect("current dir set failed");
 
     let mut command = Command::new("curl");
-    command.arg(QEMU_FSP_PATCH_URL).arg("-o").arg(QEMU_FSP_PATCH);
+    command
+        .arg(QEMU_FSP_PATCH_URL)
+        .arg("-o")
+        .arg(QEMU_FSP_PATCH);
     run_command(&mut command);
 
     let mut command = Command::new("git");
@@ -101,6 +102,8 @@ fn download_edk2_source_code() -> PathBuf {
         let mut command = Command::new("git");
         command
             .arg("clone")
+            .arg("--depth")
+            .arg("1")
             .arg("-b")
             .arg(EDK2_VERSION)
             .arg(EDK2_GIT_PATH)

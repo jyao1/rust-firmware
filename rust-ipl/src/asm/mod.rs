@@ -1,8 +1,9 @@
 // Copyright (c) 2020 Intel Corporation
 //
 // SPDX-License-Identifier: BSD-2-Clause-Patent
+use core::arch::global_asm;
 
-global_asm!(include_str!("switch_stack.s"));
+global_asm!(include_str!("switch_stack.s"), options(att_syntax));
 
 extern "win64" {
     fn switch_stack_call(entry_point: usize, stack_top: usize, p1: usize, p2: usize);

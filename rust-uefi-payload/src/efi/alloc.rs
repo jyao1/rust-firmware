@@ -148,6 +148,12 @@ impl Allocator {
         page_count: u64,
         address: u64,
     ) -> Option<usize> {
+        log!(
+            "==== find free memory: {: >5} pages @ {:#x}\n",
+            // allocation_type,
+            page_count,
+            address
+        );
         let mut cur = self.first_allocation;
         while cur != None {
             let a = &mut self.allocations[cur.unwrap()];

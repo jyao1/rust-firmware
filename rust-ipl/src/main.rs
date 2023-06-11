@@ -4,7 +4,6 @@
 
 #![feature(core_intrinsics)]
 #![feature(alloc_error_handler)]
-#![feature(global_asm)]
 #![cfg_attr(not(test), no_std)]
 #![cfg_attr(not(test), no_main)]
 #![cfg_attr(test, allow(unused_imports))]
@@ -24,7 +23,10 @@ use rust_firmware_layout::runtime::*;
 
 use rust_firmware_layout::RuntimeMemoryLayout;
 
-use rust_fsp_wrapper::{fsp::*, fsp_info_header::{FspInfoHeader, FSP_INFO_HEADER_OFF}};
+use rust_fsp_wrapper::{
+    fsp::*,
+    fsp_info_header::{FspInfoHeader, FSP_INFO_HEADER_OFF},
+};
 
 use scroll::{Pread, Pwrite};
 

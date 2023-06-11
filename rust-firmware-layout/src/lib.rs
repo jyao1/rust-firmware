@@ -9,8 +9,8 @@ use core::fmt;
 
 pub mod build_time;
 pub mod consts;
-pub mod runtime;
 pub mod fsp_build_time;
+pub mod runtime;
 
 pub struct RuntimeMemoryLayout {
     pub runtime_hob_base: u64,

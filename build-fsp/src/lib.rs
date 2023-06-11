@@ -10,7 +10,8 @@ mod build_time_fsp_template;
 
 use build_time_fsp_template::FspBuildTimeLayout;
 
-const QEMU_FSP_RELEASE: &str = "../QemuFsp/BuildFsp/QEMU_FSP_RELEASE.fd";
+// FIXME: needs later reference again
+const QEMU_FSP_RELEASE: &str = "./QemuFsp/BuildFsp/QEMU_FSP_RELEASE.fd";
 
 pub struct FspGenerateParams {
     pub loaded_fsp_base: u32,
@@ -50,19 +51,21 @@ fn get_fsp_rebase_dir() -> PathBuf {
 fn get_split_fsp_bin_py() -> PathBuf {
     let res = std::env::var("EDK2_PATH");
     let edk2_path = match res {
-        Ok(edk2_path) => { PathBuf::from(edk2_path)}
+        Ok(edk2_path) => PathBuf::from(edk2_path),
         Err(_) => {
             let edk2_path = PathBuf::from("../QemuFsp");
-            if !edk2_path.exists() { panic!("EDK2_PATH should be set!");}
+            if !edk2_path.exists() {
+                panic!("EDK2_PATH should be set!");
+            }
             edk2_path
         }
     };
 
     if !edk2_path.exists() {
-        panic!(format!(
+        panic!(
             "edk2 path {:?} not exist please set correct EDK2_PATH",
             edk2_path
-        ));
+        );
     }
 
     let split_fsp_bin_py = edk2_path
@@ -122,7 +125,7 @@ fn split_fsp_binary() -> Option<FspSplitNames> {
         print!("{}", s);
     } else {
         let s = String::from_utf8_lossy(&output.stderr);
-        panic!(format!("{}", s));
+        panic!("{}", s);
     }
 
     let fsp_rebase_dir = get_fsp_rebase_dir();
@@ -240,6 +243,6 @@ fn rebase_fsp_binary(f: &PathBuf, b: u32, c: &'static str) {
         print!("{}", s);
     } else {
         let s = String::from_utf8_lossy(&output.stderr);
-        panic!(format!("{}", s));
+        panic!("{}", s);
     }
 }
